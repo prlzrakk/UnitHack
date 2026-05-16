@@ -270,6 +270,13 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .HasMaxLength(100);
         builder.Property(x => x.Message)
             .HasMaxLength(200);
+        builder.Property(x => x.IsRead)
+            .IsRequired()
+            .HasDefaultValue(false);
+        builder.Property(x => x.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("now()");
+        builder.Property(x => x.ReadAt);
 
         builder.HasOne(x => x.User)
             .WithMany()
@@ -287,6 +294,8 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => x.UserId);
+        builder.HasIndex(x => new { x.UserId, x.IsRead });
+        builder.HasIndex(x => new { x.UserId, x.CreatedAt });
         builder.HasIndex(x => x.TaskId);
         builder.HasIndex(x => x.KanbanId);
     }

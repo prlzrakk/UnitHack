@@ -1,5 +1,4 @@
 using Infrastructure.Constants;
-using Infrastructure.Constants;
 using Infrastructure.Entities;
 using Infrastructure.Enums;
 
@@ -17,6 +16,7 @@ public class MockDataStore
     public List<KanbanTask> Tasks { get; } = [];
     public List<Tag> Tags { get; } = [];
     public List<TaskTag> TaskTags { get; } = [];
+    public List<Notification> Notifications { get; } = [];
 
     public MockDataStore()
     {

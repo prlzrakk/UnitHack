@@ -113,6 +113,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<IKanbanTaskRepository, KanbanTaskRepository>();
         builder.Services.AddScoped<ITagRepository, TagRepository>();
         builder.Services.AddScoped<ITaskTagRepository, TaskTagRepository>();
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
         builder.Services.AddScoped<ITeamRepository, TeamRepository>();
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
