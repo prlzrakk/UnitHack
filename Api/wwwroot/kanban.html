@@ -58,6 +58,119 @@
         <span class="toast-bell">🔔</span>
         <span id="toastText">напомнить о задании</span>
     </div>
+    <div class="create-task-overlay" id="createTaskOverlay">
+        <form class="create-task-modal" id="createTaskForm">
+            <div class="create-task-header">
+                <input
+                        class="create-task-name"
+                        id="newTaskTitle"
+                        type="text"
+                        placeholder="Название задачи"
+                        autocomplete="off"
+                        required
+                >
+
+                <button class="create-task-close" id="createTaskClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <div class="create-task-body">
+                <section class="create-task-block create-task-description-block">
+                    <label class="create-field">
+                        <span class="create-label">Описание</span>
+                        <textarea
+                                class="create-textarea"
+                                id="newTaskDescription"
+                                placeholder="Напиши описание задачи"
+                        ></textarea>
+                    </label>
+
+                    <label class="create-field">
+                        <span class="create-label">Теги</span>
+
+                        <div class="create-tags-box">
+                            <div class="created-tags" id="createdTags"></div>
+
+                            <div class="tag-create-row">
+                                <input
+                                        class="create-input-small"
+                                        id="newTaskTagInput"
+                                        type="text"
+                                        placeholder="Добавить тег"
+                                        autocomplete="off"
+                                >
+                                <button class="tag-add-btn" id="addTaskTagBtn" type="button">+</button>
+                            </div>
+                        </div>
+                    </label>
+                </section>
+
+                <section class="create-task-block create-task-settings-block">
+                    <label class="create-row">
+                        <span class="create-row-label">Исполнитель</span>
+
+                        <div class="assignee-picker">
+                            <input
+                                    class="create-select-like"
+                                    id="newTaskAssigneeSearch"
+                                    type="text"
+                                    placeholder="Поиск участника"
+                                    autocomplete="off"
+                            >
+
+                            <div class="assignee-options" id="assigneeOptions"></div>
+                        </div>
+                    </label>
+
+                    <label class="create-row">
+                        <span class="create-row-label">Приоритет</span>
+
+                        <select class="create-select" id="newTaskPriority">
+                            <option value="LOW">LOW</option>
+                            <option value="MID" selected>MID</option>
+                            <option value="HIGH">HIGH</option>
+                        </select>
+                    </label>
+
+                    <label class="create-row">
+                        <span class="create-row-label">Сложность</span>
+
+                        <select class="create-select" id="newTaskComplexity">
+                            <option value="30 мин">30 мин</option>
+                            <option value="1 час">1 час</option>
+                            <option value="2 часа" selected>2 часа</option>
+                            <option value="3 часа">3 часа</option>
+                            <option value="4 часа">4 часа</option>
+                            <option value="6 часов">6 часов</option>
+                            <option value="8 часов">8 часов</option>
+                        </select>
+                    </label>
+
+                    <label class="create-row">
+                        <span class="create-row-label">Дедлайн</span>
+
+                        <input
+                                class="create-date-time"
+                                id="newTaskDeadline"
+                                type="datetime-local"
+                        >
+                    </label>
+                </section>
+            </div>
+
+            <div class="create-task-actions">
+                <button class="create-action create-cancel" id="createTaskCancel" type="button">
+                    Выйти без сохранения
+                </button>
+
+                <button class="create-action create-save" type="submit">
+                    Создать задачу
+                </button>
+            </div>
+        </form>
+    </div>
     <div class="reminder-modal" id="reminderModal">
         <div class="reminder-window">
             <button class="reminder-close" id="reminderClose" aria-label="Закрыть">
