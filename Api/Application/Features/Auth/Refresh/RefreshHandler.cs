@@ -1,7 +1,8 @@
 using Api.Application.Common.Exceptions;
-using Client.Models.DTO.Response;
-using Infrastructure.Interfaces;
 using MediatR;
+using Client.Models.DTO.Response;
+using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
 
 namespace Api.Application.Features.Auth.Refresh;
 
@@ -12,7 +13,7 @@ public class RefreshHandler(ITokenService tokenService, IUserRepository users)
         CancellationToken cancellationToken)
     {
         var user = await users.GetUser(command.UserId)
-                   ?? throw new ApiException(StatusCodes.Status401Unauthorized, "User not found");
+                   ?? throw new UnauthorizedException("User not found");
 
         return new RefreshResponse(
             tokenService.GenerateAccessToken(user),

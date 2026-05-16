@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Client.Models.Entities;
 using Client.Models.Enums;
-using Infrastructure.Interfaces;
+using Infrastructure.Security.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 

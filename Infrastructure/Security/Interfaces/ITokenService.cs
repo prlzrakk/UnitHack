@@ -1,6 +1,6 @@
 using Client.Models.Entities;
 
-namespace Infrastructure.Interfaces;
+namespace Infrastructure.Security.Interfaces;
 
 public interface ITokenService
 {

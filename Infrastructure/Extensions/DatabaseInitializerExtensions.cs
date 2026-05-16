@@ -1,6 +1,4 @@
-﻿using Infrastructure.Db;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Extensions;

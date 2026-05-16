@@ -1,5 +1,6 @@
 using Client.Models.Entities;
-using Infrastructure.Interfaces;
+using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
 
 namespace Infrastructure.Repositories.Mocks;
 
@@ -7,7 +8,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 {
     private static readonly object Sync = new();
     private static readonly Dictionary<string, MockUser> Users = new(StringComparer.OrdinalIgnoreCase);
-    private static int nextId = 1;
+    private static Guid nextId = Guid.NewGuid();
 
     public Task<User?> RegisterUser(string email, string hashPassword)
     {
@@ -22,7 +23,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
             var user = new MockUser
             {
-                Id = nextId++,
+                Id = nextId,
                 Email = normalizedEmail,
                 Name = CreateDefaultName(normalizedEmail),
                 HashPassword = hashPassword
@@ -62,7 +63,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         }
     }
 
-    public Task<User?> GetUser(int userId)
+    public Task<User?> GetUser(Guid userId)
     {
         lock (Sync)
         {

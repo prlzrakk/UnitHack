@@ -1,5 +1,5 @@
 using Client.Models.Entities;
-using Infrastructure.Interfaces;
+using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
 namespace Api.Application.Features.Users.GetMe;

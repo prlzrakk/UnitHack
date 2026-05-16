@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using Client.Models.Configs;
-using Infrastructure.Interfaces;
+using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Repositories.Mocks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi;
@@ -71,6 +71,8 @@ public static class ServiceCollectionExtensions
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("RequireUserId", policy =>
                 policy.RequireClaim("user_id"));
+
+        // builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 
         return builder;
     }

@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace WebApplication1.Application.Features.Example.GetExample;
+namespace Api.Application.Features.Example.GetExample;
 
 public class GetExampleHandler : IRequestHandler<GetExampleQuery, string>
 {
