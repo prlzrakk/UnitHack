@@ -38,12 +38,7 @@ public class UserRepository(DatabaseContext context) : IUserRepository
         return await context.Users
             .FirstOrDefaultAsync(x => x.Id == userId);
     }
-
-    public Task<User?> GetUser(int userId)
-    {
-        //это зачем надо?
-        throw new NotImplementedException();
-    }
+    
 
     public async Task<bool> ChangeDisplayName(string email, string newName)
     {

@@ -5,6 +5,6 @@ namespace Api.Application.Features.Users.Register;
 
 public record RegisterUserCommand(
     string Email,
-    string? Name,
+    string Name,
     string Password
 ) : IRequest<RegisterUserResponse>;
