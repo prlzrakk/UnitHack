@@ -597,6 +597,13 @@ button {
     gap: 16px;
 }
 
+.sidebar-empty {
+    width: 100%;
+    color: #a7a7a7;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
 .project-item {
     width: 100%;
     min-height: 64px;

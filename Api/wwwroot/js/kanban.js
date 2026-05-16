@@ -1,5 +1,40 @@
-﻿const toggleKanbanSidebarBtn = document.getElementById("toggleKanbanSidebar");
+import {
+    escapeHtml,
+    formatDate,
+    formatTime,
+    getBoardTasks,
+    getTaskStats,
+    loadBoard,
+    loadWorkspace,
+    renderSidebarNavigation,
+    selectKanbanFromUrl,
+    selectProjectFromUrl,
+    updateBoardUrl,
+} from "./boardData.js";
+import { createColumn, deleteColumn as deleteColumnRequest, renameColumn } from "./api/columnApi.js";
+import { createTask, deleteTask as deleteTaskRequest, updateTask } from "./api/taskApi.js";
+import { getMe } from "./api/userApi.js";
+
+const toggleKanbanSidebarBtn = document.getElementById("toggleKanbanSidebar");
 const closeKanbanSidebarBtn = document.getElementById("closeKanbanSidebar");
+const kanbanTitle = document.getElementById("kanbanTitle");
+const kanbanBoard = document.getElementById("kanbanBoard");
+
+const reminderModal = document.getElementById("reminderModal");
+const reminderText = document.getElementById("reminderText");
+const reminderYes = document.getElementById("reminderYes");
+const reminderNo = document.getElementById("reminderNo");
+const reminderClose = document.getElementById("reminderClose");
+
+let state = {
+    workspace: { teams: [], projects: [] },
+    activeProject: null,
+    activeKanban: null,
+    board: null,
+    currentUser: null,
+};
+
+let selectedReminder = null;
 
 function openKanbanSidebar() {
     document.body.classList.remove("sidebar-closed");
@@ -16,41 +51,6 @@ function toggleKanbanSidebar() {
 toggleKanbanSidebarBtn?.addEventListener("click", toggleKanbanSidebar);
 closeKanbanSidebarBtn?.addEventListener("click", closeKanbanSidebar);
 
-let activeProjectId = getProjectFromUrl();
-
-const kanbanTitle = document.getElementById("kanbanTitle");
-const kanbanBoard = document.getElementById("kanbanBoard");
-const projectList = document.getElementById("kanbanProjectList");
-const teamList = document.getElementById("kanbanTeamList");
-
-const reminderModal = document.getElementById("reminderModal");
-const reminderText = document.getElementById("reminderText");
-const reminderYes = document.getElementById("reminderYes");
-const reminderNo = document.getElementById("reminderNo");
-const reminderClose = document.getElementById("reminderClose");
-
-let selectedReminder = null;
-
-function getProjectFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const project = params.get("project");
-
-    if (project && PROJECTS[project]) {
-        return project;
-    }
-
-    return "hackathon";
-}
-
-function setProject(projectId) {
-    activeProjectId = projectId;
-
-    const url = new URL(window.location.href);
-    url.searchParams.set("project", projectId);
-    window.history.pushState({}, "", url);
-
-    renderPage();
-}
 function openReminderModal({ userName, taskTitle }) {
     selectedReminder = {
         userName,
@@ -89,74 +89,89 @@ document.addEventListener("keydown", (event) => {
         closeReminderModal();
     }
 });
-function renderPage() {
-    const project = PROJECTS[activeProjectId];
 
-    if (projectList) {
-        renderProjectMenu();
+async function init() {
+    renderLoading();
+
+    try {
+        const [workspace, currentUser] = await Promise.all([
+            loadWorkspace(),
+            getMe().catch(() => null),
+        ]);
+
+        state.workspace = workspace;
+        state.currentUser = currentUser;
+        state.activeProject = selectProjectFromUrl(workspace.projects);
+
+        await loadActiveBoard(selectKanbanFromUrl(state.activeProject)?.id ?? null);
+    } catch (error) {
+        console.error(error);
+        renderError("Не удалось загрузить доску. Проверь авторизацию и доступ к API.");
+    }
+}
+
+async function loadActiveBoard(kanbanId = null) {
+    if (!state.activeProject) {
+        state.board = null;
+        renderSidebar();
+        renderEmpty("Проектов пока нет");
+        return;
     }
 
-    if (teamList) {
-        renderTeams(project);
+    renderLoading();
+    state.activeKanban = selectKanbanFromUrl(state.activeProject) ?? state.activeProject.kanbans[0] ?? null;
+
+    if (kanbanId) {
+        state.activeKanban = state.activeProject.kanbans.find((kanban) => kanban.id === kanbanId) ?? state.activeKanban;
     }
 
-    renderKanban(project);
+    state.board = await loadBoard(state.activeProject, state.activeKanban?.id ?? null);
+    state.activeKanban = state.board.selectedKanban ?? state.activeKanban;
+    updateBoardUrl(state.activeProject, state.activeKanban);
+    renderSidebar();
+    renderKanban(state.board);
 }
 
-function renderProjectMenu() {
-    projectList.innerHTML = "";
-
-    Object.entries(PROJECTS).forEach(([projectId, project]) => {
-        const button = document.createElement("button");
-        button.className = `project-item ${projectId === activeProjectId ? "active" : ""}`;
-
-        button.innerHTML = `
-      <span class="project-color" style="background:${project.color}"></span>
-      <span class="project-name">${project.name}</span>
-      <span class="project-meta ${projectId === activeProjectId ? "active-meta" : ""}">
-        ${project.meta}
-      </span>
-    `;
-
-        button.addEventListener("click", () => {
-            setProject(projectId);
-        });
-
-        projectList.appendChild(button);
-    });
+function renderSidebar() {
+    const tasks = getBoardTasks(state.board);
+    renderSidebarNavigation(state.workspace, state.activeProject?.id, getTaskStats(tasks));
 }
 
-function renderTeams(project) {
-    teamList.innerHTML = "";
-
-    project.teams.forEach((team) => {
-        const button = document.createElement("button");
-        button.className = "team-card";
-
-        button.innerHTML = `
-      <span>${team.name}</span>
-      <span class="team-dot" style="background:${team.color}"></span>
-    `;
-
-        teamList.appendChild(button);
-    });
+function renderLoading() {
+    kanbanTitle.textContent = "Kanban";
+    kanbanBoard.innerHTML = `<div class="kanban-state">Загрузка доски...</div>`;
 }
 
-function renderKanban(project) {
-    kanbanTitle.textContent = project.title;
+function renderError(message) {
+    kanbanTitle.textContent = "Kanban";
+    kanbanBoard.innerHTML = `<div class="kanban-state kanban-state-error">${escapeHtml(message)}</div>`;
+}
+
+function renderEmpty(message) {
+    kanbanTitle.textContent = "Kanban";
+    kanbanBoard.innerHTML = `<div class="kanban-state">${escapeHtml(message)}</div>`;
+}
+
+function renderKanban(board) {
+    kanbanTitle.textContent = board.title;
     kanbanBoard.innerHTML = "";
 
-    project.columns.forEach((column, columnIndex) => {
+    if (!board.id) {
+        renderEmpty("У проекта пока нет досок");
+        return;
+    }
+
+    board.columns.forEach((column, columnIndex) => {
         const columnEl = document.createElement("section");
         columnEl.className = "kanban-column";
 
         columnEl.innerHTML = `
       <div class="column-head">
-        <h2 class="column-title">${column.title}</h2>
+        <h2 class="column-title">${escapeHtml(column.title)}</h2>
         <span class="column-count">${column.tasks.length}</span>
 
-        <button 
-          class="column-icon column-delete-btn" 
+        <button
+          class="column-icon column-delete-btn"
           type="button"
           aria-label="Удалить колонку"
           data-column-index="${columnIndex}"
@@ -164,10 +179,11 @@ function renderKanban(project) {
           <img class="column-icon-img" src="components/images/delete.svg" alt="удалить">
         </button>
 
-        <button 
-          class="column-icon column-edit-btn" 
+        <button
+          class="column-icon column-edit-btn"
           type="button"
           aria-label="Редактировать колонку"
+          data-column-index="${columnIndex}"
         >
           ✎
         </button>
@@ -182,13 +198,17 @@ function renderKanban(project) {
         addTask.className = "add-task-btn";
         addTask.type = "button";
         addTask.innerHTML = `<span>＋</span><span>Добавить</span>`;
+        addTask.addEventListener("click", () => addTaskToColumn(column));
         columnEl.appendChild(addTask);
 
-        const deleteColumnBtn = columnEl.querySelector(".column-delete-btn");
-
-        deleteColumnBtn.addEventListener("click", (event) => {
+        columnEl.querySelector(".column-delete-btn").addEventListener("click", (event) => {
             event.stopPropagation();
-            deleteColumn(columnIndex);
+            deleteColumn(column);
+        });
+
+        columnEl.querySelector(".column-edit-btn").addEventListener("click", (event) => {
+            event.stopPropagation();
+            editColumn(column);
         });
 
         kanbanBoard.appendChild(columnEl);
@@ -198,56 +218,134 @@ function renderKanban(project) {
     addColumn.className = "add-column-btn";
     addColumn.type = "button";
     addColumn.innerHTML = `<span>＋</span><span>Добавить</span>`;
+    addColumn.addEventListener("click", addColumnToBoard);
     kanbanBoard.appendChild(addColumn);
 }
-function deleteColumn(columnIndex) {
-    const project = PROJECTS[activeProjectId];
-    const column = project.columns[columnIndex];
 
-    if (!column) {
+async function addColumnToBoard() {
+    const name = prompt("Название колонки");
+
+    if (!name?.trim() || !state.board?.id) {
         return;
     }
 
-    const confirmed = confirm(
-        `Удалить колонку «${column.title}» вместе с задачами: ${column.tasks.length}?`
-    );
+    try {
+        await createColumn(state.board.id, name.trim());
+        await reloadBoard(`Колонка «${name.trim()}» добавлена`);
+    } catch (error) {
+        handleActionError(error, "Не удалось добавить колонку");
+    }
+}
+
+async function editColumn(column) {
+    const name = prompt("Новое название колонки", column.title);
+
+    if (!name?.trim() || name.trim() === column.title) {
+        return;
+    }
+
+    try {
+        await renameColumn(column.id, name.trim());
+        await reloadBoard(`Колонка переименована в «${name.trim()}»`);
+    } catch (error) {
+        handleActionError(error, "Не удалось переименовать колонку");
+    }
+}
+
+async function deleteColumn(column) {
+    const confirmed = confirm(`Удалить колонку «${column.title}» вместе с задачами: ${column.tasks.length}?`);
 
     if (!confirmed) {
         return;
     }
 
-    project.columns.splice(columnIndex, 1);
-    renderPage();
-    showToast(`Колонка «${column.title}» удалена`);
+    try {
+        await deleteColumnRequest(column.id);
+        await reloadBoard(`Колонка «${column.title}» удалена`);
+    } catch (error) {
+        handleActionError(error, "Не удалось удалить колонку");
+    }
 }
 
-function deleteTask(columnIndex, taskIndex) {
-    const project = PROJECTS[activeProjectId];
-    const column = project.columns[columnIndex];
+async function addTaskToColumn(column) {
+    const currentUserId = getCurrentUserId();
 
-    if (!column) {
+    if (!currentUserId) {
+        showToast("Нужна авторизация для создания задачи");
         return;
     }
 
-    const task = column.tasks[taskIndex];
+    const name = prompt("Название задачи");
 
-    if (!task) {
+    if (!name?.trim()) {
         return;
     }
 
+    const description = prompt("Описание задачи", "") ?? "";
+
+    try {
+        await createTask(state.board.id, {
+            name: name.trim(),
+            description: description.trim(),
+            priority: "Medium",
+            deadline: getDefaultDeadline(),
+            userId: currentUserId,
+            columnId: column.id,
+            order: null,
+            tagIds: [],
+        });
+        await reloadBoard(`Задача «${name.trim()}» добавлена`);
+    } catch (error) {
+        handleActionError(error, "Не удалось добавить задачу");
+    }
+}
+
+async function editTask(task) {
+    const name = prompt("Название задачи", task.title);
+
+    if (!name?.trim()) {
+        return;
+    }
+
+    const description = prompt("Описание задачи", task.description) ?? "";
+
+    try {
+        await updateTask(task.id, {
+            name: name.trim(),
+            description: description.trim(),
+            priority: task.priority,
+            deadline: task.deadline,
+            userId: task.userId,
+        });
+        await reloadBoard(`Задача «${name.trim()}» обновлена`);
+    } catch (error) {
+        handleActionError(error, "Не удалось обновить задачу");
+    }
+}
+
+async function deleteTask(task) {
     const confirmed = confirm(`Удалить задачу «${task.title}»?`);
 
     if (!confirmed) {
         return;
     }
 
-    column.tasks.splice(taskIndex, 1);
-    renderPage();
-    showToast(`Задача «${task.title}» удалена`);
+    try {
+        await deleteTaskRequest(task.id);
+        await reloadBoard(`Задача «${task.title}» удалена`);
+    } catch (error) {
+        handleActionError(error, "Не удалось удалить задачу");
+    }
 }
+
 function createTaskCard(task, column, columnIndex, taskIndex) {
-    const color = task.color || column.color;
+    const color = column.color;
     const doneLabel = column.done ? "Дата выполнения" : "Дедлайн";
+    const tags = [
+        task.priority,
+        task.time,
+        ...task.tags.map((tag) => tag.name),
+    ];
 
     const card = document.createElement("article");
     card.className = "task-card";
@@ -255,16 +353,16 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
 
     card.innerHTML = `
     <div class="task-top">
-      <button class="task-icon-btn" aria-label="Редактировать задачу">✎</button>
-      <h3 class="task-title">${task.title}</h3>
-      <button 
-          class="task-icon-btn task-delete-btn" 
+      <button class="task-icon-btn task-edit-btn" type="button" aria-label="Редактировать задачу">✎</button>
+      <h3 class="task-title">${escapeHtml(task.title)}</h3>
+      <button
+          class="task-icon-btn task-delete-btn"
           type="button"
           aria-label="Удалить задачу"
           data-column-index="${columnIndex}"
           data-task-index="${taskIndex}"
         >
-          <img class="task-icon-img" src="components/images/delete.svg" alt="удалить">  
+          <img class="task-icon-img" src="components/images/delete.svg" alt="удалить">
       </button>
     </div>
     <div class="task-dates">
@@ -272,27 +370,26 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
       <div class="date-label">${doneLabel}</div>
 
       <div class="date-pills">
-        <span class="date-pill">Apr 1, 2025</span>
-        <span class="date-pill">9:41 AM</span>
+        <span class="date-pill">${escapeHtml(formatDate(task.createdAt))}</span>
+        <span class="date-pill">${escapeHtml(formatTime(task.createdAt))}</span>
       </div>
 
       <div class="date-pills">
-        <span class="date-pill">Apr 2, 2025</span>
-        <span class="date-pill">9:41 AM</span>
+        <span class="date-pill">${escapeHtml(formatDate(task.deadline))}</span>
+        <span class="date-pill">${escapeHtml(formatTime(task.deadline))}</span>
       </div>
     </div>
 
     <div class="task-description">
-      ${task.description.replace(/\n/g, "<br>")}
+      ${escapeHtml(task.description).replace(/\n/g, "<br>")}
     </div>
 
     <div class="task-footer">
       <div class="task-tags">
-        <span class="task-tag">${task.priority}</span>
-        <span class="task-tag">${task.time}</span>
+        ${tags.map((tag) => `<span class="task-tag">${escapeHtml(tag)}</span>`).join("")}
       </div>
       <div class="task-users">
-  ${getTaskUsers(task.users)
+        ${getTaskUsers(task.users)
         .map((user) => `
       <button
         class="task-user-wrap"
@@ -312,12 +409,17 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         </div>
     </div>
   `;
-    const deleteTaskBtn = card.querySelector(".task-delete-btn");
 
-    deleteTaskBtn.addEventListener("click", (event) => {
+    card.querySelector(".task-edit-btn").addEventListener("click", (event) => {
         event.stopPropagation();
-        deleteTask(columnIndex, taskIndex);
+        editTask(task);
     });
+
+    card.querySelector(".task-delete-btn").addEventListener("click", (event) => {
+        event.stopPropagation();
+        deleteTask(task);
+    });
+
     card.querySelectorAll(".task-user-wrap").forEach((userButton) => {
         userButton.addEventListener("click", (event) => {
             event.stopPropagation();
@@ -328,8 +430,18 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
             });
         });
     });
+
     return card;
 }
+
+async function reloadBoard(toastText = null) {
+    await loadActiveBoard(state.activeKanban?.id ?? null);
+
+    if (toastText) {
+        showToast(toastText);
+    }
+}
+
 function getTaskUsers(users) {
     if (Array.isArray(users)) {
         return users;
@@ -342,13 +454,20 @@ function getTaskUsers(users) {
     }));
 }
 
-function escapeAttr(value) {
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;");
+function getCurrentUserId() {
+    return state.currentUser?.id ?? state.currentUser?.Id ?? null;
 }
+
+function getDefaultDeadline() {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString();
+}
+
+function escapeAttr(value) {
+    return escapeHtml(value);
+}
+
 function showToast(text) {
     const toast = document.getElementById("toast");
     const toastText = document.getElementById("toastText");
@@ -363,11 +482,24 @@ function showToast(text) {
     }, 2200);
 }
 
-renderPage();
+function handleActionError(error, fallbackMessage) {
+    console.error(error);
+    showToast(fallbackMessage);
+}
 
-window.addEventListener("project:selected", (event) => {
-    setProject(event.detail.projectId);
+window.addEventListener("project:selected", async (event) => {
+    const project = state.workspace.projects.find((item) => item.id === event.detail.projectId);
+
+    if (!project) {
+        return;
+    }
+
+    state.activeProject = project;
+    await loadActiveBoard(project.kanbans[0]?.id ?? null);
 });
+
+window.addEventListener("sidebar:loaded", renderSidebar);
+
 kanbanBoard.addEventListener(
     "wheel",
     (event) => {
@@ -387,18 +519,4 @@ kanbanBoard.addEventListener(
     { passive: false }
 );
 
-function normalizeUsers(users) {
-    if (Array.isArray(users)) {
-        return users;
-    }
-
-    const count = Number(users) || 0;
-
-    return Array.from({ length: count }).map((_, index) => ({
-        name: `Участник ${index + 1}`,
-    }));
-}
-
-function getUserInitial(name) {
-    return name.trim().charAt(0).toUpperCase();
-}
+init();

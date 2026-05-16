@@ -21,6 +21,23 @@ public static class ServiceCollectionExtensions
             var user = builder.Configuration["DB_USER"];
             var pass = builder.Configuration["DB_PASSWORD"];
 
+            var missingValues = new Dictionary<string, string?>
+            {
+                ["DB_HOST"] = host,
+                ["DB_NAME"] = db,
+                ["DB_USER"] = user,
+                ["DB_PASSWORD"] = pass
+            }
+                .Where(x => string.IsNullOrWhiteSpace(x.Value))
+                .Select(x => x.Key)
+                .ToArray();
+
+            if (missingValues.Length > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Database connection is not configured. Set ConnectionStrings:DefaultConnection or missing env values: {string.Join(", ", missingValues)}.");
+            }
+
             connectionString = $"Host={host};Port={port};Database={db};Username={user};Password={pass}";
         }
 

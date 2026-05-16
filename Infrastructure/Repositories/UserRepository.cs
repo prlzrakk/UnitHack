@@ -1,11 +1,12 @@
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
-public class UserRepository(DatabaseContext context) : IUserRepository
+public class UserRepository(DatabaseContext context, IPasswordHasher hasher) : IUserRepository
 {
     public async Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
@@ -30,8 +31,10 @@ public class UserRepository(DatabaseContext context) : IUserRepository
     {
         var normalizedEmail = NormalizeEmail(email);
 
-        return await context.Users
-            .AnyAsync(x => x.Email == normalizedEmail && x.HashPassword == password);
+        var user = await context.Users
+            .FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+
+        return user is not null && hasher.Verify(password, user.HashPassword);
     }
 
     public async Task<User?> GetUser(string email)

@@ -18,6 +18,7 @@ builder
 var app = builder.Build();
 
 app
+    .InitializeDatabase()
     .UseConfiguredForwardedHeaders()
     .UseExceptionHandling()
     .UseSwaggerIfDevelopment()
