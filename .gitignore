@@ -4,6 +4,7 @@
 
 bin/
 obj/
+**/obj/
 [Bb]uild/
 [Ll]og/
 [Ll]ogs/
