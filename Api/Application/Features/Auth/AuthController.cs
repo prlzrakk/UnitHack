@@ -1,10 +1,11 @@
+using Api.Application.Common.Extensions;
 using Api.Application.Features.Auth.Login;
 using Api.Application.Features.Auth.Refresh;
+using Client.Models.DTO.Request;
 using Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models.DTO.Request;
 
 namespace Api.Application.Features.Auth;
 
@@ -30,9 +31,7 @@ public class AuthController(IMediator mediator) : ControllerBase
     [Authorize(Policy = AuthPolicies.RefreshTokenOnly)]
     public async Task<IActionResult> Refresh()
     {
-        var userIdClaim = User.FindFirst("user_id")?.Value;
-        if (!int.TryParse(userIdClaim, out var userId))
-            return Unauthorized();
+        var userId = User.GetUserId();
 
         var result = await mediator.Send(new RefreshCommand(userId));
 

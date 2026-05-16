@@ -1,6 +1,6 @@
 using Infrastructure.Db;
 using Infrastructure.Entities;
-using Infrastructure.Interfaces;
+using Infrastructure.Repositories.Interfaces;
 
 namespace Infrastructure.Repositories;
 
@@ -26,6 +26,11 @@ public class UserRepository(DatabaseContext context) : IUserRepository
     }
 
     public Task<User?> GetUser(string email)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<User?> GetUser(Guid userId)
     {
         throw new NotImplementedException();
     }

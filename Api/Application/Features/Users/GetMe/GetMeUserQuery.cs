@@ -1,6 +1,6 @@
-using Client.Models.Entities;
+using Infrastructure.Entities;
 using MediatR;
 
 namespace Api.Application.Features.Users.GetMe;
 
-public record GetMeUserQuery(int UserId) : IRequest<User?>;
+public record GetMeUserQuery(Guid UserId) : IRequest<User?>;

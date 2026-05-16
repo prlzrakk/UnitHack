@@ -1,6 +1,7 @@
-using Client.Models.Entities;
 
-namespace Infrastructure.Interfaces;
+using Infrastructure.Entities;
+
+namespace Infrastructure.Security.Interfaces;
 
 public interface ITokenService
 {

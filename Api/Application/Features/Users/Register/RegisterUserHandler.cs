@@ -1,9 +1,13 @@
 ﻿using Api.Application.Common.Exceptions;
-using Infrastructure.Interfaces;
-using MediatR;
-using Shared.Models.DTO.Response;
+using Client.Models.DTO.Response;
 
-namespace Api.Application.Features.Auth.Register;
+using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
+
+
+using MediatR;
+
+namespace Api.Application.Features.Users.Register;
 
 public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher, ILogger<RegisterUserHandler> logger)
     : IRequestHandler<RegisterUserCommand, RegisterUserResponse>
@@ -11,15 +15,12 @@ public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher, 
     public async Task<RegisterUserResponse> Handle(RegisterUserCommand command,
         CancellationToken cancellationToken)
     {
-        RegisterUserValidation.Validate(command);
-
         var username = command.Email;
 
         var hash = hasher.Hash(command.Password);
 
         var createdUser = await users.RegisterUser(username, hash)
-                          ?? throw new ApiException(StatusCodes.Status500InternalServerError,
-                              $"User {username} creation failed");
+                          ?? throw new InternalServerErrorException($"User {username} creation failed");
 
         var name = string.IsNullOrWhiteSpace(command.Name)
             ? null
