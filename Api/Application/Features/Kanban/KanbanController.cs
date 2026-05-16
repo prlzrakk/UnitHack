@@ -12,16 +12,20 @@ namespace Api.Application.Features.Kanban;
 
 [ApiController]
 [Route("api")]
+[Authorize(Policy = "RequireUserId")]
 public class KanbanController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// Create kanban board
     /// </summary>
     [HttpPost("projects/{projectId:guid}/kanbans")]
-    public async Task<IActionResult> CreateKanban(Guid projectId, [FromBody] CreateKanbanRequest request,
+    public async Task<IActionResult> CreateKanban(
+        Guid projectId,
+        [FromBody] CreateKanbanRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new CreateKanbanCommand(projectId, request.Name);
+        var currentUserId = User.GetUserId();
+        var command = new CreateKanbanCommand(projectId, currentUserId, request.Name);
         var result = await mediator.Send(command, cancellationToken);
 
         return Created($"api/kanbans/{result.Id}", result);
@@ -31,9 +35,11 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// Delete kanban board
     /// </summary>
     [HttpDelete("kanbans/{kanbanId:guid}")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> DeleteKanban(Guid kanbanId, CancellationToken cancellationToken)
     {
-        await mediator.Send(new DeleteKanbanCommand(kanbanId), cancellationToken);
+        var currentUserId = User.GetUserId();
+        await mediator.Send(new DeleteKanbanCommand(kanbanId, currentUserId), cancellationToken);
 
         return NoContent();
     }
@@ -41,40 +47,43 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// <summary>
     /// Change kanban name
     /// </summary>
-    [Authorize]
     [HttpPut("kanbans/{kanbanId:guid}")]
-    public async Task<IActionResult> ChangeKanban(Guid kanbanId, [FromBody] ChangeKanbanRequest request,
+    [Authorize(Policy = "RequireUserId")]
+    public async Task<IActionResult> ChangeKanban(
+        Guid kanbanId,
+        [FromBody] ChangeKanbanRequest request,
         CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-
-        var command = new ChangeKanbanCommand(kanbanId, request.Name, userId);
-
+        var currentUserId = User.GetUserId();
+        var command = new ChangeKanbanCommand(kanbanId, request.Name, currentUserId);
         var result = await mediator.Send(command, cancellationToken);
+
         return Ok(result);
     }
 
     /// <summary>
     /// Get all project kanbans
     /// </summary>
-    [Authorize]
     [HttpGet("projects/{projectId:guid}/kanbans")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> GetKanbans(Guid projectId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-
         var result = await mediator.Send(new GetProjectKanbansQuery(projectId, userId), cancellationToken);
 
         return Ok(result);
     }
 
-    [Authorize]
+    /// <summary>
+    /// Get kanban by id
+    /// </summary>
     [HttpGet("kanbans/{kanbanId:guid}")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> GetKanban(Guid kanbanId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-
         var result = await mediator.Send(new GetKanbanQuery(kanbanId, userId), cancellationToken);
+
         return Ok(result);
     }
 }
