@@ -2,7 +2,7 @@ using Client.Models.DTO.Response;
 using Infrastructure.Security.Interfaces;
 using MediatR;
 
-namespace WebApplication1.Application.Features.Auth.Refresh;
+namespace Api.Application.Features.Auth.Refresh;
 
 public class RefreshHandler(ITokenService tokenService)
     : IRequestHandler<RefreshCommand, RefreshResponse>

@@ -2,10 +2,10 @@
 using Client.Models.Configs;
 using FluentValidation;
 using Infrastructure.Repositories.Interfaces;
-using MediatR;
 using Infrastructure.Repositories.Mocks;
+using MediatR;
 
-namespace WebApplication1.Application.Common;
+namespace Api.Application.Common;
 
 public static class ServiceCollectionExtensions
 {

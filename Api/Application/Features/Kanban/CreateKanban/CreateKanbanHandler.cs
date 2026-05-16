@@ -1,7 +1,7 @@
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
-namespace WebApplication1.Application.Features.Kanban.CreateKanban;
+namespace Api.Application.Features.Kanban.CreateKanban;
 
 public class CreateKanbanHandler(
     IProjectRepository projectRepository,

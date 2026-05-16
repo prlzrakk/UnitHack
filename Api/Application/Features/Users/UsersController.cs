@@ -1,9 +1,9 @@
+using Api.Application.Features.Users.Register;
 using Client.Models.DTO.Request;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.Application.Features.Users.Register;
 
-namespace WebApplication1.Application.Features.Users;
+namespace Api.Application.Features.Users;
 
 [ApiController]
 [Route("api/users")]

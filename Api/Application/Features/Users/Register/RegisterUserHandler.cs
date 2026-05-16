@@ -1,10 +1,10 @@
-﻿using Client.Models.DTO.Response;
+﻿using Api.Application.Common.Exceptions;
+using Client.Models.DTO.Response;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 using MediatR;
-using WebApplication1.Application.Common.Exceptions;
 
-namespace WebApplication1.Application.Features.Users.Register;
+namespace Api.Application.Features.Users.Register;
 
 public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher, ILogger<RegisterUserHandler> logger)
     : IRequestHandler<RegisterUserCommand, RegisterUserResponse>

@@ -1,8 +1,8 @@
+using Api.Application.Common.Exceptions;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
-using WebApplication1.Application.Common.Exceptions;
 
-namespace WebApplication1.Application.Features.Kanban.ChangeKanban;
+namespace Api.Application.Features.Kanban.ChangeKanban;
 
 public class ChangeKanbanHandler(
     IKanbanRepository kanbanRepository,

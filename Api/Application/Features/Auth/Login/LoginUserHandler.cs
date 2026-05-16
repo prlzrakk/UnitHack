@@ -1,10 +1,10 @@
+using Api.Application.Common.Exceptions;
 using Client.Models.DTO.Response;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 using MediatR;
-using WebApplication1.Application.Common.Exceptions;
 
-namespace WebApplication1.Application.Features.Auth.Login;
+namespace Api.Application.Features.Auth.Login;
 
 public class LoginUserHandler(IUserRepository users, ITokenService tokenService)
     : IRequestHandler<LoginUserCommand, LoginUserResponse>

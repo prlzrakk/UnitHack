@@ -1,4 +1,4 @@
-﻿namespace WebApplication1.Application.Common.Exceptions;
+﻿namespace Api.Application.Common.Exceptions;
 
 public abstract class ApiException(
     int statusCode,

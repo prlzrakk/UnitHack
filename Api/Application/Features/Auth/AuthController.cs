@@ -1,12 +1,12 @@
+using Api.Application.Features.Auth.Login;
+using Api.Application.Features.Auth.Refresh;
 using Client.Models.DTO.Request;
 using Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.Application.Features.Auth.Login;
-using WebApplication1.Application.Features.Auth.Refresh;
 
-namespace WebApplication1.Application.Features.Auth;
+namespace Api.Application.Features.Auth;
 
 [ApiController]
 [Route("api/[controller]")]

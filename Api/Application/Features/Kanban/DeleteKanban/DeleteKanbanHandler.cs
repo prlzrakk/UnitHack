@@ -1,8 +1,8 @@
+using Api.Application.Common.Exceptions;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
-using WebApplication1.Application.Common.Exceptions;
 
-namespace WebApplication1.Application.Features.Kanban.DeleteKanban;
+namespace Api.Application.Features.Kanban.DeleteKanban;
 
 public class DeleteKanbanHandler(IKanbanRepository kanbanRepository, IUnitOfWork unitOfWork)
     : IRequestHandler<DeleteKanbanCommand>

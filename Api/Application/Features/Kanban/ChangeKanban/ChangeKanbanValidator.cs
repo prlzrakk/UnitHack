@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WebApplication1.Application.Features.Kanban.ChangeKanban;
+namespace Api.Application.Features.Kanban.ChangeKanban;
 
 public class ChangeKanbanValidator : AbstractValidator<ChangeKanbanCommand>
 {

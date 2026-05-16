@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WebApplication1.Application.Features.Kanban.CreateKanban;
+namespace Api.Application.Features.Kanban.CreateKanban;
 
 public class CreateKanbanValidator : AbstractValidator<CreateKanbanCommand>
 {
