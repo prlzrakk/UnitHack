@@ -30,6 +30,11 @@ public class KanbanRepository(DatabaseContext context) : IKanbanRepository
         return kanban;
     }
 
+    public Task<Kanban?> GetByIdWithProjectAndColumnsAsync(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<List<Kanban>> GetByProjectIdAsync(Guid projectId, CancellationToken cancellationToken)
     {
         var project = await context.Kanbans
