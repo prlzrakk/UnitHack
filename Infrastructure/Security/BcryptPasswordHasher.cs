@@ -1,4 +1,4 @@
-﻿using Infrastructure.Interfaces;
+﻿using Infrastructure.Security.Interfaces;
 
 namespace Infrastructure.Security;
 

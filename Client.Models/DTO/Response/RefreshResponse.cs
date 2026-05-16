@@ -1,3 +1,3 @@
-namespace Shared.Models.DTO.Response;
+namespace Client.Models.DTO.Response;
 
 public record RefreshResponse(string AccessToken, string RefreshToken);

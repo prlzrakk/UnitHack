@@ -1,4 +1,4 @@
-namespace Shared.Models.DTO.Request;
+namespace Client.Models.DTO.Request;
 
 public sealed class LoginRequest
 {
