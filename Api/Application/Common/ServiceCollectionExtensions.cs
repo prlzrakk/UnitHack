@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using Client.Models.Configs;
+using FluentValidation;
+using MediatR;
 
 namespace WebApplication1.Application.Common;
 
@@ -16,6 +18,8 @@ public static class ServiceCollectionExtensions
     
     public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
+        var applicationAssembly = typeof(ServiceCollectionExtensions).Assembly;
+        
         builder.Services.AddMediatR(cfg =>
         {
             var mediatRConfig = builder.Configuration.GetSection("Licenses").Get<MediatRConfig>();
@@ -23,6 +27,12 @@ public static class ServiceCollectionExtensions
                 cfg.LicenseKey = mediatRConfig.LicenseKey;
             cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
         });
+        
+        builder.Services.AddValidatorsFromAssembly(applicationAssembly);
+        
+        builder.Services.AddTransient(
+            typeof(IPipelineBehavior<,>),
+            typeof(ValidationBehavior<,>));
 
         return builder;
     }
