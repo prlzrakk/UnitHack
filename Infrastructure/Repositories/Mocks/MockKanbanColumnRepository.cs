@@ -50,7 +50,13 @@ public class MockKanbanColumnRepository(MockDataStore store) : IKanbanColumnRepo
         if (column is null)
             return Task.FromResult(false);
 
-        store.Tasks.RemoveAll(x => x.ColumnId == columnId);
+        var taskIds = store.Tasks
+            .Where(x => x.ColumnId == columnId)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        store.TaskTags.RemoveAll(x => taskIds.Contains(x.TaskId));
+        store.Tasks.RemoveAll(x => taskIds.Contains(x.Id));
         store.KanbanColumns.Remove(column);
         column.Kanban?.Columns.Remove(column);
 

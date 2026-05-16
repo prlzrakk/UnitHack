@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
@@ -10,6 +11,8 @@ public class CreateTaskHandler(
     IKanbanRepository kanbans,
     IKanbanColumnRepository columns,
     IKanbanTaskRepository tasks,
+    ITagRepository tags,
+    ITaskTagRepository taskTags,
     ITeamMemberRepository members,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateTaskCommand, TaskResponse>
 {
@@ -29,6 +32,7 @@ public class CreateTaskHandler(
         if (!await members.IsMemberAsync(teamId, command.UserId, cancellationToken))
             throw new BadRequestException("Assignee is not a team member");
 
+        var selectedTags = await GetValidatedTagsAsync(kanban.Id, command.TagIds, cancellationToken);
         var task = await tasks.AddAsync(
             kanban.Id,
             column.Id,
@@ -40,12 +44,29 @@ public class CreateTaskHandler(
             command.Order,
             cancellationToken);
 
+        await taskTags.ReplaceAsync(task.Id, selectedTags.Select(x => x.Id).ToArray(), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(task);
+        return ToResponse(task, selectedTags);
     }
 
-    private static TaskResponse ToResponse(KanbanTask task) => new(
+    private async Task<List<Tag>> GetValidatedTagsAsync(
+        Guid kanbanId,
+        IReadOnlyCollection<Guid> tagIds,
+        CancellationToken cancellationToken)
+    {
+        var distinctTagIds = tagIds.Distinct().ToArray();
+        if (distinctTagIds.Length == 0)
+            return [];
+
+        var kanbanTags = await tags.GetByIdsAsync(kanbanId, distinctTagIds, cancellationToken);
+        if (kanbanTags.Count != distinctTagIds.Length)
+            throw new BadRequestException("One or more tags were not found in kanban");
+
+        return kanbanTags;
+    }
+
+    private static TaskResponse ToResponse(KanbanTask task, IEnumerable<Tag> tags) => new(
         task.Id,
         task.KanbanId,
         task.ColumnId,
@@ -55,5 +76,6 @@ public class CreateTaskHandler(
         task.Priority,
         task.CreatedAt,
         task.Deadline,
-        task.Order);
+        task.Order,
+        tags.ToResponseList());
 }

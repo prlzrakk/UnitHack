@@ -14,6 +14,8 @@ public class MockDataStore
     public List<Kanban> Kanbans { get; } = [];
     public List<KanbanColumn> KanbanColumns { get; } = [];
     public List<KanbanTask> Tasks { get; } = [];
+    public List<Tag> Tags { get; } = [];
+    public List<TaskTag> TaskTags { get; } = [];
 
     public MockDataStore()
     {
