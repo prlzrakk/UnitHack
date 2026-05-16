@@ -8,7 +8,6 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 {
     private static readonly object Sync = new();
     private static readonly Dictionary<string, MockUser> Users = new(StringComparer.OrdinalIgnoreCase);
-    private static Guid nextId = Guid.NewGuid();
 
     public Task<User?> RegisterUser(string email, string hashPassword)
     {
@@ -23,7 +22,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
             var user = new MockUser
             {
-                Id = nextId,
+                Id = Guid.NewGuid(),
                 Email = normalizedEmail,
                 Name = CreateDefaultName(normalizedEmail),
                 HashPassword = hashPassword
@@ -69,7 +68,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         {
             SeedDefaultUser();
 
-            if (userId <= 0)
+            if (userId == Guid.Empty)
                 return Task.FromResult<User?>(null);
 
             var user = Users.Values.FirstOrDefault(u => u.Id == userId);
@@ -101,7 +100,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
         Users.Add(email, new MockUser
         {
-            Id = nextId++,
+            Id = Guid.NewGuid(),
             Email = email,
             Name = "Test User",
             HashPassword = hasher.Hash("password")
@@ -125,7 +124,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
     private sealed class MockUser
     {
-        public required int Id { get; init; }
+        public required Guid Id { get; init; }
         public required string Email { get; init; }
         public required string Name { get; set; }
         public required string HashPassword { get; init; }
