@@ -1,6 +1,7 @@
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
@@ -20,28 +21,37 @@ public class UserRepository(DatabaseContext context) : IUserRepository
         return user;
     }
 
-    public Task<bool> LoginUser(string email, string password)
+    public async Task<bool> LoginUser(string email, string password)
     {
-        throw new NotImplementedException();
+        return await context.Users
+            .AnyAsync(x => x.Email == email && x.HashPassword == password);
     }
 
-    public Task<User?> GetUser(string email)
+    public async Task<User?> GetUser(string email)
     {
-        throw new NotImplementedException();
+        return await context.Users
+            .FirstOrDefaultAsync(x => x.Email == email);
     }
 
-    public Task<User?> GetUser(Guid userId)
+    public async Task<User?> GetUser(Guid userId)
     {
-        throw new NotImplementedException();
+        return await context.Users
+            .FirstOrDefaultAsync(x => x.Id == userId);
     }
 
     public Task<User?> GetUser(int userId)
     {
+        //это зачем надо?
         throw new NotImplementedException();
     }
 
-    public Task<bool> ChangeDisplayName(string email, string newName)
+    public async Task<bool> ChangeDisplayName(string email, string newName)
     {
-        throw new NotImplementedException();
+        var user = await context.Users
+            .FirstOrDefaultAsync(x => x.Email == email);
+        if (user == null)
+            return false;
+        user.Name = newName;
+        return true;
     }
 }
