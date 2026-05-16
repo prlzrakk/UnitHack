@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
@@ -9,6 +10,8 @@ namespace Api.Application.Features.Tasks.UpdateTask;
 public class UpdateTaskHandler(
     IKanbanRepository kanbans,
     IKanbanTaskRepository tasks,
+    ITagRepository tags,
+    ITaskTagRepository taskTags,
     ITeamMemberRepository members,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskCommand, TaskResponse>
 {
@@ -31,12 +34,34 @@ public class UpdateTaskHandler(
         task.Deadline = command.Deadline;
         task.UserId = command.UserId;
 
+        var responseTags = await GetResponseTagsAsync(task.Id, kanban.Id, command.TagIds, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(task);
+        return ToResponse(task, responseTags);
     }
 
-    private static TaskResponse ToResponse(KanbanTask task) => new(
+    private async Task<List<Tag>> GetResponseTagsAsync(
+        Guid taskId,
+        Guid kanbanId,
+        IReadOnlyCollection<Guid>? tagIds,
+        CancellationToken cancellationToken)
+    {
+        if (tagIds is null)
+            return await taskTags.GetTagsByTaskIdAsync(taskId, cancellationToken);
+
+        var distinctTagIds = tagIds.Distinct().ToArray();
+        var selectedTags = distinctTagIds.Length == 0
+            ? new List<Tag>()
+            : await tags.GetByIdsAsync(kanbanId, distinctTagIds, cancellationToken);
+
+        if (selectedTags.Count != distinctTagIds.Length)
+            throw new BadRequestException("One or more tags were not found in kanban");
+
+        await taskTags.ReplaceAsync(taskId, selectedTags.Select(x => x.Id).ToArray(), cancellationToken);
+        return selectedTags;
+    }
+
+    private static TaskResponse ToResponse(KanbanTask task, IEnumerable<Tag> tags) => new(
         task.Id,
         task.KanbanId,
         task.ColumnId,
@@ -46,5 +71,6 @@ public class UpdateTaskHandler(
         task.Priority,
         task.CreatedAt,
         task.Deadline,
-        task.Order);
+        task.Order,
+        tags.ToResponseList());
 }

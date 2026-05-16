@@ -9,4 +9,5 @@ public sealed class UpdateTaskRequest
     public Priority Priority { get; init; }
     public DateTime Deadline { get; init; }
     public Guid UserId { get; init; }
+    public Guid[]? TagIds { get; init; }
 }

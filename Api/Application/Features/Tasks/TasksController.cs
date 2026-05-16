@@ -30,7 +30,8 @@ public class TasksController(IMediator mediator) : ControllerBase
             request.Deadline,
             request.UserId,
             request.ColumnId,
-            request.Order), cancellationToken);
+            request.Order,
+            request.TagIds ?? []), cancellationToken);
 
         return Created($"api/tasks/{result.Id}", result);
     }
@@ -49,7 +50,8 @@ public class TasksController(IMediator mediator) : ControllerBase
             request.Description,
             request.Priority,
             request.Deadline,
-            request.UserId), cancellationToken);
+            request.UserId,
+            request.TagIds), cancellationToken);
 
         return Ok(result);
     }

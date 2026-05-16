@@ -25,6 +25,10 @@ public class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
         RuleFor(x => x.ColumnId)
             .NotEmpty();
 
+        RuleForEach(x => x.TagIds)
+            .NotEmpty()
+            .WithMessage("Tag id is required");
+
         RuleFor(x => x.Priority)
             .Must(priority => Enum.IsDefined(priority))
             .WithMessage("Priority is invalid");

@@ -62,6 +62,17 @@ public class MockKanbanTaskRepository(MockDataStore store) : IKanbanTaskReposito
         if (task is null)
             return Task.FromResult(false);
 
+        var taskTags = store.TaskTags
+            .Where(x => x.TaskId == taskId)
+            .ToList();
+
+        foreach (var taskTag in taskTags)
+        {
+            store.TaskTags.Remove(taskTag);
+            taskTag.Tag?.TaskTags.Remove(taskTag);
+            task.TaskTags.Remove(taskTag);
+        }
+
         store.Tasks.Remove(task);
         task.Kanban?.Tasks.Remove(task);
         task.Column?.Tasks.Remove(task);
