@@ -1,3 +1,4 @@
+using Client.Models.DTO.Response;
 using MediatR;
 using Shared.Models.DTO.Response;
 

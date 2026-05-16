@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Client.Models.DTO.Response;
 using Infrastructure.Interfaces;
 using MediatR;
 using Shared.Models.DTO.Response;
