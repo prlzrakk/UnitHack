@@ -18,6 +18,7 @@ public class MockDataStore
     {
         var teamId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var projectId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+        var kanbanId = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
         var team = new Team
         {
@@ -25,15 +26,13 @@ public class MockDataStore
             Name = "Test Team"
         };
 
-        Teams.Add(team);
-
-        Projects.Add(new Project
+        var project = new Project
         {
             Id = projectId,
             TeamId = teamId,
             Team = team,
             Name = "Test Project"
-        });
+        };
 
         var teamMember = new TeamMember
         {
@@ -43,22 +42,14 @@ public class MockDataStore
             Role = TeamRole.Admin
         };
 
-        TeamMembers.Add(teamMember);
-        team.Members.Add(teamMember);
-        team.Projects.Add(Projects[0]);
-
-        var kanbanId = Guid.Parse("44444444-4444-4444-4444-444444444444");
         var kanban = new Kanban
         {
             Id = kanbanId,
             ProjectId = projectId,
-            Project = Projects[0],
+            Project = project,
             Name = "Test Kanban",
             Columns = []
         };
-
-        Kanbans.Add(kanban);
-        Projects[0].Kanbans.Add(kanban);
 
         var columns = new[]
         {
@@ -76,13 +67,31 @@ public class MockDataStore
                 Id = Guid.Parse("66666666-6666-6666-6666-666666666666"),
                 KanbanId = kanbanId,
                 Kanban = kanban,
-                Name = "Done",
+                Name = "In Progress",
                 Order = 2000,
+                Tasks = []
+            },
+            new KanbanColumn
+            {
+                Id = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                KanbanId = kanbanId,
+                Kanban = kanban,
+                Name = "Done",
+                Order = 3000,
                 Tasks = []
             }
         };
 
+        Teams.Add(team);
+        Projects.Add(project);
+        TeamMembers.Add(teamMember);
+        Kanbans.Add(kanban);
         KanbanColumns.AddRange(columns);
+
+        team.Members.Add(teamMember);
+        team.Projects.Add(project);
+        project.Kanbans.Add(kanban);
+
         foreach (var column in columns)
             kanban.Columns.Add(column);
     }

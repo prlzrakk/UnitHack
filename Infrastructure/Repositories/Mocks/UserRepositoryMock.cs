@@ -1,4 +1,4 @@
-using Client.Models.Entities;
+using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 
