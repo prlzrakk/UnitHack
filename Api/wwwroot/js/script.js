@@ -27,13 +27,3 @@ tasks.forEach(group=>{
   group.items.forEach(item=>q.appendChild(row(item)));
   matrix.appendChild(q);
 });
-
-
-const projectButtons = document.querySelectorAll("[data-project]");
-
-projectButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-        const projectId = button.dataset.project;
-        window.location.href = `./kanban.html?project=${projectId}`;
-    });
-});

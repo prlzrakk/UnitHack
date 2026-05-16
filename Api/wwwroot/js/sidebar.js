@@ -63,6 +63,7 @@ function initSidebar() {
                     })
                 );
 
+                markActiveProject(projectId);
                 closeSidebar();
                 return;
             }
@@ -74,9 +75,9 @@ function initSidebar() {
     markActiveProject();
 }
 
-function markActiveProject() {
+function markActiveProject(projectIdFromEvent) {
     const params = new URLSearchParams(window.location.search);
-    const activeProject = params.get("project");
+    const activeProject = projectIdFromEvent || params.get("project");
 
     if (!activeProject) {
         return;

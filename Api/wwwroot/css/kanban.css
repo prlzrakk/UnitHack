@@ -17,7 +17,7 @@
     --label: Raleway, Inter, Arial, sans-serif;
 
     --sidebar-width: 240px;
-    --column-width: 210px;
+    --column-width: clamp(320px, calc((100vw - 350px) / 3), 356px);
 }
 
 * {
@@ -39,15 +39,16 @@ button {
 
 .kanban-app {
     min-height: 100vh;
-    background: var(--bg);
+    margin: 0;
+    background: linear-gradient(180deg, #252525 0%, #1f1f1f 56%, #191919 100%);
     overflow-x: hidden;
 }
 
 /* TOPBAR */
 
 .kanban-topbar {
-    height: 72px;
-    padding: 20px 24px;
+    height: 120px;
+    padding: 24px 36px;
     background: var(--panel);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
     border-bottom-right-radius: 14px;
@@ -64,10 +65,10 @@ button {
 
 .brand {
     font-family: var(--serif);
-    font-size: 48px;
+    font-size: clamp(72px, 7vw, 96px);
     line-height: 1;
     color: #000;
-    text-shadow: 0 1px 15px var(--orange);
+    text-shadow: 0 1px 22px var(--orange);
     user-select: none;
 }
 
@@ -77,10 +78,10 @@ button {
 .profile-btn,
 .home-link {
     position: absolute;
-    top: 18px;
+    top: 42px;
 
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
 
     border: 0;
     background: transparent;
@@ -90,22 +91,22 @@ button {
 }
 
 .kanban-menu-btn {
-    left: 24px;
+    left: 36px;
     display: grid;
     align-content: center;
-    gap: 5px;
+    gap: 6px;
     padding: 0 6px;
 }
 
 .kanban-menu-btn span {
-    width: 20px;
-    height: 3px;
+    width: 28px;
+    height: 4px;
     border-radius: 999px;
     background: currentColor;
 }
 
 .home-link {
-    left: 66px;
+    left: 82px;
     text-decoration: none;
     display: grid;
     place-items: center;
@@ -114,7 +115,7 @@ button {
 }
 
 .profile-btn {
-    right: 24px;
+    right: 36px;
     padding: 3px;
 }
 
@@ -132,14 +133,14 @@ button {
 
 .kanban-page {
     display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr;
-    min-height: calc(100vh - 72px);
+    grid-template-columns: 1fr;
+    min-height: calc(100vh - 120px);
 
     transition: grid-template-columns 0.28s ease;
 }
 
 body.sidebar-closed .kanban-page {
-    grid-template-columns: 0 1fr;
+    grid-template-columns: 1fr;
 }
 
 /* SIDEBAR */
@@ -219,7 +220,7 @@ body.sidebar-closed .kanban-sidebar {
     transform: rotate(-45deg) scale(1.08);
 }
 
-.sidebar-title {
+.kanban-sidebar .sidebar-title {
     margin: 0 0 16px;
     font-family: var(--serif);
     font-size: 26px;
@@ -228,18 +229,18 @@ body.sidebar-closed .kanban-sidebar {
     color: var(--text);
 }
 
-.teams-title {
+.kanban-sidebar .teams-title {
     margin-top: 34px;
 }
 
 /* PROJECT LIST */
 
-.project-list {
+.kanban-sidebar .project-list {
     display: grid;
     gap: 8px;
 }
 
-.project-item {
+.kanban-sidebar .project-item {
     width: 100%;
     min-height: 36px;
     border-radius: 14px;
@@ -263,50 +264,50 @@ body.sidebar-closed .kanban-sidebar {
             box-shadow 0.2s ease;
 }
 
-.project-item:hover {
+.kanban-sidebar .project-item:hover {
     background: #3a3a3a;
     border-color: var(--orange);
     transform: translateX(3px);
     box-shadow: 0 5px 12px rgba(0, 0, 0, 0.28);
 }
 
-.project-item.active {
+.kanban-sidebar .project-item.active {
     min-height: 40px;
     background: var(--panel-soft);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.32);
 }
 
-.project-color {
+.kanban-sidebar .project-color {
     width: 13px;
     height: 13px;
     border-radius: 5px;
 }
 
-.project-name {
+.kanban-sidebar .project-name {
     font-size: 12px;
     font-weight: 700;
 }
 
-.project-meta {
+.kanban-sidebar .project-meta {
     color: var(--muted);
     font-size: 10px;
     white-space: nowrap;
 }
 
-.active-meta {
+.kanban-sidebar .active-meta {
     color: var(--peach);
     font-weight: 800;
 }
 
 /* TEAMS */
 
-.team-grid {
+.kanban-sidebar .team-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px 10px;
 }
 
-.team-card {
+.kanban-sidebar .team-card {
     min-height: 36px;
     border-radius: 14px;
     padding: 0 12px;
@@ -322,17 +323,17 @@ body.sidebar-closed .kanban-sidebar {
     cursor: pointer;
 }
 
-.team-card:hover {
+.kanban-sidebar .team-card:hover {
     background: #3a3a3a;
     border-color: var(--orange);
 }
 
-.team-card span:first-child {
+.kanban-sidebar .team-card span:first-child {
     font-size: 12px;
     font-weight: 700;
 }
 
-.team-dot {
+.kanban-sidebar .team-dot {
     width: 11px;
     height: 11px;
     border-radius: 50%;
@@ -343,8 +344,13 @@ body.sidebar-closed .kanban-sidebar {
 
 .kanban-main {
     min-width: 0;
-    padding: 40px 0 40px 40px;
+    height: calc(100vh - 120px);
+    min-height: 700px;
+    padding: 70px 72px 64px 144px;
     overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
 
     transition: padding 0.28s ease;
 }
@@ -355,9 +361,9 @@ body.sidebar-closed .kanban-main {
 
 .kanban-head {
     width: 100%;
-    max-width: calc(100vw - var(--sidebar-width) - 80px);
-    margin-bottom: 16px;
-    padding-right: 40px;
+    max-width: 100%;
+    margin-bottom: 24px;
+    padding-right: 18px;
 
     display: flex;
     align-items: center;
@@ -373,7 +379,7 @@ body.sidebar-closed .kanban-head {
 .kanban-head h1 {
     margin: 0;
     color: white;
-    font-size: 34px;
+    font-size: 58px;
     font-family: var(--label);
     font-weight: 400;
     line-height: 1;
@@ -382,8 +388,8 @@ body.sidebar-closed .kanban-head {
 /* NOTIFY */
 
 .notify-btn {
-    width: 26px;
-    height: 26px;
+    width: 38px;
+    height: 38px;
     position: relative;
     border: 0;
     background: transparent;
@@ -433,13 +439,15 @@ body.sidebar-closed .kanban-head {
 
 .kanban-scroll {
     display: flex;
-    gap: 10px;
+    gap: 16px;
     align-items: flex-start;
+    flex: 1;
+    min-height: 0;
 
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
 
-    padding: 0 80px 20px 0;
+    padding: 0 0 20px 0;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
     scrollbar-color: var(--orange) #2a2a2a;
@@ -464,16 +472,18 @@ body.sidebar-closed .kanban-head {
 .kanban-column {
     width: var(--column-width);
     min-width: var(--column-width);
-    min-height: 342px;
+    min-height: 100%;
+    max-height: none;
+    overflow: visible;
 
-    padding: 13px;
+    padding: 20px 24px;
     background: #f7f7f7;
     box-shadow: 0 9px 20px rgba(0, 0, 0, 0.25);
     border-radius: 16px;
 
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
 
     scroll-snap-align: start;
 }
@@ -482,7 +492,7 @@ body.sidebar-closed .kanban-head {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 12px;
 }
 
 .column-title {
@@ -490,16 +500,16 @@ body.sidebar-closed .kanban-head {
     margin: 0;
 
     color: #262626;
-    font-size: 20px;
+    font-size: 36px;
     font-family: Georgia, serif;
     font-weight: 700;
-    line-height: 1;
+    line-height: 0.92;
 }
 
 .column-count {
-    min-width: 24px;
-    height: 16px;
-    padding: 0 8px;
+    min-width: 38px;
+    height: 24px;
+    padding: 0 12px;
 
     display: inline-flex;
     align-items: center;
@@ -509,18 +519,18 @@ body.sidebar-closed .kanban-head {
     color: white;
     border-radius: 999px;
 
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .column-icon {
-    width: 14px;
-    height: 14px;
+    width: 22px;
+    height: 22px;
     border: 0;
     background: transparent;
     color: #1d1b20;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 20px;
     line-height: 1;
     padding: 0;
 }
@@ -529,8 +539,8 @@ body.sidebar-closed .kanban-head {
 
 .task-card {
     width: 100%;
-    min-height: 86px;
-    padding: 10px 10px 10px 12px;
+    min-height: 0;
+    padding: 18px 14px 20px 18px;
     position: relative;
 
     background: white;
@@ -540,7 +550,7 @@ body.sidebar-closed .kanban-head {
 
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 12px;
 }
 
 .task-card::before {
@@ -550,7 +560,7 @@ body.sidebar-closed .kanban-head {
     top: 1px;
     bottom: 1px;
 
-    width: 4px;
+    width: 6px;
 
     background: var(--task-color, var(--orange));
     border-radius: 3px;
@@ -558,19 +568,19 @@ body.sidebar-closed .kanban-head {
 
 .task-top {
     display: grid;
-    grid-template-columns: 14px 1fr 14px;
-    gap: 10px;
+    grid-template-columns: 20px 1fr 20px;
+    gap: 12px;
     align-items: start;
 }
 
 .task-icon-btn {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     border: 0;
     background: transparent;
     color: #1e1e1e;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 17px;
     line-height: 1;
     padding: 0;
 }
@@ -579,7 +589,7 @@ body.sidebar-closed .kanban-head {
     margin: 0;
     text-align: center;
     color: #262626;
-    font-size: 11px;
+    font-size: 16px;
     font-family: var(--label);
     font-weight: 700;
     line-height: 1.15;
@@ -588,12 +598,12 @@ body.sidebar-closed .kanban-head {
 .task-dates {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px 26px;
 }
 
 .date-label {
     color: #777;
-    font-size: 7px;
+    font-size: 10px;
     font-family: var(--label);
 }
 
@@ -604,20 +614,20 @@ body.sidebar-closed .kanban-head {
 }
 
 .date-pill {
-    min-height: 12px;
-    padding: 2px 4px;
+    min-height: 16px;
+    padding: 3px 7px;
     background: rgba(118, 118, 128, 0.12);
     border-radius: 999px;
     border-bottom: 1px solid var(--task-color, var(--orange));
 
     color: black;
-    font-size: 6px;
+    font-size: 8px;
     white-space: nowrap;
 }
 
 .task-description {
     color: #777;
-    font-size: 8px;
+    font-size: 13px;
     font-family: var(--label);
     line-height: 1.18;
 }
@@ -627,6 +637,8 @@ body.sidebar-closed .kanban-head {
     align-items: center;
     justify-content: space-between;
     gap: 7px;
+    min-width: 0;
+    margin-top: 2px;
 }
 
 .task-tags {
@@ -634,14 +646,15 @@ body.sidebar-closed .kanban-head {
     align-items: center;
     gap: 5px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .task-tag {
-    padding: 3px 7px;
+    padding: 5px 14px;
     background: var(--task-color, var(--orange));
     color: white;
     border-radius: 999px;
-    font-size: 7px;
+    font-size: 11px;
     font-weight: 700;
 }
 
@@ -649,17 +662,18 @@ body.sidebar-closed .kanban-head {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex: 0 0 auto;
 }
 
 .task-user {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #eeeeef;
     display: grid;
     place-items: center;
     color: black;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 /* ADD */
@@ -676,17 +690,22 @@ body.sidebar-closed .kanban-head {
     gap: 5px;
 
     font-family: var(--label);
-    font-size: 11px;
+    font-size: 18px;
     line-height: 1;
 }
 
 .add-column-btn {
-    min-width: 100px;
-    height: 342px;
+    min-width: 54px;
+    align-self: stretch;
+    min-height: 100%;
     color: white;
-    font-size: 17px;
+    font-size: 42px;
     justify-content: center;
     scroll-snap-align: start;
+}
+
+.add-column-btn span:last-child {
+    display: none;
 }
 
 /* TOAST */
@@ -749,7 +768,9 @@ body.sidebar-closed .kanban-head {
     }
 
     .kanban-main {
-        padding: 28px 0 50px 20px;
+        height: calc(100vh - 120px);
+        min-height: 640px;
+        padding: 48px 28px 48px;
     }
 
     .kanban-head {
@@ -758,11 +779,11 @@ body.sidebar-closed .kanban-head {
     }
 
     .kanban-head h1 {
-        font-size: 32px;
+        font-size: 44px;
     }
 
     .brand {
-        font-size: 42px;
+        font-size: 58px;
     }
 
     .kanban-topbar {
@@ -776,11 +797,7 @@ body.sidebar-closed .kanban-head {
     }
 
     .kanban-column {
-        min-height: 360px;
-    }
-
-    .add-column-btn {
-        height: 360px;
+        min-height: 0;
     }
 
     .brand {

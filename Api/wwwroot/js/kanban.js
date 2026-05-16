@@ -13,8 +13,8 @@ function toggleKanbanSidebar() {
     document.body.classList.toggle("sidebar-closed");
 }
 
-toggleKanbanSidebarBtn.addEventListener("click", toggleKanbanSidebar);
-closeKanbanSidebarBtn.addEventListener("click", closeKanbanSidebar);
+toggleKanbanSidebarBtn?.addEventListener("click", toggleKanbanSidebar);
+closeKanbanSidebarBtn?.addEventListener("click", closeKanbanSidebar);
 
 let activeProjectId = getProjectFromUrl();
 
@@ -47,8 +47,14 @@ function setProject(projectId) {
 function renderPage() {
     const project = PROJECTS[activeProjectId];
 
-    renderProjectMenu();
-    renderTeams(project);
+    if (projectList) {
+        renderProjectMenu();
+    }
+
+    if (teamList) {
+        renderTeams(project);
+    }
+
     renderKanban(project);
 }
 
