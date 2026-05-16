@@ -16,15 +16,11 @@ public class KanbanRepository(DatabaseContext context) : IKanbanRepository
     public async Task<bool> DeleteAsync(Guid kanbanId, CancellationToken cancellationToken)
     {
         var kanban = await context.Kanbans
-            .Include(x => x.Columns)
-            .Include(x => x.Tasks)
             .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
 
         if (kanban is null)
             return false;
 
-        context.Tasks.RemoveRange(kanban.Tasks);
-        context.KanbanColumns.RemoveRange(kanban.Columns);
         context.Kanbans.Remove(kanban);
         return true;
     }
@@ -39,6 +35,8 @@ public class KanbanRepository(DatabaseContext context) : IKanbanRepository
     {
         return await context.Kanbans
             .Include(k => k.Project)
+            .Include(k => k.Columns)
+            .Include(k => k.Tasks)
             .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
     }
 

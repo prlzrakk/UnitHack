@@ -30,18 +30,11 @@ public class ProjectRepository(DatabaseContext context) : IProjectRepository
     public async Task<bool> DeleteAsync(Guid projectId, CancellationToken cancellationToken)
     {
         var project = await context.Projects
-            .Include(x => x.Kanbans)
-            .ThenInclude(x => x.Columns)
-            .Include(x => x.Kanbans)
-            .ThenInclude(x => x.Tasks)
             .FirstOrDefaultAsync(x => x.Id == projectId, cancellationToken);
 
         if (project is null)
             return false;
 
-        context.Tasks.RemoveRange(project.Kanbans.SelectMany(x => x.Tasks));
-        context.KanbanColumns.RemoveRange(project.Kanbans.SelectMany(x => x.Columns));
-        context.Kanbans.RemoveRange(project.Kanbans);
         context.Projects.Remove(project);
         return true;
     }
