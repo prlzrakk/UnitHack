@@ -1,4 +1,5 @@
 using Infrastructure.Constants;
+using Infrastructure.Constants;
 using Infrastructure.Entities;
 using Infrastructure.Enums;
 
@@ -6,7 +7,7 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockDataStore
 {
-    public static readonly Guid SeedUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid SeedUserId = DevSeedDefaults.UserId;
 
     public List<Team> Teams { get; } = [];
     public List<TeamMember> TeamMembers { get; } = [];

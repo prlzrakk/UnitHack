@@ -54,5 +54,5 @@ public class JwtTokenService : ITokenService
         GenerateToken(user, TokenType.Access, false);
 
     public string GenerateRefreshToken(User user) =>
-        GenerateToken(user, TokenType.Refresh, false);
+        GenerateToken(user, TokenType.Refresh, settings.AllowNonExpiringTokens);
 }

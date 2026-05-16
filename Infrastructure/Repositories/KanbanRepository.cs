@@ -62,8 +62,12 @@ public class KanbanRepository(DatabaseContext context) : IKanbanRepository
     public async Task<Kanban?> GetByIdWithProjectAndColumnsAsync(Guid kanbanId, CancellationToken cancellationToken)
     {
         return await context.Kanbans
+            .AsSplitQuery()
             .Include(k => k.Project)
             .Include(k => k.Columns)
+            .Include(k => k.Tasks)
+                .ThenInclude(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
             .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
     }
 

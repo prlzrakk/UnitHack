@@ -3,11 +3,27 @@ export function buildUrl(path, params = new URLSearchParams()) {
     return `${path}${query ? `?${query}` : ""}`;
 }
 
+const ACCESS_TOKEN_KEYS = [
+    "accessToken",
+    "AccessToken",
+    "boardify.accessToken",
+    "jwt",
+    "token",
+];
+
+const REFRESH_TOKEN_KEYS = [
+    "refreshToken",
+    "RefreshToken",
+    "boardify.refreshToken",
+];
+
 export async function fetchJson(path, {
     method = "GET",
     params = new URLSearchParams(),
     body = null,
     errorText = "Request failed",
+    authToken = null,
+    skipAuth = false,
 } = {}) {
     const url = buildUrl(path, params);
     console.log("API FETCH =>", method, url);
@@ -16,6 +32,7 @@ export async function fetchJson(path, {
         method,
         headers: {
             Accept: "application/json",
+            ...getAuthHeader(authToken, skipAuth),
             ...(body ? { "Content-Type": "application/json" } : {}),
         },
         body: body ? JSON.stringify(body) : null,
@@ -31,4 +48,47 @@ export async function fetchJson(path, {
 
     const text = await response.text();
     return text ? JSON.parse(text) : null;
+}
+
+export function saveAuthTokens(tokens) {
+    const accessToken = tokens?.accessToken ?? tokens?.AccessToken;
+    const refreshToken = tokens?.refreshToken ?? tokens?.RefreshToken;
+
+    if (accessToken) {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("boardify.accessToken", accessToken);
+    }
+
+    if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("boardify.refreshToken", refreshToken);
+    }
+}
+
+export function getStoredAccessToken() {
+    return getStoredValue(ACCESS_TOKEN_KEYS);
+}
+
+export function getStoredRefreshToken() {
+    return getStoredValue(REFRESH_TOKEN_KEYS);
+}
+
+function getAuthHeader(authToken, skipAuth) {
+    if (skipAuth) {
+        return {};
+    }
+
+    const token = authToken ?? getStoredAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function getStoredValue(keys) {
+    for (const key of keys) {
+        const value = localStorage.getItem(key) ?? sessionStorage.getItem(key);
+        if (value) {
+            return value;
+        }
+    }
+
+    return null;
 }

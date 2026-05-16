@@ -452,6 +452,22 @@ body.sidebar-closed .kanban-head {
     border-radius: 999px;
 }
 
+.kanban-state {
+    min-width: 360px;
+    padding: 36px;
+    border: 1px solid #3a3a3a;
+    border-radius: 24px;
+    color: #a7a7a7;
+    background: #282828;
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.kanban-state-error {
+    color: #ffe3d8;
+    border-color: #f4864d;
+}
+
 /* COLUMN */
 
 .kanban-column {
