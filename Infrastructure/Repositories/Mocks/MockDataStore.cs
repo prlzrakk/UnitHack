@@ -1,4 +1,5 @@
 using Infrastructure.Entities;
+using Infrastructure.Enums;
 
 namespace Infrastructure.Repositories.Mocks;
 
@@ -7,7 +8,7 @@ public class MockDataStore
     public List<Project> Projects { get; } = [];
     public List<Kanban> Kanbans { get; } = [];
     public List<KanbanColumn> KanbanColumns { get; } = [];
-    public List<TeamMember> TeamMembers { get; } = [];
+    private List<TeamMember> TeamMembers { get; } = [];
 
     public MockDataStore()
     {
@@ -24,10 +25,9 @@ public class MockDataStore
 
         TeamMembers.Add(new TeamMember
         {
-            Id = Guid.NewGuid(),
             TeamId = teamId,
             UserId = userId,
-            Role = "Admin"
+            Role = TeamRole.Admin
         });
 
         var kanbanId = Guid.Parse("44444444-4444-4444-4444-444444444444");
@@ -38,8 +38,6 @@ public class MockDataStore
             ProjectId = projectId,
             Project = Projects[0],
             Name = "Test Kanban",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
             Columns = []
         });
     }

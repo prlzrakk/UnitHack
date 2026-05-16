@@ -27,5 +27,5 @@ public enum EventType
     IncomingTaskReceived,
     IncomingTaskProceeded,
     IncomingTaskFailed,
-    IncomingTaskDuplicated,
+    IncomingTaskDuplicated
 }

@@ -1,6 +1,6 @@
 using Infrastructure.Db;
-using Infrastructure.Interfaces;
-using Shared.Models.Entities;
+using Infrastructure.Repositories.Interfaces;
+using User = Client.Models.Entities.User;
 
 namespace Infrastructure.Repositories;
 
@@ -10,10 +10,25 @@ public class UserRepository(DatabaseContext context) : IUserRepository
 
     public Task<User?> RegisterUser(string email, string hashPassword)
     {
-        
+        throw new NotImplementedException();
+    }
+
+    Task<User?> IUserRepository.RegisterUser(string email, string hashPassword)
+    {
+        return RegisterUser(email, hashPassword);
     }
 
     public Task<bool> LoginUser(string email, string password)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<User?> IUserRepository.GetUser(string email)
+    {
+        return GetUser(email);
+    }
+
+    public Task<User?> GetUser(Guid userId)
     {
         throw new NotImplementedException();
     }

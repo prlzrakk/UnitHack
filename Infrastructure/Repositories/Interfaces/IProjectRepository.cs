@@ -4,6 +4,5 @@ namespace Infrastructure.Repositories.Interfaces;
 
 public interface IProjectRepository
 {
-    // TODO: вместо ExampleEntitie здесь будет сущность таблицы Project
-    Task<ExampleEntitie?> GetProjectById(Guid projectId, CancellationToken cancellationToken);
+    Task<Project?> GetProjectById(Guid projectId, CancellationToken cancellationToken);
 }
