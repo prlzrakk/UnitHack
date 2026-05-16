@@ -1,0 +1,143 @@
+# =========================
+# .NET / ASP.NET Core
+# =========================
+
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage.cobertura.xml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/packages/
+project.lock.json
+project.assets.json
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# Visual Studio
+.vs/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# =========================
+# ASP.NET Core secrets/config
+# =========================
+
+# Local app settings with secrets
+appsettings.Local.json
+appsettings.Development.local.json
+appsettings.*.local.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# User secrets should not be committed
+secrets.json
+
+# HTTPS development certificates
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+
+# =========================
+# PostgreSQL / Database
+# =========================
+
+# Local database dumps/backups
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.tar
+
+# Local PostgreSQL data directory, if you ever create one in project
+pgdata/
+postgres-data/
+db-data/
+
+# =========================
+# Entity Framework Core
+# =========================
+
+# Usually DO NOT ignore Migrations.
+# Migrations should normally be committed.
+# Uncomment only if you intentionally do not want to track migrations.
+# **/Migrations/
+
+# =========================
+# Docker
+# =========================
+
+# Keep docker-compose.yml if it is shared project setup.
+# Ignore local override files with secrets.
+docker-compose.override.yml
+docker-compose.*.override.yml
+
+# =========================
+# OS files
+# =========================
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Logs / temp files
+# =========================
+
+*.log
+*.tmp
+*.temp
+*.cache
+
+# =========================
+# Frontend, if you later add React/Vue/etc.
+# =========================
+
+node_modules/
+dist/
+.next/
+.nuxt/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
