@@ -1,0 +1,1038 @@
+﻿:root {
+    --bg: #1f1f1f;
+    --panel: #282828;
+    --panel-soft: #333333;
+    --panel-line: #3a3a3a;
+    --text: #f4f4f4;
+    --muted: #a7a7a7;
+
+    --orange: #f4864d;
+    --blue: #42609f;
+    --green: #407d52;
+    --peach: #ffe3d8;
+    --pink: #e6a0a6;
+
+    --serif: "Yeseva One", Georgia, serif;
+    --sans: Inter, Arial, sans-serif;
+    --label: Raleway, Inter, Arial, sans-serif;
+
+    --sidebar-width: 240px;
+    --column-width: 393px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+}
+
+button {
+    font: inherit;
+}
+
+.kanban-app {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(180deg, #252525 0%, #1f1f1f 56%, #191919 100%);
+    overflow-x: hidden;
+}
+
+/* TOPBAR */
+
+.kanban-topbar {
+    height: 120px;
+    padding: 24px 36px;
+    background: var(--panel);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
+    border-bottom-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.brand {
+    font-family: var(--serif);
+    font-size: clamp(72px, 7vw, 96px);
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 22px var(--orange);
+    user-select: none;
+}
+
+/* TOP BUTTONS */
+
+.kanban-menu-btn,
+.profile-btn,
+.home-link {
+    position: absolute;
+    top: 42px;
+
+    width: 38px;
+    height: 38px;
+
+    border: 0;
+    background: transparent;
+    color: var(--orange);
+    cursor: pointer;
+    z-index: 45;
+}
+
+.kanban-menu-btn {
+    left: 36px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 0 6px;
+}
+
+.kanban-menu-btn span {
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.home-link {
+    left: 82px;
+    text-decoration: none;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.profile-btn {
+    right: 36px;
+    padding: 3px;
+}
+
+.profile-btn svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* PAGE */
+
+.kanban-page {
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: calc(100vh - 120px);
+
+    transition: grid-template-columns 0.28s ease;
+}
+
+body.sidebar-closed .kanban-page {
+    grid-template-columns: 1fr;
+}
+
+/* SIDEBAR */
+
+.kanban-sidebar {
+    position: relative;
+
+    min-width: 0;
+    background: var(--panel);
+    border-right: 1px solid #111;
+    padding: 44px 14px 28px;
+    overflow-y: auto;
+
+    transition:
+            transform 0.28s ease,
+            opacity 0.2s ease,
+            padding 0.28s ease;
+}
+
+body.sidebar-closed .kanban-sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+    padding-left: 0;
+    padding-right: 0;
+    border-right: 0;
+}
+
+/* SIDEBAR CLOSE */
+
+.kanban-sidebar-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+
+    width: 28px;
+    height: 28px;
+
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.kanban-sidebar-close span {
+    position: absolute;
+    left: 4px;
+    top: 13px;
+
+    width: 22px;
+    height: 3px;
+
+    border-radius: 999px;
+    background: var(--text);
+
+    transition:
+            background 0.2s ease,
+            transform 0.2s ease;
+}
+
+.kanban-sidebar-close span:first-child {
+    transform: rotate(45deg);
+}
+
+.kanban-sidebar-close span:last-child {
+    transform: rotate(-45deg);
+}
+
+.kanban-sidebar-close:hover span {
+    background: var(--orange);
+}
+
+.kanban-sidebar-close:hover span:first-child {
+    transform: rotate(45deg) scale(1.08);
+}
+
+.kanban-sidebar-close:hover span:last-child {
+    transform: rotate(-45deg) scale(1.08);
+}
+
+.kanban-sidebar .sidebar-title {
+    margin: 0 0 16px;
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--text);
+}
+
+.kanban-sidebar .teams-title {
+    margin-top: 34px;
+}
+
+/* PROJECT LIST */
+
+.kanban-sidebar .project-list {
+    display: grid;
+    gap: 8px;
+}
+
+.kanban-sidebar .project-item {
+    width: 100%;
+    min-height: 36px;
+    border-radius: 14px;
+    padding: 0 12px;
+    border: 1px solid var(--panel-line);
+    background: transparent;
+    color: var(--text);
+
+    display: grid;
+    grid-template-columns: 16px 1fr auto;
+    align-items: center;
+    gap: 9px;
+
+    cursor: pointer;
+    text-align: left;
+
+    transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+}
+
+.kanban-sidebar .project-item:hover {
+    background: #3a3a3a;
+    border-color: var(--orange);
+    transform: translateX(3px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.28);
+}
+
+.kanban-sidebar .project-item.active {
+    min-height: 40px;
+    background: var(--panel-soft);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.32);
+}
+
+.kanban-sidebar .project-color {
+    width: 13px;
+    height: 13px;
+    border-radius: 5px;
+}
+
+.kanban-sidebar .project-name {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.kanban-sidebar .project-meta {
+    color: var(--muted);
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.kanban-sidebar .active-meta {
+    color: var(--peach);
+    font-weight: 800;
+}
+
+/* TEAMS */
+
+.kanban-sidebar .team-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+}
+
+.kanban-sidebar .team-card {
+    min-height: 36px;
+    border-radius: 14px;
+    padding: 0 12px;
+    border: 1px solid var(--panel-line);
+    background: transparent;
+    color: var(--text);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    cursor: pointer;
+}
+
+.kanban-sidebar .team-card:hover {
+    background: #3a3a3a;
+    border-color: var(--orange);
+}
+
+.kanban-sidebar .team-card span:first-child {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.kanban-sidebar .team-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+/* MAIN */
+
+.kanban-main {
+    min-width: 0;
+
+    /* главное: убрали фиксированную высоту */
+    height: auto;
+    min-height: 0;
+
+    padding: 70px 72px 64px 144px;
+
+    /* не режем контент по вертикали */
+    overflow: visible;
+
+    display: flex;
+    flex-direction: column;
+
+    transition: padding 0.28s ease;
+}
+
+body.sidebar-closed .kanban-main {
+    padding-left: 40px;
+}
+
+.kanban-head {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 24px;
+    padding-right: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    transition: max-width 0.28s ease;
+}
+
+body.sidebar-closed .kanban-head {
+    max-width: calc(100vw - 80px);
+}
+
+.kanban-head h1 {
+    margin: 0;
+    color: white;
+    font-size: 58px;
+    font-family: var(--label);
+    font-weight: 400;
+    line-height: 1;
+}
+
+/* NOTIFY */
+
+.notify-btn {
+    width: 38px;
+    height: 38px;
+    position: relative;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding-right: 98px;
+}
+
+.column-icon img {
+    height: 24px;
+    width: 24px;
+}
+
+.column-icon-img,
+.task-icon-img {
+    width: 22px;
+    height: 22px;
+    display: block;
+    pointer-events: none;
+}
+
+/* KANBAN SCROLL */
+
+.kanban-scroll {
+    width: 100%;
+    max-width: 100%;
+
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    align-items: flex-start;
+    flex: 1;
+    min-height: 0;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    padding: 0 120px 20px 0;
+
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: var(--orange) #2a2a2a;
+}
+
+.kanban-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-scroll::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 999px;
+}
+
+.kanban-scroll::-webkit-scrollbar-thumb {
+    background: var(--orange);
+    border-radius: 999px;
+}
+
+/* COLUMN */
+
+.kanban-column {
+    flex: 0 0 var(--column-width);
+
+    width: var(--column-width);
+    min-width: var(--column-width);
+    min-height: 100%;
+
+    padding: 24px;
+    background: #f7f7f7;
+    box-shadow: 0 9px 20px rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    scroll-snap-align: start;
+}
+
+.column-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.column-title {
+    flex: 1;
+    margin: 0;
+
+    color: #262626;
+    font-size: 36px;
+    font-family: Georgia, serif;
+    font-weight: 700;
+    line-height: 0.92;
+}
+
+.column-count {
+    min-width: 38px;
+    height: 24px;
+    padding: 0 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #262626;
+    color: white;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.column-icon {
+    width: 22px;
+    height: 22px;
+    border: 0;
+    background: transparent;
+    color: #1d1b20;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+}
+
+/* TASK */
+
+.task-card {
+    width: 100%;
+    min-height: 0;
+    padding: 18px 14px 20px 18px;
+    position: relative;
+
+    background: white;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-card::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    bottom: 1px;
+
+    width: 6px;
+
+    background: var(--task-color, var(--orange));
+    border-radius: 3px;
+}
+
+.task-top {
+    display: grid;
+    grid-template-columns: 20px 1fr 20px;
+    gap: 12px;
+    align-items: start;
+}
+
+.task-icon-btn {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    background: transparent;
+    color: #1e1e1e;
+    cursor: pointer;
+    font-size: 17px;
+    line-height: 1;
+    padding: 0;
+}
+
+.task-title {
+    margin: 0;
+    text-align: center;
+    color: #262626;
+    font-size: 16px;
+    font-family: var(--label);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.task-dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 26px;
+}
+
+.date-label {
+    color: #777;
+    font-size: 10px;
+    font-family: var(--label);
+}
+
+.date-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.date-pill {
+    min-height: 16px;
+    padding: 3px 7px;
+    background: rgba(118, 118, 128, 0.12);
+    border-radius: 999px;
+    border-bottom: 1px solid var(--task-color, var(--orange));
+
+    color: black;
+    font-size: 8px;
+    white-space: nowrap;
+}
+
+.task-description {
+    color: #777;
+    font-size: 13px;
+    font-family: var(--label);
+    line-height: 1.18;
+}
+
+.task-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    min-width: 0;
+    margin-top: 2px;
+}
+
+.task-tags {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.task-tag {
+    padding: 5px 14px;
+    background: var(--task-color, var(--orange));
+    color: white;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.task-users {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+}
+
+.task-user {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #eeeeef;
+    display: grid;
+    place-items: center;
+    color: black;
+    font-size: 12px;
+}
+
+/* ADD */
+
+.add-task-btn,
+.add-column-btn {
+    border: 0;
+    background: transparent;
+    color: #262626;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    font-family: var(--label);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.add-column-btn {
+    flex: 0 0 90px;
+
+    min-width: 90px;
+    align-self: stretch;
+    min-height: 100%;
+
+    border: 0;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    font-family: var(--label);
+    font-size: 42px;
+    line-height: 1;
+
+    scroll-snap-align: start;
+}
+
+.add-column-btn span:last-child {
+    display: none;
+}
+
+/* TOAST */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 46px;
+    z-index: 100;
+
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: white;
+    color: #111;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    font-family: var(--label);
+    font-size: 13px;
+
+    transition:
+            opacity 0.25s ease,
+            transform 0.25s ease;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+/* USER TOOLTIP */
+
+.task-user {
+    position: relative;
+    border: 0;
+    cursor: pointer;
+    transition:
+            transform 0.18s ease,
+            background 0.18s ease,
+            box-shadow 0.18s ease;
+}
+
+.task-user:hover {
+    transform: translateY(-2px) scale(1.08);
+    background: var(--task-color, var(--orange));
+    color: white;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+
+.task-user::after {
+    content: attr(data-user-name);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+
+    min-width: max-content;
+    max-width: 160px;
+
+    padding: 6px 10px;
+    border-radius: 10px;
+
+    background: #262626;
+    color: white;
+
+    font-family: var(--label);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+
+    white-space: nowrap;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+
+    transition:
+            opacity 0.18s ease,
+            transform 0.18s ease;
+    z-index: 20;
+}
+
+.task-user::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 3px);
+
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+
+    width: 8px;
+    height: 8px;
+    background: #262626;
+    rotate: 45deg;
+
+    transition:
+            opacity 0.18s ease,
+            transform 0.18s ease;
+    z-index: 19;
+}
+
+.task-user:hover::after,
+.task-user:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* REMINDER MODAL */
+
+.reminder-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 160;
+
+    display: grid;
+    place-items: center;
+
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.48);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.22s ease;
+}
+
+.reminder-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.reminder-window {
+    width: min(420px, 100%);
+    position: relative;
+
+    padding: 42px 34px 30px;
+    border-radius: 28px;
+
+    background: #282828;
+    border: 1px solid #3a3a3a;
+    color: #f4f4f4;
+
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+
+    transform: translateY(16px) scale(0.96);
+    transition:
+            transform 0.22s ease,
+            opacity 0.22s ease;
+}
+
+.reminder-modal.is-open .reminder-window {
+    transform: translateY(0) scale(1);
+}
+
+.reminder-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.reminder-close span {
+    position: absolute;
+    left: 7px;
+    top: 16px;
+
+    width: 22px;
+    height: 3px;
+    border-radius: 999px;
+    background: #f4f4f4;
+}
+
+.reminder-close span:first-child {
+    transform: rotate(45deg);
+}
+
+.reminder-close span:last-child {
+    transform: rotate(-45deg);
+}
+
+.reminder-close:hover span {
+    background: var(--orange);
+}
+
+.reminder-icon {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 18px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 18px;
+    background: rgba(244, 134, 77, 0.16);
+
+    font-size: 28px;
+}
+
+.reminder-title {
+    margin: 0 0 12px;
+
+    font-family: var(--serif);
+    font-size: 34px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.reminder-text {
+    margin: 0 0 28px;
+
+    color: #bdbdbd;
+    font-family: var(--label);
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.reminder-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.reminder-btn {
+    min-width: 96px;
+    height: 42px;
+
+    border: 0;
+    border-radius: 999px;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.reminder-no {
+    background: #3a3a3a;
+    color: #f4f4f4;
+}
+
+.reminder-no:hover {
+    background: #464646;
+}
+
+.reminder-yes {
+    background: var(--orange);
+    color: white;
+}
+
+.reminder-yes:hover {
+    background: #ff9866;
+}
+/* MOBILE */
+
+@media (max-width: 980px) {
+    .kanban-page {
+        grid-template-columns: 1fr;
+    }
+
+    .kanban-sidebar {
+        position: fixed;
+        left: 0;
+        top: 72px;
+        z-index: 60;
+
+        width: 240px;
+        height: calc(100vh - 72px);
+
+        transform: translateX(0);
+    }
+
+    body.sidebar-closed .kanban-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .kanban-main {
+        height: calc(100vh - 120px);
+        min-height: 640px;
+        padding: 48px 28px 48px;
+    }
+
+    .kanban-head {
+        max-width: calc(100vw - 40px);
+        padding-right: 20px;
+    }
+
+    .kanban-head h1 {
+        font-size: 44px;
+    }
+
+    .brand {
+        font-size: 58px;
+    }
+
+    .kanban-topbar {
+        height: 72px;
+    }
+}
+
+@media (max-width: 560px) {
+    :root {
+        --column-width: 220px;
+    }
+
+    .kanban-column {
+        min-height: 0;
+    }
+
+    .brand {
+        font-size: 36px;
+    }
+
+    .home-link {
+        display: none;
+    }
+}

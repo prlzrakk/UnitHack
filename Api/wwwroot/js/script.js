@@ -27,39 +27,3 @@ tasks.forEach(group=>{
   group.items.forEach(item=>q.appendChild(row(item)));
   matrix.appendChild(q);
 });
-
-
-const sidebar = document.getElementById("sidebar");
-const overlay = document.getElementById("sidebarOverlay");
-const openBtn = document.getElementById("openSidebar");
-const closeBtn = document.getElementById("closeSidebar");
-
-function openSidebar() {
-    sidebar.classList.add("is-open");
-    overlay.classList.add("is-open");
-    document.body.style.overflow = "hidden";
-}
-
-function closeSidebar() {
-    sidebar.classList.remove("is-open");
-    overlay.classList.remove("is-open");
-    document.body.style.overflow = "";
-}
-
-openBtn.addEventListener("click", openSidebar);
-closeBtn.addEventListener("click", closeSidebar);
-overlay.addEventListener("click", closeSidebar);
-
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-        closeSidebar();
-    }
-});
-const collapseButtons = document.querySelectorAll("[data-collapse]");
-
-collapseButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-        const section = button.closest(".sidebar-section");
-        section.classList.toggle("is-collapsed");
-    });
-});

@@ -4,8 +4,8 @@ using Api.Middleware;
 using Client.Models.Configs;
 using FluentValidation;
 using Infrastructure.Extensions;
+using Infrastructure.Repositories;
 using Infrastructure.Repositories.Interfaces;
-using Infrastructure.Repositories.Mocks;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
 using MediatR;
@@ -107,16 +107,14 @@ public static class ServiceCollectionExtensions
 
     public static WebApplicationBuilder AddInfrastructureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<MockDataStore>();
-
-        builder.Services.AddScoped<IUserRepository, UserRepositoryMock>();
-        builder.Services.AddScoped<IKanbanRepository, MockKanbanRepository>();
-        builder.Services.AddScoped<IKanbanColumnRepository, MockKanbanColumnRepository>();
-        builder.Services.AddScoped<IKanbanTaskRepository, MockKanbanTaskRepository>();
-        builder.Services.AddScoped<IProjectRepository, MockProjectRepository>();
-        builder.Services.AddScoped<ITeamRepository, MockTeamRepository>();
-        builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepositoryMock>();
-        builder.Services.AddScoped<IUnitOfWork, MockUnitOfWork>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IKanbanRepository, KanbanRepository>();
+        builder.Services.AddScoped<IKanbanColumnRepository, KanbanColumnRepository>();
+        builder.Services.AddScoped<IKanbanTaskRepository, KanbanTaskRepository>();
+        builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+        builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+        builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWorkRepository>();
 
         return builder;
     }
