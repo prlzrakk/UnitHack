@@ -35,11 +35,6 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         }
     }
 
-    public Task<User?> RegisterUser(string email, string name, string hashPassword)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<bool> LoginUser(string email, string password)
     {
         var normalizedEmail = NormalizeEmail(email);
