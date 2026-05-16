@@ -1,0 +1,18 @@
+﻿:root {
+    --bg: #1f1f1f;
+    --panel: #282828;
+    --panel-soft: #333333;
+    --panel-line: #3a3a3a;
+    --text: #f4f4f4;
+    --muted: #a7a7a7;
+
+    --orange: #f4864d;
+    --blue: #42609f;
+    --green: #407d52;
+    --peach: #ffe3d8;
+    --pink: #e6a0a6;
+
+    --serif: "Yeseva One", Georgia, serif;
+    --sans: Inter, Arial, sans-serif;
+    --label: Raleway, Inter, Arial, sans-serif;
+}

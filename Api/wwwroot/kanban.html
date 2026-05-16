@@ -1,0 +1,66 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Boardify — Kanban</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap"
+            rel="stylesheet"
+    >
+    <link rel="stylesheet" href="./css/styles.css" />
+
+    <link rel="stylesheet" href="./css/kanban.css" />
+    
+</head>
+
+<body class="kanban-body">
+<div class="kanban-app">
+    <header class="kanban-topbar">
+        <button class="kanban-menu-btn" id="toggleKanbanSidebar" aria-label="Открыть или закрыть сайдбар">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <a class="home-link" href="./index.html" aria-label="Назад на главную">←</a>
+
+        <div class="brand">Boardify</div>
+
+        <button class="profile-btn" aria-label="Профиль">
+            <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="14" r="7"></circle>
+                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
+            </svg>
+        </button>
+    </header>
+    <div id="sidebarMount"></div>
+
+    <main class="kanban-page">
+        <section class="kanban-main">
+            <div class="kanban-head">
+                <h1 id="kanbanTitle">Kanban</h1>
+
+                <button class="notify-btn" aria-label="Уведомления">
+                    <span class="notify-dot"></span>
+                </button>
+            </div>
+
+            <section class="kanban-scroll" id="kanbanBoard"></section>
+        </section>
+    </main>
+
+    <div class="toast" id="toast">
+        <span class="toast-bell">🔔</span>
+        <span id="toastText">напомнить о задании</span>
+    </div>
+</div>
+<script src="./js/sidebar.js"></script>
+<script src="./mocks/kanbanData.js"></script>
+<script src="./js/kanban.js"></script>
+</body>
+</html>

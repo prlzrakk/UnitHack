@@ -29,37 +29,11 @@ tasks.forEach(group=>{
 });
 
 
-const sidebar = document.getElementById("sidebar");
-const overlay = document.getElementById("sidebarOverlay");
-const openBtn = document.getElementById("openSidebar");
-const closeBtn = document.getElementById("closeSidebar");
+const projectButtons = document.querySelectorAll("[data-project]");
 
-function openSidebar() {
-    sidebar.classList.add("is-open");
-    overlay.classList.add("is-open");
-    document.body.style.overflow = "hidden";
-}
-
-function closeSidebar() {
-    sidebar.classList.remove("is-open");
-    overlay.classList.remove("is-open");
-    document.body.style.overflow = "";
-}
-
-openBtn.addEventListener("click", openSidebar);
-closeBtn.addEventListener("click", closeSidebar);
-overlay.addEventListener("click", closeSidebar);
-
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-        closeSidebar();
-    }
-});
-const collapseButtons = document.querySelectorAll("[data-collapse]");
-
-collapseButtons.forEach((button) => {
+projectButtons.forEach((button) => {
     button.addEventListener("click", () => {
-        const section = button.closest(".sidebar-section");
-        section.classList.toggle("is-collapsed");
+        const projectId = button.dataset.project;
+        window.location.href = `./kanban.html?project=${projectId}`;
     });
 });
