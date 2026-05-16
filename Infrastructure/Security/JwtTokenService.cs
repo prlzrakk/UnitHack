@@ -5,7 +5,7 @@ using Client.Models.Enums;
 using Infrastructure.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Shared.Models.Enums;
+using Shared.Models.Entities;
 
 namespace Infrastructure.Security;
 
@@ -29,29 +29,30 @@ public class JwtTokenService : ITokenService
             SecurityAlgorithms.HmacSha256);
     }
 
-    private static List<Claim> CreateBaseClaims(string email, TokenType type, UserRole role, bool isNeverExpires) =>
+    private static List<Claim> CreateBaseClaims(User user, TokenType type, bool isNeverExpires) =>
     [
-        new("email", email),
-        new("role", role.ToClaimValue()),
+        new("user_id", user.Id.ToString()),
+        new("email", user.Email),
+        new("name", user.Name),
         new(TokenClaimTypes.TokenType, type.ToClaimValue()),
         new("never_expires", isNeverExpires.ToString())
     ];
 
-
-    private string GenerateToken(string username, TokenType type, UserRole role, bool isNeverExpires)
+    private string GenerateToken(User user, TokenType type, bool isNeverExpires)
     {
-        var claims = CreateBaseClaims(username, type, role, isNeverExpires);
+        var claims = CreateBaseClaims(user, type, isNeverExpires);
 
         var jwtToken = new JwtSecurityToken(
             expires: DateTime.UtcNow.Add(type is TokenType.Access ? settings.ExpiresAccess : settings.ExpiresRefresh),
             claims: claims,
             signingCredentials: signingCredentials);
+
         return new JwtSecurityTokenHandler().WriteToken(jwtToken);
     }
 
-    public string GenerateAccessToken(string username) =>
-        GenerateToken(username, TokenType.Access, UserRole.Member, false);
+    public string GenerateAccessToken(User user) =>
+        GenerateToken(user, TokenType.Access, false);
 
-    public string GenerateRefreshToken(string username) =>
-        GenerateToken(username, TokenType.Refresh, UserRole.Member, false);
+    public string GenerateRefreshToken(User user) =>
+        GenerateToken(user, TokenType.Refresh, false);
 }

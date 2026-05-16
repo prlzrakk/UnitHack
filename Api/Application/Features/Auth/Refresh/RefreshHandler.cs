@@ -1,18 +1,22 @@
+using Api.Application.Common.Exceptions;
 using Infrastructure.Interfaces;
 using MediatR;
 using Shared.Models.DTO.Response;
 
 namespace Api.Application.Features.Auth.Refresh;
 
-public class RefreshHandler(ITokenService tokenService)
+public class RefreshHandler(ITokenService tokenService, IUserRepository users)
     : IRequestHandler<RefreshCommand, RefreshResponse>
 {
-    public Task<RefreshResponse> Handle(RefreshCommand command,
+    public async Task<RefreshResponse> Handle(RefreshCommand command,
         CancellationToken cancellationToken)
     {
-        return Task.FromResult(new RefreshResponse(
-            tokenService.GenerateAccessToken(command.Email),
-            tokenService.GenerateRefreshToken(command.Email)
-        ));
+        var user = await users.GetUser(command.UserId)
+                   ?? throw new ApiException(StatusCodes.Status401Unauthorized, "User not found");
+
+        return new RefreshResponse(
+            tokenService.GenerateAccessToken(user),
+            tokenService.GenerateRefreshToken(user)
+        );
     }
 }

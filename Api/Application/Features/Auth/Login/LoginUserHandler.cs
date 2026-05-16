@@ -13,13 +13,20 @@ public class LoginUserHandler(IUserRepository users, ITokenService tokenService)
     {
         LoginUserValidation.Validate(command);
 
-        var username = command.Email;
+        var email = command.Email.Trim().ToLowerInvariant();
 
-        var loginStatus = await users.LoginUser(username, command.Password);
+        var loginStatus = await users.LoginUser(email, command.Password);
 
         if (loginStatus)
-            return new LoginUserResponse(tokenService.GenerateAccessToken(username),
-                tokenService.GenerateRefreshToken(username));
-        throw new ApiException(StatusCodes.Status401Unauthorized, "Incorrect password or username");
+        {
+            var user = await users.GetUser(email)
+                       ?? throw new ApiException(StatusCodes.Status401Unauthorized, "Incorrect email or password");
+
+            return new LoginUserResponse(
+                tokenService.GenerateAccessToken(user),
+                tokenService.GenerateRefreshToken(user));
+        }
+
+        throw new ApiException(StatusCodes.Status401Unauthorized, "Incorrect email or password");
     }
 }
