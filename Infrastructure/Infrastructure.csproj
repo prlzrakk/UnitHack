@@ -17,7 +17,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Client.Models\Client.Models.csproj" />
-      <Folder Include="Repositories\Mocks\" />
     </ItemGroup>
 
 </Project>

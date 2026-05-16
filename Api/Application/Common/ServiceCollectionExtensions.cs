@@ -5,7 +5,7 @@ using Infrastructure.Repositories.Mocks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi;
 
-namespace WebApplication1.Application.Common;
+namespace Api.Application.Common;
 
 public static class ServiceCollectionExtensions
 {
@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
 
         return builder;
     }
-    
+
     public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddMediatR(cfg =>
@@ -63,18 +63,21 @@ public static class ServiceCollectionExtensions
     public static WebApplicationBuilder AddInfrastructureServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IUserRepository, UserRepositoryMock>();
+        builder.Services.AddScoped<IKanbanRepository, MockKanbanRepository>();
+        builder.Services.AddScoped<IProjectRepository, MockProjectRepository>();
+        builder.Services.AddSingleton<MockDataStore>();
+        builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepositoryMock>();
+        builder.Services.AddScoped<IUnitOfWork, MockUnitOfWork>();
 
         return builder;
     }
+
     public static WebApplicationBuilder AddAuthorizationPolicy(this WebApplicationBuilder builder)
     {
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("RequireUserId", policy =>
                 policy.RequireClaim("user_id"));
 
-        // builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-
         return builder;
     }
-
 }
