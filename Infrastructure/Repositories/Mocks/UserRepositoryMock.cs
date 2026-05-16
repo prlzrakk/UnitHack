@@ -1,5 +1,6 @@
-using Infrastructure.Interfaces;
-using Shared.Models.Entities;
+using Client.Models.Entities;
+using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
 
 namespace Infrastructure.Repositories.Mocks;
 

@@ -1,8 +1,8 @@
-using Infrastructure.Interfaces;
+using Client.Models.DTO.Response;
+using Infrastructure.Security.Interfaces;
 using MediatR;
-using Shared.Models.DTO.Response;
 
-namespace Api.Application.Features.Auth.Refresh;
+namespace WebApplication1.Application.Features.Auth.Refresh;
 
 public class RefreshHandler(ITokenService tokenService)
     : IRequestHandler<RefreshCommand, RefreshResponse>

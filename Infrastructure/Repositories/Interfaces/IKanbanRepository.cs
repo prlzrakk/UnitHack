@@ -2,5 +2,7 @@ namespace Infrastructure.Repositories.Interfaces;
 
 public interface IKanbanRepository
 {
-    Task<Project?> GetProjectById(Guid projectId, CancellationToken cancellationToken);
+    void Add(Kanban kanban);
+    Task<bool> DeleteAsync(Guid kanbanId, CancellationToken cancellationToken);
+    Task<Kanban?> GetByIdWithProjectAsync(Guid kanbanId, CancellationToken cancellationToken);
 }

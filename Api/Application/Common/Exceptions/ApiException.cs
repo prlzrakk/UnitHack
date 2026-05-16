@@ -1,6 +1,10 @@
-﻿namespace Api.Application.Common.Exceptions;
+﻿namespace WebApplication1.Application.Common.Exceptions;
 
-public class ApiException(int code, string message) : Exception(message)
+public abstract class ApiException(
+    int statusCode,
+    string message,
+    string errorCode) : Exception(message)
 {
-    public int Code { get; } = code;
+    public int StatusCode { get; } = statusCode;
+    public string ErrorCode { get; } = errorCode;
 }

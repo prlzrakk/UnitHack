@@ -1,7 +1,7 @@
-﻿using MediatR;
-using Shared.Models.DTO.Response;
+﻿using Client.Models.DTO.Response;
+using MediatR;
 
-namespace Api.Application.Features.Auth.Register;
+namespace WebApplication1.Application.Features.Users.Register;
 
 public record RegisterUserCommand(
     string Email,

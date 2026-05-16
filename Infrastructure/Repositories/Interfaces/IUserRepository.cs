@@ -1,6 +1,6 @@
-using Shared.Models.Entities;
+using Client.Models.Entities;
 
-namespace Infrastructure.Interfaces;
+namespace Infrastructure.Repositories.Interfaces;
 
 public interface IUserRepository
 {

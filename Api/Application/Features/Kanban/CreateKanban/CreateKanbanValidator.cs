@@ -8,7 +8,7 @@ public class CreateKanbanValidator : AbstractValidator<CreateKanbanCommand>
     {
         RuleFor(x => x.ProjectId)
             .NotEmpty();
-        
+
         RuleFor(x => x.Name)
             .NotEmpty()
             .MaximumLength(100);

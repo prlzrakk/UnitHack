@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using Client.Models.Configs;
 using FluentValidation;
+using Infrastructure.Repositories.Interfaces;
 using MediatR;
-using Infrastructure.Interfaces;
 using Infrastructure.Repositories.Mocks;
 
 namespace WebApplication1.Application.Common;

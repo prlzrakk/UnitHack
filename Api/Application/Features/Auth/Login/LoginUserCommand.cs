@@ -1,7 +1,7 @@
+using Client.Models.DTO.Response;
 using MediatR;
-using Shared.Models.DTO.Response;
 
-namespace Api.Application.Features.Auth.Login;
+namespace WebApplication1.Application.Features.Auth.Login;
 
 public record LoginUserCommand(
     string Email,
