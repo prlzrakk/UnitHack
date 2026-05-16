@@ -1,16 +1,23 @@
 using Infrastructure.Db;
+using Infrastructure.Entities;
 using Infrastructure.Interfaces;
-using Shared.Models.Entities;
 
 namespace Infrastructure.Repositories;
 
 public class UserRepository(DatabaseContext context) : IUserRepository
 {
-    private DatabaseContext _context = context;
-
-    public Task<User?> RegisterUser(string email, string hashPassword)
+    public async Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
-        
+        if (context.Users.Any(u => u.Email == email)) return null;
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Email = email,
+            HashPassword = hashPassword
+        };
+        await context.Users.AddAsync(user);
+        return user;
     }
 
     public Task<bool> LoginUser(string email, string password)
