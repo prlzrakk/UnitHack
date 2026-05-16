@@ -1,50 +1,52 @@
 using Infrastructure.Db;
+using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
-using User = Client.Models.Entities.User;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
 public class UserRepository(DatabaseContext context) : IUserRepository
 {
-    private DatabaseContext _context = context;
-
-    public Task<User?> RegisterUser(string email, string hashPassword)
+    public async Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
-        throw new NotImplementedException();
+        if (context.Users.Any(u => u.Email == email)) return null;
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Email = email,
+            HashPassword = hashPassword
+        };
+        await context.Users.AddAsync(user);
+        return user;
     }
 
-    Task<User?> IUserRepository.RegisterUser(string email, string hashPassword)
+    public async Task<bool> LoginUser(string email, string password)
     {
-        return RegisterUser(email, hashPassword);
+        return await context.Users
+            .AnyAsync(x => x.Email == email && x.HashPassword == password);
     }
 
-    public Task<bool> LoginUser(string email, string password)
+    public async Task<User?> GetUser(string email)
     {
-        throw new NotImplementedException();
+        return await context.Users
+            .FirstOrDefaultAsync(x => x.Email == email);
     }
 
-    Task<User?> IUserRepository.GetUser(string email)
+    public async Task<User?> GetUser(Guid userId)
     {
-        return GetUser(email);
+        return await context.Users
+            .FirstOrDefaultAsync(x => x.Id == userId);
     }
+    
 
-    public Task<User?> GetUser(Guid userId)
+    public async Task<bool> ChangeDisplayName(string email, string newName)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<User?> GetUser(string email)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<User?> GetUser(int userId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> ChangeDisplayName(string email, string newName)
-    {
-        throw new NotImplementedException();
+        var user = await context.Users
+            .FirstOrDefaultAsync(x => x.Email == email);
+        if (user == null)
+            return false;
+        user.Name = newName;
+        return true;
     }
 }

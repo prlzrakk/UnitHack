@@ -5,7 +5,7 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
 {
-    public void Add(Kanban kanban)
+    public Task AddAsync(Kanban kanban, CancellationToken cancellationToken = default)
     {
         store.Kanbans.Add(kanban);
 
@@ -13,6 +13,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         {
             store.KanbanColumns.AddRange(kanban.Columns);
         }
+        return Task.CompletedTask;
     }
 
     public Task<bool> DeleteAsync(

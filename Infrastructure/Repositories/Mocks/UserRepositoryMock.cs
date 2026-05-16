@@ -1,4 +1,4 @@
-using Client.Models.Entities;
+using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 
@@ -9,7 +9,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
     private static readonly object Sync = new();
     private static readonly Dictionary<string, MockUser> Users = new(StringComparer.OrdinalIgnoreCase);
 
-    public Task<User?> RegisterUser(string email, string hashPassword)
+    public Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
         var normalizedEmail = NormalizeEmail(email);
 
@@ -24,7 +24,9 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
             {
                 Id = Guid.NewGuid(),
                 Email = normalizedEmail,
-                Name = CreateDefaultName(normalizedEmail),
+                Name = string.IsNullOrWhiteSpace(name)
+                    ? CreateDefaultName(normalizedEmail)
+                    : name.Trim(),
                 HashPassword = hashPassword
             };
 

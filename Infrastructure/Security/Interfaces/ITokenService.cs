@@ -1,4 +1,5 @@
-using Client.Models.Entities;
+
+using Infrastructure.Entities;
 
 namespace Infrastructure.Security.Interfaces;
 
