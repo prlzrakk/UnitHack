@@ -8,7 +8,7 @@ public class MockDataStore
     public List<Project> Projects { get; } = [];
     public List<Kanban> Kanbans { get; } = [];
     public List<KanbanColumn> KanbanColumns { get; } = [];
-    private List<TeamMember> TeamMembers { get; } = [];
+    public List<TeamMember> TeamMembers { get; } = [];
 
     public MockDataStore()
     {
