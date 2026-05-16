@@ -1,48 +1,63 @@
-namespace WebApplication1;
+using Infrastructure.Extensions;
+using Infrastructure.Interfaces;
+using Infrastructure.Security;
+using Microsoft.AspNetCore.HttpOverrides;
+using WebApplication1.Application.Common;
 
-public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+builder.LoadEnvFiles();
+
+builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+
+var jwtSettings = JwtSettingsResolver.Resolve(builder.Configuration);
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddSingleton<ITokenService, JwtTokenService>();
+builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddAuth(jwtSettings);
+
+builder
+    .AddAuthorizationPolicy()
+    .AddSwagger()
+    .AddApplicationServices()
+    .AddDatabase()
+    .AddInfrastructureServices();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    public static void Main(string[] args)
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDev", policy =>
     {
-        var builder = WebApplication.CreateBuilder(args);
+        policy
+            .WithOrigins("http://localhost:63342")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
-        // Add services to the container.
-        builder.Services.AddAuthorization();
+var app = builder.Build();
 
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+app.UseForwardedHeaders();
 
-        var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
-
-        app.UseHttpsRedirection();
-
-        app.UseAuthorization();
-
-        var summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
-        app.MapGet("/weatherforecast", (HttpContext httpContext) =>
-            {
-                var forecast = Enumerable.Range(1, 5).Select(index =>
-                        new WeatherForecast
-                        {
-                            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                            TemperatureC = Random.Shared.Next(-20, 55),
-                            Summary = summaries[Random.Shared.Next(summaries.Length)]
-                        })
-                    .ToArray();
-                return forecast;
-            })
-            .WithName("GetWeatherForecast");
-
-        app.Run();
-    }
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseCors("FrontendDev");
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+app.Run();
