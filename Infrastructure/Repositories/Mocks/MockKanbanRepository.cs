@@ -15,7 +15,8 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
             ProjectId = project.Id,
             Project = project,
             Name = name.Trim(),
-            Columns = []
+            Columns = [],
+            Tags = []
         };
 
         store.Kanbans.Add(kanban);
@@ -58,7 +59,18 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
             .Select(x => x.Id)
             .ToHashSet();
 
-        store.Tasks.RemoveAll(x => x.KanbanId == kanbanId || columnIds.Contains(x.ColumnId));
+        var taskIds = store.Tasks
+            .Where(x => x.KanbanId == kanbanId || columnIds.Contains(x.ColumnId))
+            .Select(x => x.Id)
+            .ToHashSet();
+        var tagIds = store.Tags
+            .Where(x => x.KanbanId == kanbanId)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        store.TaskTags.RemoveAll(x => taskIds.Contains(x.TaskId) || tagIds.Contains(x.TagId));
+        store.Tasks.RemoveAll(x => taskIds.Contains(x.Id));
+        store.Tags.RemoveAll(x => x.KanbanId == kanbanId);
         store.KanbanColumns.RemoveAll(x => x.KanbanId == kanbanId);
         kanban.Project?.Kanbans.Remove(kanban);
 
@@ -130,6 +142,10 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         kanban.Tasks = store.Tasks
             .Where(x => x.KanbanId == kanban.Id)
             .OrderBy(x => x.Order)
+            .ToList();
+        kanban.Tags = store.Tags
+            .Where(x => x.KanbanId == kanban.Id)
+            .OrderBy(x => x.Name)
             .ToList();
 
         foreach (var column in kanban.Columns)

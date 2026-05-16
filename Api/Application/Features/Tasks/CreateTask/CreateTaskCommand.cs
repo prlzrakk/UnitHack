@@ -13,4 +13,5 @@ public record CreateTaskCommand(
     DateTime Deadline,
     Guid UserId,
     Guid ColumnId,
-    int? Order) : IRequest<TaskResponse>;
+    int? Order,
+    Guid[] TagIds) : IRequest<TaskResponse>;

@@ -140,6 +140,10 @@ public class KanbanConfiguration : IEntityTypeConfiguration<Kanban>
             .WithOne(x => x.Kanban)
             .HasForeignKey(x => x.KanbanId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(x => x.Tags)
+            .WithOne(x => x.Kanban)
+            .HasForeignKey(x => x.KanbanId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(x => new { x.ProjectId, x.Name })
             .IsUnique();
@@ -222,7 +226,7 @@ public class TagConfiguration : IEntityTypeConfiguration<Tag>
             .HasMaxLength(100);
 
         builder.HasOne(x => x.Kanban)
-            .WithMany()
+            .WithMany(x => x.Tags)
             .HasForeignKey(x => x.KanbanId)
             .OnDelete(DeleteBehavior.Cascade);
 

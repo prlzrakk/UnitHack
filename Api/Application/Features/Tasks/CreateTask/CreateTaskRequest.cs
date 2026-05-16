@@ -11,4 +11,5 @@ public sealed class CreateTaskRequest
     public Guid UserId { get; init; }
     public Guid ColumnId { get; init; }
     public int? Order { get; init; }
+    public Guid[] TagIds { get; init; } = [];
 }
