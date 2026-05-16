@@ -13,9 +13,14 @@ public class UserRepository(DatabaseContext context) : IUserRepository
         throw new NotImplementedException();
     }
 
-    Task<User?> IUserRepository.RegisterUser(string email, string hashPassword)
+    Task<User?> IUserRepository.RegisterUser(string email,string name, string hashPassword)
     {
         return RegisterUser(email, hashPassword);
+    }
+
+    public Task<User?> RegisterUser(string email, string name, string hashPassword)
+    {
+        throw new NotImplementedException();
     }
 
     public Task<bool> LoginUser(string email, string password)
