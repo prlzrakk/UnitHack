@@ -1,5 +1,6 @@
+using Api.Application.Common.Extensions;
 using Api.Application.Features.Auth.Register;
-using Infrastructure.Interfaces;
+using Api.Application.Features.Users.GetMe;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace Api.Application.Features.Users;
 
 [ApiController]
 [Route("api/users")]
-public class UsersController(IMediator mediator, IUserRepository users) : ControllerBase
+public class UsersController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// Create user
@@ -31,11 +32,9 @@ public class UsersController(IMediator mediator, IUserRepository users) : Contro
     [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> GetMe()
     {
-        var userIdClaim = User.FindFirst("user_id")?.Value;
-        if (!int.TryParse(userIdClaim, out var userId))
-            return Unauthorized();
+        var userId = User.GetUserId();
 
-        var user = await users.GetUser(userId);
+        var user = await mediator.Send(new GetMeUserQuery(userId));
         return user is null ? NotFound() : Ok(user);
     }
 }

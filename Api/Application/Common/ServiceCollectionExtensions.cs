@@ -2,6 +2,8 @@
 using Client.Models.Configs;
 using Infrastructure.Interfaces;
 using Infrastructure.Repositories.Mocks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi;
 
 namespace WebApplication1.Application.Common;
 
@@ -29,7 +31,7 @@ public static class ServiceCollectionExtensions
         return builder;
     }
 
-    public static WebApplicationBuilder AddSwagger(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddSwaggerWithAuth(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
@@ -38,6 +40,21 @@ public static class ServiceCollectionExtensions
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             if (File.Exists(xmlPath))
                 options.IncludeXmlComments(xmlPath);
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
+                Description = "Paste JWT token here. The Authorization header will be sent as: Bearer {token}"
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                { new OpenApiSecuritySchemeReference("Bearer", document), [] }
+            });
         });
 
         return builder;
