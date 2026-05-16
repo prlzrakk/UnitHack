@@ -17,7 +17,7 @@
     --label: Raleway, Inter, Arial, sans-serif;
 
     --sidebar-width: 240px;
-    --column-width: clamp(320px, calc((100vw - 350px) / 3), 356px);
+    --column-width: 393px;
 }
 
 * {
@@ -344,10 +344,15 @@ body.sidebar-closed .kanban-sidebar {
 
 .kanban-main {
     min-width: 0;
-    height: calc(100vh - 120px);
-    min-height: 700px;
+
+    /* главное: убрали фиксированную высоту */
+    height: auto;
+    min-height: 0;
+
     padding: 70px 72px 64px 144px;
-    overflow: hidden;
+
+    /* не режем контент по вертикали */
+    overflow: visible;
 
     display: flex;
     flex-direction: column;
@@ -394,67 +399,43 @@ body.sidebar-closed .kanban-head {
     border: 0;
     background: transparent;
     cursor: pointer;
+    padding-right: 98px;
 }
 
-.notify-btn::before {
-    content: "";
-    position: absolute;
-    left: 5px;
-    top: 4px;
-
-    width: 15px;
-    height: 17px;
-
-    border: 2px solid white;
-    border-bottom: 0;
-    border-radius: 10px 10px 3px 3px;
+.column-icon img {
+    height: 24px;
+    width: 24px;
 }
 
-.notify-btn::after {
-    content: "";
-    position: absolute;
-    left: 9px;
-    bottom: 3px;
-
-    width: 8px;
-    height: 2px;
-
-    background: white;
-    border-radius: 999px;
+task-icon-btn img {
+    height: 24px;
+    width: 24px;
 }
-
-.notify-dot {
-    position: absolute;
-    right: 1px;
-    top: 0;
-
-    width: 7px;
-    height: 7px;
-
-    background: #39f759;
-    border-radius: 50%;
-}
-
 /* KANBAN SCROLL */
 
 .kanban-scroll {
+    width: 100%;
+    max-width: 100%;
+
     display: flex;
+    flex-wrap: nowrap;
     gap: 16px;
     align-items: flex-start;
     flex: 1;
     min-height: 0;
 
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden;
 
-    padding: 0 0 20px 0;
+    padding: 0 120px 20px 0;
+
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
     scrollbar-color: var(--orange) #2a2a2a;
 }
 
 .kanban-scroll::-webkit-scrollbar {
-    height: 7px;
+    height: 8px;
 }
 
 .kanban-scroll::-webkit-scrollbar-track {
@@ -470,13 +451,13 @@ body.sidebar-closed .kanban-head {
 /* COLUMN */
 
 .kanban-column {
+    flex: 0 0 var(--column-width);
+
     width: var(--column-width);
     min-width: var(--column-width);
     min-height: 100%;
-    max-height: none;
-    overflow: visible;
 
-    padding: 20px 24px;
+    padding: 24px;
     background: #f7f7f7;
     box-shadow: 0 9px 20px rgba(0, 0, 0, 0.25);
     border-radius: 16px;
@@ -661,7 +642,7 @@ body.sidebar-closed .kanban-head {
 .task-users {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 7px;
     flex: 0 0 auto;
 }
 
@@ -695,12 +676,26 @@ body.sidebar-closed .kanban-head {
 }
 
 .add-column-btn {
-    min-width: 54px;
+    flex: 0 0 90px;
+
+    min-width: 90px;
     align-self: stretch;
     min-height: 100%;
+
+    border: 0;
+    background: transparent;
     color: white;
-    font-size: 42px;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    gap: 5px;
+
+    font-family: var(--label);
+    font-size: 42px;
+    line-height: 1;
+
     scroll-snap-align: start;
 }
 

@@ -109,7 +109,9 @@ function renderKanban(project) {
       <div class="column-head">
         <h2 class="column-title">${column.title}</h2>
         <span class="column-count">${column.tasks.length}</span>
-        <button class="column-icon" aria-label="Удалить колонку">⌫</button>
+        <button class="column-icon" aria-label="Удалить колонку">
+            <img class="column-icon img" src="components/images/delete.svg" alt="удалить">
+        </button>
         <button class="column-icon" aria-label="Редактировать колонку">✎</button>
       </div>
     `;
@@ -144,7 +146,9 @@ function createTaskCard(task, column) {
     <div class="task-top">
       <button class="task-icon-btn" aria-label="Редактировать задачу">✎</button>
       <h3 class="task-title">${task.title}</h3>
-      <button class="task-icon-btn" aria-label="Удалить задачу">⌫</button>
+      <button class="task-icon-btn" aria-label="Удалить задачу">
+        <img class="task-icon-btn img" src="components/images/delete.svg" alt="удалить">  
+    </button>
     </div>
 
     <div class="task-dates">
@@ -157,7 +161,7 @@ function createTaskCard(task, column) {
       </div>
 
       <div class="date-pills">
-        <span class="date-pill">Apr 1, 2025</span>
+        <span class="date-pill">Apr 2, 2025</span>
         <span class="date-pill">9:41 AM</span>
       </div>
     </div>
@@ -174,7 +178,7 @@ function createTaskCard(task, column) {
 
       <div class="task-users">
         ${Array.from({ length: task.users })
-        .map(() => `<span class="task-user">⌾</span>`)
+        .map(() => `<img class="task-user" src="components/images/user.svg" alt="пользователь"></img>`)
         .join("")}
       </div>
     </div>
@@ -206,3 +210,21 @@ renderPage();
 window.addEventListener("project:selected", (event) => {
     setProject(event.detail.projectId);
 });
+kanbanBoard.addEventListener(
+    "wheel",
+    (event) => {
+        const isVerticalWheel = Math.abs(event.deltaY) > Math.abs(event.deltaX);
+
+        if (!isVerticalWheel) {
+            return;
+        }
+
+        event.preventDefault();
+
+        kanbanBoard.scrollBy({
+            left: event.deltaY,
+            behavior: "smooth",
+        });
+    },
+    { passive: false }
+);
