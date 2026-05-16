@@ -7,7 +7,7 @@ public class TaskEvent
     public Guid Id { get; set; }
     
     public Guid TaskId { get; set; }
-    public Task? Task { get; set; }
+    public KanbanTask? Task { get; set; }
     
     public Guid KanbanId { get; set; }
     public Kanban? Kanban { get; set; }
@@ -26,5 +26,5 @@ public class TaskEvent
     public int NewOrder { get; set; }
     public int OldOrder { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

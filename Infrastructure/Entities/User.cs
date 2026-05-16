@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Infrastructure.Entities;
+﻿namespace Infrastructure.Entities;
 
 public class User
 {
@@ -8,4 +6,6 @@ public class User
     public string Name { get; set; }
     public string Email { get; set; }
     public string HashPassword { get; set; }
+    
+    public ICollection<TeamMember> TeamMemberships { get; set; } = new List<TeamMember>();
 }

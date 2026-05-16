@@ -10,10 +10,11 @@ public class Notification
     public User User { get; set; }
     
     public Guid TaskId { get; set; }
-    public Task Task { get; set; }
+    public KanbanTask KanbanTask { get; set; }
     
     public Guid KanbanId { get; set; }
     public Kanban Kanban { get; set; }
     
     public string Message { get; set; }
+    
 }

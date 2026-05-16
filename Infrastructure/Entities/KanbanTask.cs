@@ -1,13 +1,14 @@
+using Infrastructure.Enums;
+
 namespace Infrastructure.Entities;
 
-public class Task
+public class KanbanTask
 {
     public Guid Id { get; set; }
     
     public string Name { get; set; }
-    public string Description { get; set; }
-    public string Status { get; set; }
-    public int Priority { get; set; }
+    public string? Description { get; set; }
+    public Priority Priority { get; set; }
     
     public DateTime CreatedAt { get; set; }
     public DateTime Deadline { get; set; }
@@ -23,5 +24,5 @@ public class Task
     
     public int Order { get; set; }
     
-    public List<Tag> Tags { get; set; }
+    public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
 }
