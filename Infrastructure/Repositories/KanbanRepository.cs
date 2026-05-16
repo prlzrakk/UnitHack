@@ -15,31 +15,45 @@ public class KanbanRepository(DatabaseContext context) : IKanbanRepository
 
     public async Task<bool> DeleteAsync(Guid kanbanId, CancellationToken cancellationToken)
     {
-        var kanban = await context.Kanbans.FindAsync(kanbanId, cancellationToken);
-        if (kanban == null)
+        var kanban = await context.Kanbans
+            .Include(x => x.Columns)
+            .Include(x => x.Tasks)
+            .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
+
+        if (kanban is null)
             return false;
+
+        context.Tasks.RemoveRange(kanban.Tasks);
+        context.KanbanColumns.RemoveRange(kanban.Columns);
         context.Kanbans.Remove(kanban);
         return true;
     }
 
-    public async Task<Kanban?> GetByIdWithProjectAsync(Guid kanbanId, CancellationToken cancellationToken)
+    public async Task<Kanban?> GetByIdAsync(Guid kanbanId, CancellationToken cancellationToken)
     {
-        var kanban = await context.Kanbans
-            .Include(k => k.Project)
+        return await context.Kanbans
             .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
-        return kanban;
     }
 
-    public Task<Kanban?> GetByIdWithProjectAndColumnsAsync(Guid kanbanId, CancellationToken cancellationToken)
+    public async Task<Kanban?> GetByIdWithProjectAsync(Guid kanbanId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return await context.Kanbans
+            .Include(k => k.Project)
+            .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
+    }
+
+    public async Task<Kanban?> GetByIdWithProjectAndColumnsAsync(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        return await context.Kanbans
+            .Include(k => k.Project)
+            .Include(k => k.Columns)
+            .FirstOrDefaultAsync(x => x.Id == kanbanId, cancellationToken);
     }
 
     public async Task<List<Kanban>> GetByProjectIdAsync(Guid projectId, CancellationToken cancellationToken)
     {
-        var project = await context.Kanbans
-            .Where(x => x.Project.Id == projectId)
+        return await context.Kanbans
+            .Where(x => x.ProjectId == projectId)
             .ToListAsync(cancellationToken);
-        return project;
     }
 }

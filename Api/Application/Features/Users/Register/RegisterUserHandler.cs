@@ -9,7 +9,7 @@ using MediatR;
 
 namespace Api.Application.Features.Users.Register;
 
-public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher, ILogger<RegisterUserHandler> logger)
+public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher)
     : IRequestHandler<RegisterUserCommand, RegisterUserResponse>
 {
     public async Task<RegisterUserResponse> Handle(RegisterUserCommand command,

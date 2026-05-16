@@ -1,11 +1,14 @@
-﻿using System.Reflection;
+using System.Reflection;
+using System.Text.Json.Serialization;
 using Api.Middleware;
 using Client.Models.Configs;
+using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Repositories.Mocks;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi;
@@ -26,7 +29,12 @@ public static class ServiceCollectionExtensions
 
     public static WebApplicationBuilder AddApiServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+        builder.Services.AddProblemDetails();
 
         return builder;
     }
@@ -44,6 +52,9 @@ public static class ServiceCollectionExtensions
 
             cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
         });
+
+        builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+        builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         return builder;
     }
@@ -100,7 +111,10 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddScoped<IUserRepository, UserRepositoryMock>();
         builder.Services.AddScoped<IKanbanRepository, MockKanbanRepository>();
+        builder.Services.AddScoped<IKanbanColumnRepository, MockKanbanColumnRepository>();
+        builder.Services.AddScoped<IKanbanTaskRepository, MockKanbanTaskRepository>();
         builder.Services.AddScoped<IProjectRepository, MockProjectRepository>();
+        builder.Services.AddScoped<ITeamRepository, MockTeamRepository>();
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepositoryMock>();
         builder.Services.AddScoped<IUnitOfWork, MockUnitOfWork>();
 

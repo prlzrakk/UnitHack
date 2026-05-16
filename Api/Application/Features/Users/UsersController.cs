@@ -18,7 +18,7 @@ public class UsersController(IMediator mediator) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] RegisterRequest req)
     {
-        var result = await mediator.Send(new RegisterUserCommand(req.Email, req.Name, req.Password));
+        var result = await mediator.Send(new RegisterUserCommand(req.Email, req.Name ?? string.Empty, req.Password));
         if (!result.Status)
             return NoContent();
 
@@ -33,8 +33,8 @@ public class UsersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var userId = User.GetUserId();
-
         var user = await mediator.Send(new GetMeUserQuery(userId));
-        return user is null ? NotFound() : Ok(user);
+
+        return Ok(user);
     }
 }
