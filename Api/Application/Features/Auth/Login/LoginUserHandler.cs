@@ -1,8 +1,8 @@
 using Api.Application.Common.Exceptions;
-using MediatR;
 using Client.Models.DTO.Response;
+using MediatR;
 using Infrastructure.Repositories.Interfaces;
-using Infrastructure.Security.Interfaces.Infrastructure.Interfaces;
+using Infrastructure.Security.Interfaces;
 
 namespace Api.Application.Features.Auth.Login;
 
@@ -19,11 +19,13 @@ public class LoginUserHandler(IUserRepository users, ITokenService tokenService)
         if (loginStatus)
         {
             var user = await users.GetUser(email)
-                       ?? throw new ApiException(StatusCodes.Status401Unauthorized, "Incorrect email or password");
+                       ?? throw new UnauthorizedException("Incorrect email or password");
 
             return new LoginUserResponse(
                 tokenService.GenerateAccessToken(user),
                 tokenService.GenerateRefreshToken(user));
         }
+
+        throw new UnauthorizedException("Incorrect email or password");
     }
 }

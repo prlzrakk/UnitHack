@@ -1,8 +1,8 @@
-using Api.Application.Common;
 using Infrastructure.Extensions;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
 using Microsoft.AspNetCore.HttpOverrides;
+using WebApplication1.Application.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
