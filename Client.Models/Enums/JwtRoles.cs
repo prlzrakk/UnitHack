@@ -1,4 +1,4 @@
-namespace Shared.Models.Enums;
+namespace Client.Models.Enums;
 
 public enum UserRole
 {

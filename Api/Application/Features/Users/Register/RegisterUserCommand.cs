@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Shared.Models.DTO.Response;
+﻿using Client.Models.DTO.Response;
+using MediatR;
 
 namespace Api.Application.Features.Auth.Register;
 

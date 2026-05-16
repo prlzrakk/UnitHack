@@ -1,7 +1,7 @@
 ﻿using Api.Application.Common.Exceptions;
+using Client.Models.DTO.Response;
 using Infrastructure.Interfaces;
 using MediatR;
-using Shared.Models.DTO.Response;
 
 namespace Api.Application.Features.Auth.Register;
 

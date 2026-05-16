@@ -1,10 +1,10 @@
 using Api.Application.Common.Extensions;
 using Api.Application.Features.Auth.Register;
 using Api.Application.Features.Users.GetMe;
+using Client.Models.DTO.Request;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models.DTO.Request;
 
 namespace Api.Application.Features.Users;
 

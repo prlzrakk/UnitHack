@@ -2,7 +2,6 @@ using Client.Models.Enums;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Shared.Models.Enums;
 
 namespace Infrastructure.Security;
 

@@ -1,10 +1,10 @@
 using Api.Application.Features.Auth.Login;
 using Api.Application.Features.Auth.Refresh;
+using Client.Models.DTO.Request;
 using Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models.DTO.Request;
 
 namespace Api.Application.Features.Auth;
 
