@@ -25,6 +25,16 @@ public class UserRepository(DatabaseContext context) : IUserRepository
         throw new NotImplementedException();
     }
 
+    Task<User?> IUserRepository.GetUser(string email)
+    {
+        return GetUser(email);
+    }
+
+    public Task<User?> GetUser(Guid userId)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<User?> GetUser(string email)
     {
         throw new NotImplementedException();
