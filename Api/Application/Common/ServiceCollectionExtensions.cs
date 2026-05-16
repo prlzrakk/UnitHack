@@ -52,8 +52,8 @@ public static class ServiceCollectionExtensions
     public static WebApplicationBuilder AddAuthorizationPolicy(this WebApplicationBuilder builder)
     {
         builder.Services.AddAuthorizationBuilder()
-            .AddPolicy("RequireEmail", policy =>
-                policy.RequireClaim("email"));
+            .AddPolicy("RequireUserId", policy =>
+                policy.RequireClaim("user_id"));
 
         return builder;
     }
