@@ -17,7 +17,7 @@ public class ChangeKanbanHandler(
             throw new NotFoundException("Kanban not found");
 
         var isAdmin =
-            await teamMemberRepository.IsAdminAsync(request.KanbanId, request.CurrentUserId, cancellationToken);
+            await teamMemberRepository.IsAdminAsync(kanban.Project.TeamId, request.CurrentUserId, cancellationToken);
 
         if (!isAdmin)
             throw new ForbiddenException("Only team admin can change kanban");
