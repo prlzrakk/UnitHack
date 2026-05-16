@@ -15,19 +15,6 @@ public class CreateTaskHandler(
 {
     public async Task<TaskResponse> Handle(CreateTaskCommand command, CancellationToken cancellationToken)
     {
-        if (command.KanbanId == Guid.Empty)
-            throw new BadRequestException("Kanban id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (string.IsNullOrWhiteSpace(command.Name))
-            throw new BadRequestException("Task name is required");
-        if (command.UserId == Guid.Empty)
-            throw new BadRequestException("User id is required");
-        if (command.ColumnId == Guid.Empty)
-            throw new BadRequestException("Column id is required");
-        if (!Enum.IsDefined(command.Priority))
-            throw new BadRequestException("Priority is invalid");
-
         var kanban = await kanbans.GetByIdWithProjectAsync(command.KanbanId, cancellationToken)
                      ?? throw new NotFoundException("Kanban not found");
         var column = await columns.GetByIdAsync(command.ColumnId, cancellationToken)

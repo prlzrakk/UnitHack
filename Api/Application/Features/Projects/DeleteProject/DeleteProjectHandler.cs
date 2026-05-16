@@ -11,11 +11,6 @@ public class DeleteProjectHandler(
 {
     public async Task Handle(DeleteProjectCommand command, CancellationToken cancellationToken)
     {
-        if (command.ProjectId == Guid.Empty)
-            throw new BadRequestException("Project id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var project = await projects.GetProjectById(command.ProjectId, cancellationToken)
                       ?? throw new NotFoundException("Project not found");
 

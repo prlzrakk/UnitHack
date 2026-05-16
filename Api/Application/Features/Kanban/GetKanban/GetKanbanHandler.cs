@@ -9,11 +9,6 @@ public class GetKanbanHandler(IKanbanRepository kanbanRepository, ITeamMemberRep
 {
     public async Task<GetKanbanResponse> Handle(GetKanbanQuery request, CancellationToken cancellationToken)
     {
-        if (request.KanbanId == Guid.Empty)
-            throw new BadRequestException("Kanban id is required");
-        if (request.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var kanban = await kanbanRepository.GetByIdWithProjectAndColumnsAsync(request.KanbanId, cancellationToken);
 
         if (kanban is null)

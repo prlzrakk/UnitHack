@@ -12,11 +12,6 @@ public class DeleteColumnHandler(
 {
     public async Task Handle(DeleteColumnCommand command, CancellationToken cancellationToken)
     {
-        if (command.ColumnId == Guid.Empty)
-            throw new BadRequestException("Column id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var column = await columns.GetByIdAsync(command.ColumnId, cancellationToken)
                      ?? throw new NotFoundException("Column not found");
         var kanban = await kanbans.GetByIdWithProjectAsync(column.KanbanId, cancellationToken)

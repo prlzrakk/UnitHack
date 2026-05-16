@@ -78,14 +78,11 @@ public class TeamsController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var currentUserId = User.GetUserId();
-        if (req.Role is null)
-            return BadRequest("Role is required");
 
         var result = await mediator.Send(
-            new ChangeMemberRoleCommand(teamId, currentUserId, userId, req.Role.Value),
+            new ChangeMemberRoleCommand(teamId, currentUserId, userId, req.Role),
             cancellationToken);
 
         return Ok(result);
     }
 }
-

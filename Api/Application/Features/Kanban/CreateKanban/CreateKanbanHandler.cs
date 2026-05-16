@@ -14,13 +14,6 @@ public class CreateKanbanHandler(
 {
     public async Task<CreateKanbanResponse> Handle(CreateKanbanCommand request, CancellationToken cancellationToken)
     {
-        if (request.ProjectId == Guid.Empty)
-            throw new BadRequestException("Project id is required");
-        if (request.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new BadRequestException("Kanban name is required");
-
         var project = await projectRepository.GetProjectById(request.ProjectId, cancellationToken);
 
         if (project is null)

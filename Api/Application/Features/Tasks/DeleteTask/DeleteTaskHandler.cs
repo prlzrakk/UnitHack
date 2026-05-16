@@ -12,11 +12,6 @@ public class DeleteTaskHandler(
 {
     public async Task Handle(DeleteTaskCommand command, CancellationToken cancellationToken)
     {
-        if (command.TaskId == Guid.Empty)
-            throw new BadRequestException("Task id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var task = await tasks.GetByIdAsync(command.TaskId, cancellationToken)
                    ?? throw new NotFoundException("Task not found");
         var kanban = await kanbans.GetByIdWithProjectAsync(task.KanbanId, cancellationToken)

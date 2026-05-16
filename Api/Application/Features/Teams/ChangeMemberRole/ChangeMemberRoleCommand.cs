@@ -7,4 +7,4 @@ public record ChangeMemberRoleCommand(
     Guid TeamId,
     Guid CurrentUserId,
     Guid UserId,
-    TeamRole Role) : IRequest<ChangeMemberRoleResponse>;
+    TeamRole? Role) : IRequest<ChangeMemberRoleResponse>;

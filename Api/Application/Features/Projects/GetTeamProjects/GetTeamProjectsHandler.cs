@@ -12,11 +12,6 @@ public class GetTeamProjectsHandler(
 {
     public async Task<List<ProjectResponse>> Handle(GetTeamProjectsQuery query, CancellationToken cancellationToken)
     {
-        if (query.TeamId == Guid.Empty)
-            throw new BadRequestException("Team id is required");
-        if (query.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var team = await teams.GetTeam(query.TeamId, cancellationToken)
                    ?? throw new NotFoundException("Team not found");
 

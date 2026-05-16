@@ -2,11 +2,13 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using Client.Models.Configs;
+using FluentValidation;
 using Infrastructure.Extensions;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Repositories.Mocks;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi;
@@ -50,6 +52,9 @@ public static class ServiceCollectionExtensions
 
             cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
         });
+
+        builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+        builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
         return builder;
     }

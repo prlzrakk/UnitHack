@@ -13,11 +13,6 @@ public class GetProjectKanbansHandler(
     public async Task<GetProjectKanbansResponse> Handle(GetProjectKanbansQuery request,
         CancellationToken cancellationToken)
     {
-        if (request.ProjectId == Guid.Empty)
-            throw new BadRequestException("Project id is required");
-        if (request.UserId == Guid.Empty)
-            throw new BadRequestException("User id is required");
-
         var project = await projectRepository.GetProjectById(request.ProjectId, cancellationToken)
                       ?? throw new NotFoundException("Project not found");
 

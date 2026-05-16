@@ -1,5 +1,4 @@
 using Api.Application.Features.Teams.Common;
-using Api.Application.Common.Exceptions;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -10,9 +9,6 @@ public class GetTeamsHandler(ITeamRepository teams, ITeamMemberRepository member
 {
     public async Task<List<TeamListItemResponse>> Handle(GetTeamsQuery query, CancellationToken cancellationToken)
     {
-        if (query.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var userTeams = await teams.GetTeamsByUserId(query.CurrentUserId, cancellationToken);
         var result = new List<TeamListItemResponse>();
 

@@ -35,6 +35,7 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// Delete kanban board
     /// </summary>
     [HttpDelete("kanbans/{kanbanId:guid}")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> DeleteKanban(Guid kanbanId, CancellationToken cancellationToken)
     {
         var currentUserId = User.GetUserId();
@@ -47,6 +48,7 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// Change kanban name
     /// </summary>
     [HttpPut("kanbans/{kanbanId:guid}")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> ChangeKanban(
         Guid kanbanId,
         [FromBody] ChangeKanbanRequest request,
@@ -63,6 +65,7 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// Get all project kanbans
     /// </summary>
     [HttpGet("projects/{projectId:guid}/kanbans")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> GetKanbans(Guid projectId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -75,6 +78,7 @@ public class KanbanController(IMediator mediator) : ControllerBase
     /// Get kanban by id
     /// </summary>
     [HttpGet("kanbans/{kanbanId:guid}")]
+    [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> GetKanban(Guid kanbanId, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();

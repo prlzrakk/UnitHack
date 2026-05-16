@@ -15,14 +15,7 @@ public class ChangeMemberRoleHandler(
         ChangeMemberRoleCommand command,
         CancellationToken cancellationToken)
     {
-        if (command.TeamId == Guid.Empty)
-            throw new BadRequestException("Team id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (command.UserId == Guid.Empty)
-            throw new BadRequestException("User id is required");
-        if (!Enum.IsDefined(command.Role))
-            throw new BadRequestException("Role is invalid");
+        var role = command.Role!.Value;
 
         var team = await teams.GetTeam(command.TeamId, cancellationToken)
                    ?? throw new NotFoundException("Team not found");
@@ -34,14 +27,14 @@ public class ChangeMemberRoleHandler(
         var member = await members.GetMemberAsync(team.Id, command.UserId, cancellationToken)
                      ?? throw new NotFoundException("Team member not found");
 
-        if (member.Role == TeamRole.Admin && command.Role == TeamRole.Member)
+        if (member.Role == TeamRole.Admin && role == TeamRole.Member)
         {
             var adminsCount = await members.CountAdminsAsync(team.Id, cancellationToken);
             if (adminsCount <= 1)
                 throw new BadRequestException("Team must have at least one admin");
         }
 
-        member = await members.ChangeRoleAsync(team.Id, command.UserId, command.Role, cancellationToken)
+        member = await members.ChangeRoleAsync(team.Id, command.UserId, role, cancellationToken)
                  ?? throw new NotFoundException("Team member not found");
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

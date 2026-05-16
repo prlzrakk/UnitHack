@@ -10,11 +10,6 @@ public class GetProjectHandler(IProjectRepository projects, ITeamMemberRepositor
 {
     public async Task<ProjectResponse> Handle(GetProjectQuery query, CancellationToken cancellationToken)
     {
-        if (query.ProjectId == Guid.Empty)
-            throw new BadRequestException("Project id is required");
-        if (query.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var project = await projects.GetProjectById(query.ProjectId, cancellationToken)
                       ?? throw new NotFoundException("Project not found");
 

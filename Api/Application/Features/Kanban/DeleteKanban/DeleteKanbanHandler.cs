@@ -12,11 +12,6 @@ public class DeleteKanbanHandler(
 {
     public async Task Handle(DeleteKanbanCommand request, CancellationToken cancellationToken)
     {
-        if (request.KanbanId == Guid.Empty)
-            throw new BadRequestException("Kanban id is required");
-        if (request.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-
         var kanban = await kanbanRepository.GetByIdWithProjectAsync(request.KanbanId, cancellationToken);
         if (kanban is null)
             throw new NotFoundException("Kanban not found");

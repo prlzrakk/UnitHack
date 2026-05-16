@@ -12,13 +12,6 @@ public class RemoveTeamMemberHandler(
 {
     public async Task Handle(RemoveTeamMemberCommand command, CancellationToken cancellationToken)
     {
-        if (command.TeamId == Guid.Empty)
-            throw new BadRequestException("Team id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (command.UserId == Guid.Empty)
-            throw new BadRequestException("User id is required");
-
         var team = await teams.GetTeam(command.TeamId, cancellationToken)
                    ?? throw new NotFoundException("Team not found");
 

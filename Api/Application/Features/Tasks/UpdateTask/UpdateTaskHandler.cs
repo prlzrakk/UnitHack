@@ -14,17 +14,6 @@ public class UpdateTaskHandler(
 {
     public async Task<TaskResponse> Handle(UpdateTaskCommand command, CancellationToken cancellationToken)
     {
-        if (command.TaskId == Guid.Empty)
-            throw new BadRequestException("Task id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (string.IsNullOrWhiteSpace(command.Name))
-            throw new BadRequestException("Task name is required");
-        if (command.UserId == Guid.Empty)
-            throw new BadRequestException("User id is required");
-        if (!Enum.IsDefined(command.Priority))
-            throw new BadRequestException("Priority is invalid");
-
         var task = await tasks.GetByIdAsync(command.TaskId, cancellationToken)
                    ?? throw new NotFoundException("Task not found");
         var kanban = await kanbans.GetByIdWithProjectAsync(task.KanbanId, cancellationToken)

@@ -14,13 +14,6 @@ public class CreateProjectHandler(
 {
     public async Task<ProjectResponse> Handle(CreateProjectCommand command, CancellationToken cancellationToken)
     {
-        if (command.TeamId == Guid.Empty)
-            throw new BadRequestException("Team id is required");
-        if (command.CurrentUserId == Guid.Empty)
-            throw new BadRequestException("Current user id is required");
-        if (string.IsNullOrWhiteSpace(command.Name))
-            throw new BadRequestException("Project name is required");
-
         var team = await teams.GetTeam(command.TeamId, cancellationToken)
                    ?? throw new NotFoundException("Team not found");
 
