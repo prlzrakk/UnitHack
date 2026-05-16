@@ -6,8 +6,8 @@ public static class LoginUserValidation
 {
     public static void Validate(LoginUserCommand command)
     {
-        if (string.IsNullOrWhiteSpace(command.Username))
-            throw new ApiException(StatusCodes.Status400BadRequest, "Username is required");
+        if (string.IsNullOrWhiteSpace(command.Email))
+            throw new ApiException(StatusCodes.Status400BadRequest, "Email is required");
 
         if (string.IsNullOrWhiteSpace(command.Password))
             throw new ApiException(StatusCodes.Status400BadRequest, "Password is required");

@@ -22,6 +22,7 @@ public static class AuthExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
@@ -31,7 +32,10 @@ public static class AuthExtensions
                     LifetimeValidator = (notBefore, expires, token, parameters) =>
                         JwtLifetimeValidator.Validate(notBefore, expires, token, settings),
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = signingKey
+                    IssuerSigningKey = signingKey,
+                    NameClaimType = "email",
+                    RoleClaimType = "role",
+                    ClockSkew = TimeSpan.Zero
                 };
             });
         services.AddAuthorization(options =>

@@ -13,7 +13,7 @@ public class LoginUserHandler(IUserRepository users, ITokenService tokenService)
     {
         LoginUserValidation.Validate(command);
 
-        var username = command.Username;
+        var username = command.Email;
 
         var loginStatus = await users.LoginUser(username, command.Password);
 

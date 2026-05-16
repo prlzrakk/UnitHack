@@ -10,10 +10,9 @@ public class RefreshHandler(ITokenService tokenService)
     public Task<RefreshResponse> Handle(RefreshCommand command,
         CancellationToken cancellationToken)
     {
-        var username = command.Username;
         return Task.FromResult(new RefreshResponse(
-            tokenService.GenerateAccessToken(username),
-            tokenService.GenerateRefreshToken(username)
+            tokenService.GenerateAccessToken(command.Email),
+            tokenService.GenerateRefreshToken(command.Email)
         ));
     }
 }

@@ -28,7 +28,7 @@ public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher, 
         if (name is not null && name != createdUser.Name)
         {
             var oldUsername = createdUser.Name;
-            await users.ChangeDisplayName(createdUser.Name, name);
+            await users.ChangeDisplayName(createdUser.Email, name);
             logger.LogInformation("Имя пользователя было измененно с {OldUsername} на {NewUsername}", oldUsername,
                 name);
             createdUser.Name = name;
