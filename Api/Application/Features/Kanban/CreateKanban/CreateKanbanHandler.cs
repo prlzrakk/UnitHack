@@ -1,3 +1,4 @@
+using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -9,47 +10,66 @@ public class CreateKanbanHandler(
     IUnitOfWork unitOfWork
 ) : IRequestHandler<CreateKanbanCommand, CreateKanbanResponse>
 {
-    public Task<CreateKanbanResponse> Handle(CreateKanbanCommand request, CancellationToken cancellationToken)
+    public async Task<CreateKanbanResponse> Handle(CreateKanbanCommand request, CancellationToken cancellationToken)
     {
-        // TODO: сделать, когда будут сущности таблиц
+        var project = await projectRepository.GetProjectById(request.ProjectId, cancellationToken);
 
-        // var project = await projectRepository.GetProjectById(request.ProjectId, cancellationToken);
-        //
-        // if (project is null)
-        //     throw new Exception("Project not found");
+        if (project is null)
+            throw new Exception("Project not found");
 
-        // var kanban = new Kanban
-        // {
-        //     
-        // }
+        var kanban = new Infrastructure.Entities.Kanban
+        {
+            Id = Guid.NewGuid(),
+            ProjectId = project.Id,
+            Name = request.Name.Trim()
+        };
 
-        // var columns = new List<KanbanColumn>
-        // {
-        //     
-        // }
+        var columns = new List<KanbanColumn>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                KanbanId = kanban.Id,
+                Name = "To Do",
+                Order = 1000
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                KanbanId = kanban.Id,
+                Name = "In Progress",
+                Order = 2000
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                KanbanId = kanban.Id,
+                Name = "Done",
+                Order = 3000
+            }
+        };
 
-        // kanban.columns = columns;
 
-        // dbContext.Kanbans.Add(kanban);
+        kanban.Columns = columns;
 
-        // TODO: гпт сказал, что не круто для каждого репозитория сохранять, а проще сделать все, а потом одной штукой отправить SQL запрос уже (надо думать)
-        // await unitOfWork.SaveChangesAsync(cancellationToken);
+        kanbanRepository.Add(kanban);
 
-        // return new CreateKanbanResponse
-        // {
-        //     Id = kanban.Id,
-        //     ProjectId = kanban.ProjectId,
-        //     Name = kanban.Name,
-        //     Columns = columns
-        //         .OrderBy(x => x.Order)
-        //         .Select(x => new KanbanColumnResponse
-        //         {
-        //             Id = x.Id,
-        //             Name = x.Name,
-        //             Order = x.Order
-        //         })
-        //         .ToList()
-        // };
-        return Task.FromResult(new CreateKanbanResponse());
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new CreateKanbanResponse
+        {
+            Id = kanban.Id,
+            ProjectId = kanban.ProjectId,
+            Name = kanban.Name,
+            Columns = columns
+                .OrderBy(x => x.Order)
+                .Select(x => new KanbanColumnResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Order = x.Order
+                })
+                .ToList()
+        };
     }
 }
