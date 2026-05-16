@@ -14,4 +14,16 @@ public class TeamMemberRepositoryMock(MockDataStore store) : ITeamMemberReposito
 
         return Task.FromResult(isAdmin);
     }
+
+    public Task<bool> IsMemberAsync(
+        Guid teamId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var isMember = store.TeamMembers.Any(x =>
+            x.TeamId == teamId &&
+            x.UserId == userId);
+
+        return Task.FromResult(true);
+    }
 }

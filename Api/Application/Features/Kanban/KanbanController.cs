@@ -2,6 +2,7 @@ using Api.Application.Common.Extensions;
 using Api.Application.Features.Kanban.ChangeKanban;
 using Api.Application.Features.Kanban.CreateKanban;
 using Api.Application.Features.Kanban.DeleteKanban;
+using Api.Application.Features.Kanban.GetKanban;
 using Api.Application.Features.Kanban.GetProjectKanbans;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -45,14 +46,17 @@ public class KanbanController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> ChangeKanban(Guid kanbanId, [FromBody] ChangeKanbanRequest request,
         CancellationToken cancellationToken)
     {
-        var currentUserId = User.GetUserId();
+        var userId = User.GetUserId();
 
-        var command = new ChangeKanbanCommand(kanbanId, request.Name, currentUserId);
+        var command = new ChangeKanbanCommand(kanbanId, request.Name, userId);
 
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>
+    /// Get all project kanbans
+    /// </summary>
     [Authorize]
     [HttpGet("projects/{projectId:guid}/kanbans")]
     public async Task<IActionResult> GetKanbans(Guid projectId, CancellationToken cancellationToken)
@@ -60,7 +64,17 @@ public class KanbanController(IMediator mediator) : ControllerBase
         var userId = User.GetUserId();
 
         var result = await mediator.Send(new GetProjectKanbansQuery(projectId, userId), cancellationToken);
-        
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpGet("kanbans/{kanbanId:guid}")]
+    public async Task<IActionResult> GetKanban(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+
+        var result = await mediator.Send(new GetKanbanQuery(kanbanId, userId), cancellationToken);
         return Ok(result);
     }
 }

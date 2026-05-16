@@ -13,6 +13,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         {
             store.KanbanColumns.AddRange(kanban.Columns);
         }
+
         return Task.CompletedTask;
     }
 
@@ -49,6 +50,28 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         }
 
         return Task.FromResult(kanban);
+    }
+
+    public Task<Kanban?> GetByIdWithProjectAndColumnsAsync(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        var kanban = store.Kanbans
+            .FirstOrDefault(x => x.Id == kanbanId);
+
+        if (kanban is null)
+            return Task.FromResult<Kanban?>(null);
+
+        if (kanban.Project is null)
+        {
+            kanban.Project = store.Projects
+                .FirstOrDefault(x => x.Id == kanban.ProjectId)!;
+        }
+
+        kanban.Columns = store.KanbanColumns
+            .Where(x => x.KanbanId == kanban.Id)
+            .OrderBy(x => x.Order)
+            .ToList();
+
+        return Task.FromResult<Kanban?>(kanban);
     }
 
     public Task<List<Kanban>> GetByProjectIdAsync(
