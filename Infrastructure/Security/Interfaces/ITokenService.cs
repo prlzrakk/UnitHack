@@ -1,4 +1,4 @@
-using Shared.Models.Entities;
+using Client.Models.Entities;
 
 namespace Infrastructure.Interfaces;
 

@@ -1,4 +1,4 @@
-﻿namespace Shared.Models.Entities;
+﻿namespace Client.Models.Entities;
 
 public class User
 {
