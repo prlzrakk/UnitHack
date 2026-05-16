@@ -4,5 +4,5 @@ using MediatR;
 namespace Api.Application.Features.Auth.Refresh;
 
 public record RefreshCommand(
-    string Email
+    int UserId
 ) : IRequest<RefreshResponse>;

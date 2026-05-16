@@ -1,11 +1,11 @@
 ﻿using System.Reflection;
 using Client.Models.Configs;
-using FluentValidation;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Repositories.Mocks;
-using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.OpenApi;
 
-namespace Api.Application.Common;
+namespace WebApplication1.Application.Common;
 
 public static class ServiceCollectionExtensions
 {
@@ -20,8 +20,6 @@ public static class ServiceCollectionExtensions
     
     public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
-        var applicationAssembly = typeof(ServiceCollectionExtensions).Assembly;
-        
         builder.Services.AddMediatR(cfg =>
         {
             var mediatRConfig = builder.Configuration.GetSection("Licenses").Get<MediatRConfig>();
@@ -29,17 +27,11 @@ public static class ServiceCollectionExtensions
                 cfg.LicenseKey = mediatRConfig.LicenseKey;
             cfg.RegisterServicesFromAssemblies(typeof(Program).Assembly);
         });
-        
-        builder.Services.AddValidatorsFromAssembly(applicationAssembly);
-        
-        builder.Services.AddTransient(
-            typeof(IPipelineBehavior<,>),
-            typeof(ValidationBehavior<,>));
 
         return builder;
     }
 
-    public static WebApplicationBuilder AddSwagger(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddSwaggerWithAuth(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
@@ -48,6 +40,21 @@ public static class ServiceCollectionExtensions
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             if (File.Exists(xmlPath))
                 options.IncludeXmlComments(xmlPath);
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = JwtBearerDefaults.AuthenticationScheme,
+                BearerFormat = "JWT",
+                Description = "Paste JWT token here. The Authorization header will be sent as: Bearer {token}"
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                { new OpenApiSecuritySchemeReference("Bearer", document), [] }
+            });
         });
 
         return builder;
@@ -62,11 +69,12 @@ public static class ServiceCollectionExtensions
     public static WebApplicationBuilder AddAuthorizationPolicy(this WebApplicationBuilder builder)
     {
         builder.Services.AddAuthorizationBuilder()
-            .AddPolicy("RequireEmail", policy =>
-                policy.RequireClaim("email"));
+            .AddPolicy("RequireUserId", policy =>
+                policy.RequireClaim("user_id"));
 
         // builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 
         return builder;
     }
+
 }

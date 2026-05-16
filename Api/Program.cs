@@ -19,7 +19,7 @@ builder.Services.AddAuth(jwtSettings);
 
 builder
     .AddAuthorizationPolicy()
-    .AddSwagger()
+    .AddSwaggerWithAuth()
     .AddApplicationServices()
     .AddDatabase()
     .AddInfrastructureServices();

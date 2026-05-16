@@ -32,8 +32,7 @@ public static class AuthExtensions
                         JwtLifetimeValidator.Validate(notBefore, expires, token, settings),
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = signingKey,
-                    NameClaimType = "email",
-                    RoleClaimType = "role",
+                    NameClaimType = "user_id",
                     ClockSkew = TimeSpan.Zero
                 };
             });

@@ -8,6 +8,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 {
     private static readonly object Sync = new();
     private static readonly Dictionary<string, MockUser> Users = new(StringComparer.OrdinalIgnoreCase);
+    private static int nextId = 1;
 
     public Task<User?> RegisterUser(string email, string hashPassword)
     {
@@ -22,6 +23,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
             var user = new MockUser
             {
+                Id = nextId++,
                 Email = normalizedEmail,
                 Name = CreateDefaultName(normalizedEmail),
                 HashPassword = hashPassword
@@ -32,7 +34,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         }
     }
 
-    public Task<bool> LoginUser(string email, string hashPassword)
+    public Task<bool> LoginUser(string email, string password)
     {
         var normalizedEmail = NormalizeEmail(email);
 
@@ -41,7 +43,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
             SeedDefaultUser();
 
             var isValid = Users.TryGetValue(normalizedEmail, out var user)
-                          && hasher.Verify(hashPassword, user.HashPassword);
+                          && hasher.Verify(password, user.HashPassword);
             return Task.FromResult(isValid);
         }
     }
@@ -61,16 +63,16 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         }
     }
 
-    public Task<User?> GetUser(int userTaskId)
+    public Task<User?> GetUser(int userId)
     {
         lock (Sync)
         {
             SeedDefaultUser();
 
-            if (userTaskId <= 0)
+            if (userId <= 0)
                 return Task.FromResult<User?>(null);
 
-            var user = Users.Values.ElementAtOrDefault(userTaskId - 1);
+            var user = Users.Values.FirstOrDefault(u => u.Id == userId);
             return Task.FromResult(user is null ? null : ToUser(user));
         }
     }
@@ -99,6 +101,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
         Users.Add(email, new MockUser
         {
+            Id = nextId++,
             Email = email,
             Name = "Test User",
             HashPassword = hasher.Hash("password")
@@ -115,12 +118,14 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
     private static User ToUser(MockUser user) => new()
     {
+        Id = user.Id,
         Email = user.Email,
         Name = user.Name
     };
 
     private sealed class MockUser
     {
+        public required int Id { get; init; }
         public required string Email { get; init; }
         public required string Name { get; set; }
         public required string HashPassword { get; init; }

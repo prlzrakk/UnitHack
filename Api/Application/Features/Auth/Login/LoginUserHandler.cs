@@ -1,8 +1,8 @@
 using Api.Application.Common.Exceptions;
+using MediatR;
 using Client.Models.DTO.Response;
 using Infrastructure.Repositories.Interfaces;
-using Infrastructure.Security.Interfaces;
-using MediatR;
+using Infrastructure.Security.Interfaces.Infrastructure.Interfaces;
 
 namespace Api.Application.Features.Auth.Login;
 
@@ -12,13 +12,18 @@ public class LoginUserHandler(IUserRepository users, ITokenService tokenService)
     public async Task<LoginUserResponse> Handle(LoginUserCommand command,
         CancellationToken cancellationToken)
     {
-        var username = command.Email;
+        var email = command.Email.Trim().ToLowerInvariant();
 
-        var loginStatus = await users.LoginUser(username, command.Password);
+        var loginStatus = await users.LoginUser(email, command.Password);
 
         if (loginStatus)
-            return new LoginUserResponse(tokenService.GenerateAccessToken(username),
-                tokenService.GenerateRefreshToken(username));
-        throw new UnauthorizedException("Incorrect password or username");
+        {
+            var user = await users.GetUser(email)
+                       ?? throw new ApiException(StatusCodes.Status401Unauthorized, "Incorrect email or password");
+
+            return new LoginUserResponse(
+                tokenService.GenerateAccessToken(user),
+                tokenService.GenerateRefreshToken(user));
+        }
     }
 }

@@ -30,11 +30,11 @@ public class AuthController(IMediator mediator) : ControllerBase
     [Authorize(Policy = AuthPolicies.RefreshTokenOnly)]
     public async Task<IActionResult> Refresh()
     {
-        var email = User.FindFirst("email")?.Value;
-        if (string.IsNullOrEmpty(email))
+        var userIdClaim = User.FindFirst("user_id")?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
             return Unauthorized();
 
-        var result = await mediator.Send(new RefreshCommand(email));
+        var result = await mediator.Send(new RefreshCommand(userId));
 
         return Ok(result);
     }
