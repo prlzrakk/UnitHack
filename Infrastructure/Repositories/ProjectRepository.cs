@@ -1,13 +1,48 @@
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
 public class ProjectRepository(DatabaseContext context) : IProjectRepository
 {
+    public async Task<Project> AddAsync(Project project, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        await context.Projects.AddAsync(project, cancellationToken);
+        return project;
+    }
+
     public async Task<Project?> GetProjectById(Guid projectId, CancellationToken cancellationToken)
     {
-        return await context.Projects.FindAsync(projectId, cancellationToken);
+        return await context.Projects
+            .FirstOrDefaultAsync(x => x.Id == projectId, cancellationToken);
+    }
+
+    public async Task<List<Project>> GetByTeamIdAsync(Guid teamId, CancellationToken cancellationToken)
+    {
+        return await context.Projects
+            .Where(x => x.TeamId == teamId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> DeleteAsync(Guid projectId, CancellationToken cancellationToken)
+    {
+        var project = await context.Projects
+            .Include(x => x.Kanbans)
+            .ThenInclude(x => x.Columns)
+            .Include(x => x.Kanbans)
+            .ThenInclude(x => x.Tasks)
+            .FirstOrDefaultAsync(x => x.Id == projectId, cancellationToken);
+
+        if (project is null)
+            return false;
+
+        context.Tasks.RemoveRange(project.Kanbans.SelectMany(x => x.Tasks));
+        context.KanbanColumns.RemoveRange(project.Kanbans.SelectMany(x => x.Columns));
+        context.Kanbans.RemoveRange(project.Kanbans);
+        context.Projects.Remove(project);
+        return true;
     }
 }

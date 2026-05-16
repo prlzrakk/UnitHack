@@ -18,7 +18,7 @@ public class GetKanbanHandler(IKanbanRepository kanbanRepository, ITeamMemberRep
             await teamMemberRepository.IsMemberAsync(kanban.Project.TeamId, request.CurrentUserId, cancellationToken);
 
         if (!isMember)
-            throw new NotFoundException("Team member not found");
+            throw new ForbiddenException("Only team member can view kanban");
 
         return new GetKanbanResponse
         {

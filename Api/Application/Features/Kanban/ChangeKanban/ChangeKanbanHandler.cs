@@ -22,7 +22,7 @@ public class ChangeKanbanHandler(
         if (!isAdmin)
             throw new ForbiddenException("Only team admin can change kanban");
 
-        kanban.Name = request.Name;
+        kanban.Name = request.Name.Trim();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

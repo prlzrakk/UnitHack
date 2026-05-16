@@ -9,7 +9,9 @@ public class UserRepository(DatabaseContext context) : IUserRepository
 {
     public async Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
-        if (context.Users.Any(u => u.Email == email)) return null;
+        if (await context.Users.AnyAsync(u => u.Email == email))
+            return null;
+
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -17,6 +19,7 @@ public class UserRepository(DatabaseContext context) : IUserRepository
             Email = email,
             HashPassword = hashPassword
         };
+
         await context.Users.AddAsync(user);
         return user;
     }
@@ -38,14 +41,15 @@ public class UserRepository(DatabaseContext context) : IUserRepository
         return await context.Users
             .FirstOrDefaultAsync(x => x.Id == userId);
     }
-    
 
     public async Task<bool> ChangeDisplayName(string email, string newName)
     {
         var user = await context.Users
             .FirstOrDefaultAsync(x => x.Email == email);
-        if (user == null)
+
+        if (user is null)
             return false;
+
         user.Name = newName;
         return true;
     }
