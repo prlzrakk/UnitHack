@@ -58,6 +58,27 @@
         <span class="toast-bell">🔔</span>
         <span id="toastText">напомнить о задании</span>
     </div>
+    <div class="reminder-modal" id="reminderModal">
+        <div class="reminder-window">
+            <button class="reminder-close" id="reminderClose" aria-label="Закрыть">
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="reminder-icon">🔔</div>
+
+            <h2 class="reminder-title">Напомнить о задаче?</h2>
+
+            <p class="reminder-text" id="reminderText">
+                Напомнить выбранному пользователю о задаче?
+            </p>
+
+            <div class="reminder-actions">
+                <button class="reminder-btn reminder-no" id="reminderNo">Нет</button>
+                <button class="reminder-btn reminder-yes" id="reminderYes">Да</button>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="./js/sidebar.js"></script>
 <script src="./mocks/kanbanData.js"></script>

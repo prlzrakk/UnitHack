@@ -22,7 +22,11 @@
                         description: "сложность: 2 часа\nприоритет: 1 // какое-то описание",
                         priority: "HIGH",
                         time: "2 часа",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                     {
                         title: "API задач",
@@ -30,7 +34,11 @@
                         priority: "MID",
                         time: "1 час",
                         color: "#42609f",
-                        users: 3,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -43,7 +51,10 @@
                         description: "сложность: 2 часа\nприоритет: 1 // какое-то описание",
                         priority: "HIGH",
                         time: "2 часа",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                        ],
                     },
                     {
                         title: "намазать мясо масло",
@@ -51,7 +62,11 @@
                         priority: "MID",
                         time: "1 час",
                         color: "#42609f",
-                        users: 3,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -65,14 +80,22 @@
                         description: "сложность: 2 часа\nприоритет: 1 // какое-то описание",
                         priority: "HIGH",
                         time: "2 часа",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                     {
                         title: "кикикикиик",
                         description: "очередь / валидация",
                         priority: "MID",
                         time: "1 час",
-                        users: 3,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -101,7 +124,11 @@
                         description: "JWT, роли, базовая защита роутов",
                         priority: "MID",
                         time: "3 часа",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -114,7 +141,9 @@
                         description: "валидация ответа и обработка ошибок",
                         priority: "HIGH",
                         time: "1 час",
-                        users: 1,
+                        users: [
+                            { name: "Аня" },
+                        ],
                     },
                 ],
             },
@@ -128,7 +157,10 @@
                         description: "страница проекта готова",
                         priority: "LOW",
                         time: "30 мин",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                        ],
                     },
                 ],
             },
@@ -156,7 +188,11 @@
                         description: "цвета, кнопки, карточки, состояния",
                         priority: "HIGH",
                         time: "4 часа",
-                        users: 3,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -169,7 +205,11 @@
                         description: "mobile, tablet, desktop",
                         priority: "MID",
                         time: "2 часа",
-                        users: 2,
+                        users: [
+                            { name: "Аня" },
+                            { name: "Макс" },
+                            { name: "aboba"}
+                        ],
                     },
                 ],
             },
@@ -183,7 +223,9 @@
                         description: "основные цвета утверждены",
                         priority: "LOW",
                         time: "1 час",
-                        users: 1,
+                        users: [
+                            { name: "Макс" },
+                        ],
                     },
                 ],
             },
