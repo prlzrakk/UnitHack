@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Application\Features\Users\" />
       <Folder Include="wwwroot\" />
     </ItemGroup>
 

@@ -2,6 +2,8 @@
 using Client.Models.Configs;
 using FluentValidation;
 using MediatR;
+using Infrastructure.Interfaces;
+using Infrastructure.Repositories.Mocks;
 
 namespace WebApplication1.Application.Common;
 
@@ -43,7 +45,9 @@ public static class ServiceCollectionExtensions
         builder.Services.AddSwaggerGen(options =>
         {
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFile));
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            if (File.Exists(xmlPath))
+                options.IncludeXmlComments(xmlPath);
         });
 
         return builder;
@@ -51,6 +55,16 @@ public static class ServiceCollectionExtensions
 
     public static WebApplicationBuilder AddInfrastructureServices(this WebApplicationBuilder builder)
     {
+        builder.Services.AddScoped<IUserRepository, UserRepositoryMock>();
+
+        return builder;
+    }
+    public static WebApplicationBuilder AddAuthorizationPolicy(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RequireEmail", policy =>
+                policy.RequireClaim("email"));
+
         // builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 
         return builder;
