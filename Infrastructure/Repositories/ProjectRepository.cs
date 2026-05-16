@@ -7,9 +7,15 @@ namespace Infrastructure.Repositories;
 
 public class ProjectRepository(DatabaseContext context) : IProjectRepository
 {
-    public async Task<Project> AddAsync(Project project, CancellationToken cancellationToken)
+    public async Task<Project> AddAsync(Guid teamId, string name, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(project);
+        var project = new Project
+        {
+            Id = Guid.NewGuid(),
+            TeamId = teamId,
+            Name = name.Trim()
+        };
+
         await context.Projects.AddAsync(project, cancellationToken);
         return project;
     }

@@ -1,3 +1,4 @@
+using Infrastructure.Constants;
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
@@ -7,10 +8,28 @@ namespace Infrastructure.Repositories;
 
 public class KanbanRepository(DatabaseContext context) : IKanbanRepository
 {
-    public async Task AddAsync(Kanban kanban, CancellationToken cancellationToken = default)
+    public async Task<Kanban> AddAsync(Guid projectId, string name, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(kanban);
+        var kanbanId = Guid.NewGuid();
+        var kanban = new Kanban
+        {
+            Id = kanbanId,
+            ProjectId = projectId,
+            Name = name.Trim(),
+            Columns = KanbanDefaults.BasicColumns
+                .Select(column => new KanbanColumn
+                {
+                    Id = Guid.NewGuid(),
+                    KanbanId = kanbanId,
+                    Name = column.Name,
+                    Order = column.Order,
+                    Tasks = []
+                })
+                .ToList()
+        };
+
         await context.Kanbans.AddAsync(kanban, cancellationToken);
+        return kanban;
     }
 
     public async Task<bool> DeleteAsync(Guid kanbanId, CancellationToken cancellationToken)

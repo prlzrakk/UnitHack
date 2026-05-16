@@ -1,4 +1,3 @@
-using Infrastructure.Entities;
 using Api.Application.Common.Exceptions;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
@@ -23,44 +22,7 @@ public class CreateKanbanHandler(
         if (!isAdmin)
             throw new ForbiddenException("Only team admin can create kanban");
 
-        var kanban = new Infrastructure.Entities.Kanban
-        {
-            Id = Guid.NewGuid(),
-            ProjectId = project.Id,
-            Project = project,
-            Name = request.Name.Trim()
-        };
-
-        var columns = new List<KanbanColumn>
-        {
-            new()
-            {
-                Id = Guid.NewGuid(),
-                KanbanId = kanban.Id,
-                Name = "To Do",
-                Order = 1000
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                KanbanId = kanban.Id,
-                Name = "In Progress",
-                Order = 2000
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                KanbanId = kanban.Id,
-                Name = "Done",
-                Order = 3000
-            }
-        };
-
-
-        kanban.Columns = columns;
-
-        await kanbanRepository.AddAsync(kanban, cancellationToken);
-
+        var kanban = await kanbanRepository.AddAsync(project.Id, request.Name, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CreateKanbanResponse
@@ -68,7 +30,7 @@ public class CreateKanbanHandler(
             Id = kanban.Id,
             ProjectId = kanban.ProjectId,
             Name = kanban.Name,
-            Columns = columns
+            Columns = kanban.Columns
                 .OrderBy(x => x.Order)
                 .Select(x => new KanbanColumnResponse
                 {

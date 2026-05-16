@@ -1,5 +1,7 @@
+using Infrastructure.Constants;
 using Infrastructure.Db;
 using Infrastructure.Entities;
+using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +9,32 @@ namespace Infrastructure.Repositories;
 
 public class KanbanTaskRepository(DatabaseContext context) : IKanbanTaskRepository
 {
-    public async Task<KanbanTask> AddAsync(KanbanTask task, CancellationToken cancellationToken)
+    public async Task<KanbanTask> AddAsync(
+        Guid kanbanId,
+        Guid columnId,
+        Guid userId,
+        string name,
+        string? description,
+        Priority priority,
+        DateTime deadline,
+        int? order,
+        CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(task);
+        var taskOrder = order ?? await GetNextOrderAsync(kanbanId, cancellationToken);
+        var task = new KanbanTask
+        {
+            Id = Guid.NewGuid(),
+            KanbanId = kanbanId,
+            ColumnId = columnId,
+            UserId = userId,
+            Name = name.Trim(),
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+            Priority = priority,
+            Deadline = deadline,
+            CreatedAt = DateTime.UtcNow,
+            Order = taskOrder
+        };
+
         await context.Tasks.AddAsync(task, cancellationToken);
         return task;
     }
@@ -31,5 +56,15 @@ public class KanbanTaskRepository(DatabaseContext context) : IKanbanTaskReposito
 
         context.Tasks.Remove(task);
         return true;
+    }
+
+    private async Task<int> GetNextOrderAsync(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        var maxOrder = await context.Tasks
+            .Where(x => x.KanbanId == kanbanId)
+            .Select(x => (int?)x.Order)
+            .MaxAsync(cancellationToken);
+
+        return (maxOrder ?? 0) + KanbanDefaults.OrderStep;
     }
 }

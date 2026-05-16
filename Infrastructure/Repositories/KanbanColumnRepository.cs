@@ -1,3 +1,4 @@
+using Infrastructure.Constants;
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
@@ -7,9 +8,22 @@ namespace Infrastructure.Repositories;
 
 public class KanbanColumnRepository(DatabaseContext context) : IKanbanColumnRepository
 {
-    public async Task<KanbanColumn> AddAsync(KanbanColumn column, CancellationToken cancellationToken)
+    public async Task<KanbanColumn> AddAsync(
+        Guid kanbanId,
+        string name,
+        int? order,
+        CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(column);
+        var columnOrder = order ?? await GetNextOrderAsync(kanbanId, cancellationToken);
+        var column = new KanbanColumn
+        {
+            Id = Guid.NewGuid(),
+            KanbanId = kanbanId,
+            Name = name.Trim(),
+            Order = columnOrder,
+            Tasks = []
+        };
+
         await context.KanbanColumns.AddAsync(column, cancellationToken);
         return column;
     }
@@ -31,5 +45,15 @@ public class KanbanColumnRepository(DatabaseContext context) : IKanbanColumnRepo
 
         context.KanbanColumns.Remove(column);
         return true;
+    }
+
+    private async Task<int> GetNextOrderAsync(Guid kanbanId, CancellationToken cancellationToken)
+    {
+        var maxOrder = await context.KanbanColumns
+            .Where(x => x.KanbanId == kanbanId)
+            .Select(x => (int?)x.Order)
+            .MaxAsync(cancellationToken);
+
+        return (maxOrder ?? 0) + KanbanDefaults.OrderStep;
     }
 }
