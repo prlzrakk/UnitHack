@@ -42,12 +42,7 @@ public class UserRepository(DatabaseContext context) : IUserRepository
     {
         throw new NotImplementedException();
     }
-
-    public Task<User?> GetUser(int userId)
-    {
-        throw new NotImplementedException();
-    }
-
+    
     public Task<bool> ChangeDisplayName(string email, string newName)
     {
         throw new NotImplementedException();

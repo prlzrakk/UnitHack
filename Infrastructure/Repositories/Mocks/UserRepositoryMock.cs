@@ -102,7 +102,7 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
         Users.Add(email, new MockUser
         {
-            Id = Guid.NewGuid(),
+            Id = MockDataStore.SeedUserId,
             Email = email,
             Name = "Test User",
             HashPassword = hasher.Hash("password")

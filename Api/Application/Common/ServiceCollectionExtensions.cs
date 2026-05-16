@@ -64,7 +64,10 @@ public static class ServiceCollectionExtensions
     {
         builder.Services.AddScoped<IUserRepository, UserRepositoryMock>();
         builder.Services.AddScoped<IKanbanRepository, MockKanbanRepository>();
+        builder.Services.AddScoped<IKanbanColumnRepository, MockKanbanColumnRepository>();
+        builder.Services.AddScoped<IKanbanTaskRepository, MockKanbanTaskRepository>();
         builder.Services.AddScoped<IProjectRepository, MockProjectRepository>();
+        builder.Services.AddScoped<ITeamRepository, MockTeamRepository>();
         builder.Services.AddSingleton<MockDataStore>();
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepositoryMock>();
         builder.Services.AddScoped<IUnitOfWork, MockUnitOfWork>();

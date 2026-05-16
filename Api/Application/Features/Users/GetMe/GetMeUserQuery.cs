@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Api.Application.Features.Users.GetMe;
 
-public record GetMeUserQuery(Guid UserId) : IRequest<User?>;
+public record GetMeUserQuery(Guid UserId) : IRequest<User>;

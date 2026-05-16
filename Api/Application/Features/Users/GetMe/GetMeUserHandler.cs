@@ -1,13 +1,18 @@
+using Api.Application.Common.Exceptions;
 using Client.Models.Entities;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
 namespace Api.Application.Features.Users.GetMe;
 
-public class GetMeUserHandler(IUserRepository users) : IRequestHandler<GetMeUserQuery, User?>
+public class GetMeUserHandler(IUserRepository users) : IRequestHandler<GetMeUserQuery, User>
 {
-    public Task<User?> Handle(GetMeUserQuery query, CancellationToken cancellationToken)
+    public async Task<User> Handle(GetMeUserQuery query, CancellationToken cancellationToken)
     {
-        return users.GetUser(query.UserId);
+        if (query.UserId == Guid.Empty)
+            throw new BadRequestException("User id is required");
+
+        return await users.GetUser(query.UserId)
+               ?? throw new NotFoundException("User not found");
     }
 }
