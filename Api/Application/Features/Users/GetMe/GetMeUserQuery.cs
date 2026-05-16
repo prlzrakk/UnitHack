@@ -1,4 +1,4 @@
-using Client.Models.Entities;
+using Infrastructure.Entities;
 using MediatR;
 
 namespace Api.Application.Features.Users.GetMe;

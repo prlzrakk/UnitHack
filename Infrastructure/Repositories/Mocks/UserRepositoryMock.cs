@@ -1,4 +1,4 @@
-using Client.Models.Entities;
+using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 
@@ -33,6 +33,11 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
             Users.Add(normalizedEmail, user);
             return Task.FromResult<User?>(ToUser(user));
         }
+    }
+
+    public Task<User?> RegisterUser(string email, string name, string hashPassword)
+    {
+        throw new NotImplementedException();
     }
 
     public Task<bool> LoginUser(string email, string password)
