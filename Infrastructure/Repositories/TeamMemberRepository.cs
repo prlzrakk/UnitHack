@@ -14,4 +14,9 @@ public class TeamMemberRepository(DatabaseContext context) : ITeamMemberReposito
             .Select(x => x.Role == TeamRole.Admin)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public Task<bool> IsMemberAsync(Guid teamId, Guid userId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
 }
