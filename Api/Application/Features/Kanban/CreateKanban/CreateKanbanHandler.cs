@@ -52,7 +52,7 @@ public class CreateKanbanHandler(
 
         kanban.Columns = columns;
 
-        kanbanRepository.Add(kanban);
+        kanbanRepository.AddAsync(kanban);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
