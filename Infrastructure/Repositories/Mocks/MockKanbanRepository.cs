@@ -1,3 +1,4 @@
+using Infrastructure.Constants;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 
@@ -5,28 +6,37 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
 {
-    public Task AddAsync(Kanban kanban, CancellationToken cancellationToken = default)
+    public Task<Kanban> AddAsync(Guid projectId, string name, CancellationToken cancellationToken = default)
     {
-        if (kanban.Project is null)
+        var project = store.Projects.First(x => x.Id == projectId);
+        var kanban = new Kanban
         {
-            kanban.Project = store.Projects.First(x => x.Id == kanban.ProjectId);
-        }
+            Id = Guid.NewGuid(),
+            ProjectId = project.Id,
+            Project = project,
+            Name = name.Trim(),
+            Columns = []
+        };
 
         store.Kanbans.Add(kanban);
-        kanban.Project.Kanbans.Add(kanban);
+        project.Kanbans.Add(kanban);
 
-        if (kanban.Columns is not null)
-        {
-            foreach (var column in kanban.Columns)
+        var columns = KanbanDefaults.BasicColumns
+            .Select(column => new KanbanColumn
             {
-                column.Kanban = kanban;
-                column.Tasks ??= [];
-            }
+                Id = Guid.NewGuid(),
+                KanbanId = kanban.Id,
+                Kanban = kanban,
+                Name = column.Name,
+                Order = column.Order,
+                Tasks = []
+            })
+            .ToList();
 
-            store.KanbanColumns.AddRange(kanban.Columns);
-        }
+        kanban.Columns = columns;
+        store.KanbanColumns.AddRange(columns);
 
-        return Task.CompletedTask;
+        return Task.FromResult(kanban);
     }
 
     public Task<bool> DeleteAsync(

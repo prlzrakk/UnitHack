@@ -1,6 +1,5 @@
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Projects.Common;
-using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -21,14 +20,7 @@ public class CreateProjectHandler(
         if (!isAdmin)
             throw new ForbiddenException("Only team admin can create projects");
 
-        var project = await projects.AddAsync(new Project
-        {
-            Id = Guid.NewGuid(),
-            TeamId = team.Id,
-            Team = team,
-            Name = command.Name.Trim()
-        }, cancellationToken);
-
+        var project = await projects.AddAsync(team.Id, command.Name, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new ProjectResponse(project.Id, project.TeamId, project.Name);
