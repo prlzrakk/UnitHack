@@ -45,4 +45,13 @@ public static class ServiceCollectionExtensions
 
         return builder;
     }
+    public static WebApplicationBuilder AddAuthorizationPolicy(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RequireEmail", policy =>
+                policy.RequireClaim("email"));
+
+        return builder;
+    }
+
 }

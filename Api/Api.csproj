@@ -19,11 +19,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Application\Features\Users\" />
       <Folder Include="wwwroot\" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Client.Models\Client.Models.csproj" />
+      <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
