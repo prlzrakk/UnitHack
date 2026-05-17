@@ -48,7 +48,7 @@ button {
     margin: 0 auto;
     position: relative;
     background: var(--bg);
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -264,10 +264,10 @@ button {
 
 .quadrant {
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 
     min-height: 300px;
-    padding: 78px 76px 44px;
+    padding: 78px 52px 44px;
 
     display: flex;
     flex-direction: column;
@@ -282,7 +282,7 @@ button {
 .quadrant::after {
     content: attr(data-label);
     position: absolute;
-    left: 76px;
+    left: 52px;
     top: 34px;
 
     font-size: 15px;
@@ -298,15 +298,16 @@ button {
 
 .task-row {
     width: 100%;
+    max-width: 100%;
     min-height: 104px;
 
     display: grid;
     grid-template-columns:
-    minmax(150px, 1.35fr)
+    minmax(0, 1.35fr)
     1px
-    minmax(108px, 0.8fr)
+    minmax(0, 0.8fr)
     1px
-    minmax(128px, 1fr);
+    minmax(0, 1fr);
     align-items: center;
     column-gap: 18px;
 
@@ -330,10 +331,14 @@ button {
 
 /* Название задачи */
 .task-title {
+    min-width: 0;
     font-size: 30px;
     line-height: 1.12;
     color: var(--text);
     overflow-wrap: break-word;
+    word-break: normal;
+    word-wrap: break-word;
+    hyphens: none;
 }
 
 /* Делители внутри карточки */
@@ -350,7 +355,7 @@ button {
     display: grid;
     gap: 10px;
 
-    font-size: 16px;
+    font-size: clamp(12px, 1.05vw, 16px);
     line-height: 1.2;
     color: var(--text);
 }
@@ -358,6 +363,9 @@ button {
 .task-meta span {
     min-width: 0;
     overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: normal;
+    hyphens: none;
 }
 
 .task-meta span:first-child {
@@ -589,6 +597,13 @@ button {
     gap: 16px;
 }
 
+.sidebar-empty {
+    width: 100%;
+    color: #a7a7a7;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
 .project-item {
     width: 100%;
     min-height: 64px;
@@ -733,21 +748,21 @@ button {
     }
 
     .quadrant {
-        padding-left: 54px;
-        padding-right: 54px;
+        padding-left: 42px;
+        padding-right: 42px;
     }
 
     .quadrant::after {
-        left: 54px;
+        left: 42px;
     }
 
     .task-row {
         grid-template-columns:
-      minmax(130px, 1.2fr)
+      minmax(0, 1.2fr)
       1px
-      minmax(100px, 0.8fr)
+      minmax(0, 0.8fr)
       1px
-      minmax(116px, 1fr);
+      minmax(0, 1fr);
     }
 }
 

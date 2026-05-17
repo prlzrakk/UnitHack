@@ -1,3 +1,4 @@
+using Infrastructure.Constants;
 using Infrastructure.Entities;
 using Infrastructure.Enums;
 
@@ -5,7 +6,7 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockDataStore
 {
-    public static readonly Guid SeedUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid SeedUserId = DevSeedDefaults.UserId;
 
     public List<Team> Teams { get; } = [];
     public List<TeamMember> TeamMembers { get; } = [];
@@ -13,6 +14,9 @@ public class MockDataStore
     public List<Kanban> Kanbans { get; } = [];
     public List<KanbanColumn> KanbanColumns { get; } = [];
     public List<KanbanTask> Tasks { get; } = [];
+    public List<Tag> Tags { get; } = [];
+    public List<TaskTag> TaskTags { get; } = [];
+    public List<Notification> Notifications { get; } = [];
 
     public MockDataStore()
     {
@@ -51,36 +55,24 @@ public class MockDataStore
             Columns = []
         };
 
-        var columns = new[]
+        var columnIds = new[]
         {
-            new KanbanColumn
-            {
-                Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                KanbanId = kanbanId,
-                Kanban = kanban,
-                Name = "To Do",
-                Order = 1000,
-                Tasks = []
-            },
-            new KanbanColumn
-            {
-                Id = Guid.Parse("66666666-6666-6666-6666-666666666666"),
-                KanbanId = kanbanId,
-                Kanban = kanban,
-                Name = "In Progress",
-                Order = 2000,
-                Tasks = []
-            },
-            new KanbanColumn
-            {
-                Id = Guid.Parse("77777777-7777-7777-7777-777777777777"),
-                KanbanId = kanbanId,
-                Kanban = kanban,
-                Name = "Done",
-                Order = 3000,
-                Tasks = []
-            }
+            Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            Guid.Parse("66666666-6666-6666-6666-666666666666"),
+            Guid.Parse("77777777-7777-7777-7777-777777777777")
         };
+
+        var columns = KanbanDefaults.BasicColumns
+            .Select((column, index) => new KanbanColumn
+            {
+                Id = columnIds[index],
+                KanbanId = kanbanId,
+                Kanban = kanban,
+                Name = column.Name,
+                Order = column.Order,
+                Tasks = []
+            })
+            .ToArray();
 
         Teams.Add(team);
         Projects.Add(project);

@@ -1,22 +1,25 @@
 using Infrastructure.Db;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
+using Infrastructure.Security.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
-public class UserRepository(DatabaseContext context) : IUserRepository
+public class UserRepository(DatabaseContext context, IPasswordHasher hasher) : IUserRepository
 {
     public async Task<User?> RegisterUser(string email, string name, string hashPassword)
     {
-        if (await context.Users.AnyAsync(u => u.Email == email))
+        var normalizedEmail = NormalizeEmail(email);
+
+        if (await context.Users.AnyAsync(u => u.Email == normalizedEmail))
             return null;
 
         var user = new User
         {
             Id = Guid.NewGuid(),
             Name = name,
-            Email = email,
+            Email = normalizedEmail,
             HashPassword = hashPassword
         };
 
@@ -26,14 +29,20 @@ public class UserRepository(DatabaseContext context) : IUserRepository
 
     public async Task<bool> LoginUser(string email, string password)
     {
-        return await context.Users
-            .AnyAsync(x => x.Email == email && x.HashPassword == password);
+        var normalizedEmail = NormalizeEmail(email);
+
+        var user = await context.Users
+            .FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+
+        return user is not null && hasher.Verify(password, user.HashPassword);
     }
 
     public async Task<User?> GetUser(string email)
     {
+        var normalizedEmail = NormalizeEmail(email);
+
         return await context.Users
-            .FirstOrDefaultAsync(x => x.Email == email);
+            .FirstOrDefaultAsync(x => x.Email == normalizedEmail);
     }
 
     public async Task<User?> GetUser(Guid userId)
@@ -44,13 +53,20 @@ public class UserRepository(DatabaseContext context) : IUserRepository
 
     public async Task<bool> ChangeDisplayName(string email, string newName)
     {
+        var normalizedEmail = NormalizeEmail(email);
+
         var user = await context.Users
-            .FirstOrDefaultAsync(x => x.Email == email);
+            .FirstOrDefaultAsync(x => x.Email == normalizedEmail);
 
         if (user is null)
             return false;
 
         user.Name = newName;
         return true;
+    }
+
+    private static string NormalizeEmail(string email)
+    {
+        return email.Trim().ToLowerInvariant();
     }
 }

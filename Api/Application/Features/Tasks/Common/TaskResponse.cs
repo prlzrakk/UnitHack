@@ -1,3 +1,4 @@
+using Api.Application.Features.Tags.Common;
 using Infrastructure.Enums;
 
 namespace Api.Application.Features.Tasks.Common;
@@ -12,4 +13,5 @@ public record TaskResponse(
     Priority Priority,
     DateTime CreatedAt,
     DateTime Deadline,
-    int Order);
+    int Order,
+    IReadOnlyCollection<TagResponse> Tags);

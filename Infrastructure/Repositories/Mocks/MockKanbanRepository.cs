@@ -1,3 +1,4 @@
+using Infrastructure.Constants;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 
@@ -5,28 +6,38 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
 {
-    public Task AddAsync(Kanban kanban, CancellationToken cancellationToken = default)
+    public Task<Kanban> AddAsync(Guid projectId, string name, CancellationToken cancellationToken = default)
     {
-        if (kanban.Project is null)
+        var project = store.Projects.First(x => x.Id == projectId);
+        var kanban = new Kanban
         {
-            kanban.Project = store.Projects.First(x => x.Id == kanban.ProjectId);
-        }
+            Id = Guid.NewGuid(),
+            ProjectId = project.Id,
+            Project = project,
+            Name = name.Trim(),
+            Columns = [],
+            Tags = []
+        };
 
         store.Kanbans.Add(kanban);
-        kanban.Project.Kanbans.Add(kanban);
+        project.Kanbans.Add(kanban);
 
-        if (kanban.Columns is not null)
-        {
-            foreach (var column in kanban.Columns)
+        var columns = KanbanDefaults.BasicColumns
+            .Select(column => new KanbanColumn
             {
-                column.Kanban = kanban;
-                column.Tasks ??= [];
-            }
+                Id = Guid.NewGuid(),
+                KanbanId = kanban.Id,
+                Kanban = kanban,
+                Name = column.Name,
+                Order = column.Order,
+                Tasks = []
+            })
+            .ToList();
 
-            store.KanbanColumns.AddRange(kanban.Columns);
-        }
+        kanban.Columns = columns;
+        store.KanbanColumns.AddRange(columns);
 
-        return Task.CompletedTask;
+        return Task.FromResult(kanban);
     }
 
     public Task<bool> DeleteAsync(
@@ -48,7 +59,18 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
             .Select(x => x.Id)
             .ToHashSet();
 
-        store.Tasks.RemoveAll(x => x.KanbanId == kanbanId || columnIds.Contains(x.ColumnId));
+        var taskIds = store.Tasks
+            .Where(x => x.KanbanId == kanbanId || columnIds.Contains(x.ColumnId))
+            .Select(x => x.Id)
+            .ToHashSet();
+        var tagIds = store.Tags
+            .Where(x => x.KanbanId == kanbanId)
+            .Select(x => x.Id)
+            .ToHashSet();
+
+        store.TaskTags.RemoveAll(x => taskIds.Contains(x.TaskId) || tagIds.Contains(x.TagId));
+        store.Tasks.RemoveAll(x => taskIds.Contains(x.Id));
+        store.Tags.RemoveAll(x => x.KanbanId == kanbanId);
         store.KanbanColumns.RemoveAll(x => x.KanbanId == kanbanId);
         kanban.Project?.Kanbans.Remove(kanban);
 
@@ -82,16 +104,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         if (kanban is null)
             return Task.FromResult<Kanban?>(null);
 
-        if (kanban.Project is null)
-        {
-            kanban.Project = store.Projects
-                .FirstOrDefault(x => x.Id == kanban.ProjectId)!;
-        }
-
-        kanban.Columns = store.KanbanColumns
-            .Where(x => x.KanbanId == kanban.Id)
-            .OrderBy(x => x.Order)
-            .ToList();
+        HydrateKanban(kanban);
 
         return Task.FromResult<Kanban?>(kanban);
     }
@@ -121,6 +134,10 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
             .Where(x => x.KanbanId == kanban.Id)
             .OrderBy(x => x.Order)
             .ToList();
+        kanban.Tags = store.Tags
+            .Where(x => x.KanbanId == kanban.Id)
+            .OrderBy(x => x.Name)
+            .ToList();
 
         foreach (var column in kanban.Columns)
         {
@@ -129,6 +146,21 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
                 .Where(x => x.ColumnId == column.Id)
                 .OrderBy(x => x.Order)
                 .ToList();
+        }
+
+        foreach (var task in kanban.Tasks)
+        {
+            task.Kanban = kanban;
+            task.Column ??= kanban.Columns.FirstOrDefault(x => x.Id == task.ColumnId);
+            task.TaskTags = store.TaskTags
+                .Where(x => x.TaskId == task.Id)
+                .ToList();
+
+            foreach (var taskTag in task.TaskTags)
+            {
+                taskTag.Task = task;
+                taskTag.Tag ??= store.Tags.FirstOrDefault(x => x.Id == taskTag.TagId)!;
+            }
         }
     }
 }

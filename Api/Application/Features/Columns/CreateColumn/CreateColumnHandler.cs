@@ -1,6 +1,5 @@
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Columns.Common;
-using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -21,17 +20,7 @@ public class CreateColumnHandler(
         if (!isAdmin)
             throw new ForbiddenException("Only team admin can create columns");
 
-        var order = command.Order ?? (kanban.Columns.Count == 0 ? 1000 : kanban.Columns.Max(x => x.Order) + 1000);
-        var column = await columns.AddAsync(new KanbanColumn
-        {
-            Id = Guid.NewGuid(),
-            KanbanId = kanban.Id,
-            Kanban = kanban,
-            Name = command.Name.Trim(),
-            Order = order,
-            Tasks = []
-        }, cancellationToken);
-
+        var column = await columns.AddAsync(kanban.Id, command.Name, command.Order, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new ColumnResponse(column.Id, column.KanbanId, column.Name, column.Order);

@@ -1,4 +1,5 @@
 using Infrastructure.Entities;
+using Infrastructure.Constants;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security.Interfaces;
 
@@ -96,16 +97,16 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
 
     private void SeedDefaultUser()
     {
-        const string email = "test@example.com";
+        const string email = DevSeedDefaults.UserEmail;
         if (Users.ContainsKey(email))
             return;
 
         Users.Add(email, new MockUser
         {
-            Id = MockDataStore.SeedUserId,
+            Id = DevSeedDefaults.UserId,
             Email = email,
-            Name = "Test User",
-            HashPassword = hasher.Hash("password")
+            Name = DevSeedDefaults.UserName,
+            HashPassword = hasher.Hash(DevSeedDefaults.UserPassword)
         });
     }
 

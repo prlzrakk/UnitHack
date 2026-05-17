@@ -22,6 +22,10 @@ public class UpdateTaskValidator : AbstractValidator<UpdateTaskCommand>
         RuleFor(x => x.UserId)
             .NotEmpty();
 
+        RuleForEach(x => x.TagIds)
+            .NotEmpty()
+            .WithMessage("Tag id is required");
+
         RuleFor(x => x.Priority)
             .Must(priority => Enum.IsDefined(priority))
             .WithMessage("Priority is invalid");

@@ -11,6 +11,7 @@
     mount.innerHTML = html;
 
     initSidebar();
+    window.dispatchEvent(new CustomEvent("sidebar:loaded"));
 }
 
 function initSidebar() {
@@ -52,31 +53,40 @@ function initSidebar() {
         });
     });
 
-    document.querySelectorAll("[data-project]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const projectId = button.dataset.project;
+    sidebar.addEventListener("click", (event) => {
+        const projectButton = event.target.closest("[data-project]");
 
-            if (document.body.classList.contains("kanban-body")) {
-                window.dispatchEvent(
-                    new CustomEvent("project:selected", {
-                        detail: { projectId },
-                    })
-                );
+        if (!projectButton) {
+            return;
+        }
 
-                closeSidebar();
-                return;
-            }
+        const projectId = projectButton.dataset.project;
 
-            window.location.href = `./kanban.html?project=${projectId}`;
-        });
+        if (document.body.classList.contains("kanban-body")) {
+            window.dispatchEvent(
+                new CustomEvent("project:selected", {
+                    detail: { projectId },
+                })
+            );
+
+            markActiveProject(projectId);
+            closeSidebar();
+            return;
+        }
+
+        window.location.href = `./kanban.html?project=${projectId}`;
     });
 
     markActiveProject();
 }
 
-function markActiveProject() {
+window.BoardifySidebar = {
+    refreshProjectLinks: markActiveProject,
+};
+
+function markActiveProject(projectIdFromEvent) {
     const params = new URLSearchParams(window.location.search);
-    const activeProject = params.get("project");
+    const activeProject = projectIdFromEvent || params.get("project");
 
     if (!activeProject) {
         return;
