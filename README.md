@@ -1,5 +1,12 @@
 # UnitHack
 
+
+<p align="center">
+  <a href="http://51.250.102.19/index.html" target="_blank">
+    <img src="https://img.shields.io/badge/Открыть%20сайт-Boardify-f4864d?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Открыть сайт Boardify">
+  </a>
+</p>
+
 ![Platform](https://img.shields.io/badge/platform-Web-blue)
 ![Language](https://img.shields.io/badge/language-C%23-purple)
 ![Backend](https://img.shields.io/badge/backend-ASP.NET%20Core-green)
