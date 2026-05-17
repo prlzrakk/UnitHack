@@ -1,4 +1,5 @@
-﻿using Infrastructure.Entities;
+﻿using System.Diagnostics;
+using Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -19,6 +20,8 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TaskTag> TaskTags { get; set; }
     public DbSet<OutboxEvent> OutboxEvents { get; set; }
+    
+    public DbSet<ProcessedMessage> ProcessedMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +38,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new TaskEventConfiguration());
         modelBuilder.ApplyConfiguration(new AutomationRuleConfiguration());
         modelBuilder.ApplyConfiguration(new OutboxEventConfiguration());
+        modelBuilder.ApplyConfiguration(new ProcessedMessageConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
@@ -412,3 +416,16 @@ public class OutboxEventConfiguration : IEntityTypeConfiguration<OutboxEvent>
         builder.Property(x => x.PublishedAt);
     }
 }
+
+public class ProcessedMessageConfiguration : IEntityTypeConfiguration<ProcessedMessage>
+{
+    public void Configure(EntityTypeBuilder<ProcessedMessage> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.HasIndex(x => new {x.MessageId, x.Handler});
+        builder.Property(x => x.Handler)
+            .IsRequired();
+        builder.Property(x => x.ProcessedAt)
+            .IsRequired();
+    }
+}  
