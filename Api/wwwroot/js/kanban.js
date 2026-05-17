@@ -1077,6 +1077,8 @@ function openTaskDetailOverlay(task) {
     detailTaskAssignee.textContent = getTaskAssigneeName(task);
     detailTaskPriority.value = normalizePriorityForSelect(task.priority);
     detailTaskComplexity.value = task.complexity || "";
+    syncKanbanSelect(detailTaskPriority);
+    syncKanbanSelect(detailTaskComplexity);
     detailTaskDeadline.value = toDateTimeLocalValueSafe(task.deadline);
 
     renderDetailSubtasks();
@@ -1088,7 +1090,35 @@ function openTaskDetailOverlay(task) {
         detailTaskTitle.focus();
     }, 0);
 }
+function syncKanbanSelect(input) {
+    if (!input) {
+        return;
+    }
 
+    const dropdown = document.querySelector(`[data-kanban-select="${input.id}"]`);
+
+    if (!dropdown) {
+        return;
+    }
+
+    const label = dropdown.querySelector("[data-kanban-select-label]");
+    const options = dropdown.querySelectorAll(".kanban-select-option");
+
+    let selectedOption = null;
+
+    options.forEach((option) => {
+        const isSelected = option.dataset.value === input.value;
+        option.classList.toggle("is-selected", isSelected);
+
+        if (isSelected) {
+            selectedOption = option;
+        }
+    });
+
+    if (label && selectedOption) {
+        label.textContent = selectedOption.textContent.trim();
+    }
+}
 function closeTaskDetailOverlay() {
     taskDetailOverlay.classList.remove("is-open");
     taskDetailOverlay.setAttribute("aria-hidden", "true");
@@ -2730,16 +2760,16 @@ newTaskAssigneeSearch?.addEventListener("focus", () => {
 });
 
 document.addEventListener("click", (event) => {
-    if (!newTaskAssigneeSearch || !assigneeOptions) {
-        return;
-    }
-
     if (!event.target.closest(".assignee-picker")) {
         assigneeOptions.innerHTML = "";
     }
 
     if (!event.target.closest(".subtask-assignee-dropdown")) {
         closeSubtaskAssigneeDropdowns();
+    }
+
+    if (!event.target.closest(".kanban-select-dropdown")) {
+        closeKanbanSelects();
     }
 });
 
@@ -2938,7 +2968,7 @@ function handleActionError(error, fallbackMessage) {
 /* =========================
    START
 ========================= */
-
+initKanbanSelects();
 init();
 
 try {
@@ -2952,4 +2982,49 @@ try {
     }
 } catch (error) {
     console.error("Не удалось подключить уведомления:", error);
+}
+function initKanbanSelects() {
+    document.querySelectorAll("[data-kanban-select]").forEach((dropdown) => {
+        const inputId = dropdown.dataset.kanbanSelect;
+        const input = document.getElementById(inputId);
+        const toggle = dropdown.querySelector(".kanban-select-toggle");
+        const label = dropdown.querySelector("[data-kanban-select-label]");
+        const options = dropdown.querySelectorAll(".kanban-select-option");
+
+        toggle?.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            const shouldOpen = !dropdown.classList.contains("is-open");
+            closeKanbanSelects(dropdown);
+
+            dropdown.classList.toggle("is-open", shouldOpen);
+            toggle.setAttribute("aria-expanded", String(shouldOpen));
+        });
+
+        options.forEach((option) => {
+            option.addEventListener("click", (event) => {
+                event.stopPropagation();
+
+                input.value = option.dataset.value;
+                label.textContent = option.textContent.trim();
+
+                options.forEach((item) => {
+                    item.classList.toggle("is-selected", item === option);
+                });
+
+                closeKanbanSelects();
+            });
+        });
+    });
+}
+
+function closeKanbanSelects(exceptDropdown = null) {
+    document.querySelectorAll(".kanban-select-dropdown.is-open").forEach((dropdown) => {
+        if (dropdown === exceptDropdown) {
+            return;
+        }
+
+        dropdown.classList.remove("is-open");
+        dropdown.querySelector(".kanban-select-toggle")?.setAttribute("aria-expanded", "false");
+    });
 }

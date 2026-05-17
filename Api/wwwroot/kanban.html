@@ -34,24 +34,24 @@
                 <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
             </svg>
         </a>
+
+        <button
+                class="notify-btn topbar-notify-btn"
+                id="notificationOpen"
+                type="button"
+                aria-label="Уведомления"
+                data-unread-count="0"
+        >
+            <img src="components/images/hasNotifications.svg" alt="есть уведомления">
+            <span class="notify-count" id="notificationBadge" aria-hidden="true">0</span>
+        </button>
     </header>
-    <div id="sidebarMount"></div>
+<!--    <div id="sidebarMount"></div>-->
 
     <main class="kanban-page">
         <section class="kanban-main">
             <div class="kanban-head">
                 <h1 id="kanbanTitle">Kanban</h1>
-
-                <button
-                        class="notify-btn"
-                        id="notificationOpen"
-                        type="button"
-                        aria-label="Уведомления"
-                        data-unread-count="0"
-                >
-                    <img src="components/images/hasNotifications.svg" alt="есть уведомления">
-                    <span class="notify-count" id="notificationBadge" aria-hidden="true">0</span>
-                </button>
             </div>
 
             <section class="kanban-scroll" id="kanbanBoard"></section>
@@ -154,25 +154,67 @@
                     <label class="create-row">
                         <span class="create-row-label">Приоритет</span>
 
-                        <select class="create-select" id="newTaskPriority">
-                            <option value="LOW">LOW</option>
-                            <option value="MID" selected>MID</option>
-                            <option value="HIGH">HIGH</option>
-                        </select>
+                        <input type="hidden" id="newTaskPriority" value="MID">
+
+                        <div class="kanban-select-dropdown" data-kanban-select="newTaskPriority">
+                            <button
+                                    class="kanban-select-toggle"
+                                    type="button"
+                                    aria-expanded="false"
+                            >
+                                <span data-kanban-select-label>MID</span>
+                                <span class="kanban-select-chevron"></span>
+                            </button>
+
+                            <div class="kanban-select-menu" role="menu">
+                                <button
+                                        class="kanban-select-option"
+                                        type="button"
+                                        data-value="LOW"
+                                >
+                                    LOW
+                                </button>
+
+                                <button
+                                        class="kanban-select-option is-selected"
+                                        type="button"
+                                        data-value="MID"
+                                >
+                                    MID
+                                </button>
+
+                                <button
+                                        class="kanban-select-option"
+                                        type="button"
+                                        data-value="HIGH"
+                                >
+                                    HIGH
+                                </button>
+                            </div>
+                        </div>
                     </label>
 
                     <label class="create-row">
                         <span class="create-row-label">Сложность</span>
 
-                        <select class="create-select" id="newTaskComplexity">
-                            <option value="30 мин">30 мин</option>
-                            <option value="1 час">1 час</option>
-                            <option value="2 часа" selected>2 часа</option>
-                            <option value="3 часа">3 часа</option>
-                            <option value="4 часа">4 часа</option>
-                            <option value="6 часов">6 часов</option>
-                            <option value="8 часов">8 часов</option>
-                        </select>
+                        <input type="hidden" id="newTaskComplexity" value="2 часа">
+
+                        <div class="kanban-select-dropdown" data-kanban-select="newTaskComplexity">
+                            <button class="kanban-select-toggle" type="button" aria-expanded="false">
+                                <span data-kanban-select-label>2 часа</span>
+                                <span class="kanban-select-chevron"></span>
+                            </button>
+
+                            <div class="kanban-select-menu" role="menu">
+                                <button class="kanban-select-option" type="button" data-value="30 мин">30 мин</button>
+                                <button class="kanban-select-option" type="button" data-value="1 час">1 час</button>
+                                <button class="kanban-select-option is-selected" type="button" data-value="2 часа">2 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="3 часа">3 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="4 часа">4 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="6 часов">6 часов</button>
+                                <button class="kanban-select-option" type="button" data-value="8 часов">8 часов</button>
+                            </div>
+                        </div>
                     </label>
 
                     <label class="create-row create-deadline-row">
@@ -280,25 +322,43 @@
 
                     <label class="task-detail-field" for="detailTaskPriority">
                         <span class="task-detail-label">Приоритет:</span>
-                        <select class="task-detail-select" id="detailTaskPriority">
-                            <option value="Low">Низкий</option>
-                            <option value="Medium">Средний</option>
-                            <option value="High">Высокий</option>
-                        </select>
+                        <input type="hidden" id="detailTaskPriority" value="Medium">
+
+                        <div class="kanban-select-dropdown detail-kanban-select" data-kanban-select="detailTaskPriority">
+                            <button class="kanban-select-toggle" type="button" aria-expanded="false">
+                                <span data-kanban-select-label>Средний</span>
+                                <span class="kanban-select-chevron"></span>
+                            </button>
+
+                            <div class="kanban-select-menu" role="menu">
+                                <button class="kanban-select-option" type="button" data-value="Low">Низкий</button>
+                                <button class="kanban-select-option is-selected" type="button" data-value="Medium">Средний</button>
+                                <button class="kanban-select-option" type="button" data-value="High">Высокий</button>
+                            </div>
+                        </div>
                     </label>
 
                     <label class="task-detail-field" for="detailTaskComplexity">
                         <span class="task-detail-label">Сложность:</span>
-                        <select class="task-detail-select" id="detailTaskComplexity">
-                            <option value="">Выбрать сложность</option>
-                            <option value="30 мин">30 мин</option>
-                            <option value="1 час">1 час</option>
-                            <option value="2 часа">2 часа</option>
-                            <option value="3 часа">3 часа</option>
-                            <option value="4 часа">4 часа</option>
-                            <option value="6 часов">6 часов</option>
-                            <option value="8 часов">8 часов</option>
-                        </select>
+                        <input type="hidden" id="detailTaskComplexity" value="">
+
+                        <div class="kanban-select-dropdown detail-kanban-select" data-kanban-select="detailTaskComplexity">
+                            <button class="kanban-select-toggle" type="button" aria-expanded="false">
+                                <span data-kanban-select-label>Выбрать сложность</span>
+                                <span class="kanban-select-chevron"></span>
+                            </button>
+
+                            <div class="kanban-select-menu" role="menu">
+                                <button class="kanban-select-option is-selected" type="button" data-value="">Выбрать сложность</button>
+                                <button class="kanban-select-option" type="button" data-value="30 мин">30 мин</button>
+                                <button class="kanban-select-option" type="button" data-value="1 час">1 час</button>
+                                <button class="kanban-select-option" type="button" data-value="2 часа">2 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="3 часа">3 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="4 часа">4 часа</button>
+                                <button class="kanban-select-option" type="button" data-value="6 часов">6 часов</button>
+                                <button class="kanban-select-option" type="button" data-value="8 часов">8 часов</button>
+                            </div>
+                        </div>
                     </label>
 
                     <label class="task-detail-field" for="detailTaskDeadline">
