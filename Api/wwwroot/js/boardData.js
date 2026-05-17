@@ -191,7 +191,7 @@ async function loadProject(team, project, index) {
         team,
         name: readText(project, "name", "Name") || "Проект",
         color: COLORS[index % COLORS.length],
-        meta: kanbans.length === 1 ? "1 доска" : `${kanbans.length} досок`,
+        meta: formatKanbanCount(kanbans.length),
         kanbans,
     };
 }
@@ -318,26 +318,60 @@ function renderSidebarTaskStats(taskStats) {
     }
 
     if (!taskStats) {
-        list.innerHTML = `<div class="sidebar-empty">Задачи загрузятся на доске</div>`;
+        list.innerHTML = `
+            <button class="project-item" data-my-tasks-filter="all">
+                <span class="project-color orange"></span>
+                <span class="project-name">Все задачи</span>
+                <span class="project-meta">→</span>
+            </button>
+        `;
         return;
     }
 
     list.innerHTML = `
-        <button class="project-item">
+        <button class="project-item" data-my-tasks-filter="all">
+            <span class="project-color peach"></span>
+            <span class="project-name">Все задачи</span>
+            <span class="project-meta">→</span>
+        </button>
+
+        <button class="project-item" data-my-tasks-filter="urgent">
             <span class="project-color orange"></span>
             <span class="project-name">Срочные</span>
             <span class="project-meta">${taskStats.urgent}</span>
         </button>
-        <button class="project-item">
+
+        <button class="project-item" data-my-tasks-filter="week">
             <span class="project-color blue"></span>
             <span class="project-name">На неделе</span>
             <span class="project-meta">${taskStats.week}</span>
+        </button>
+
+        <button class="project-item" data-my-tasks-filter="overdue">
+            <span class="project-color pink"></span>
+            <span class="project-name">Просроченные</span>
+            <span class="project-meta">!</span>
         </button>
     `;
 }
 
 function readId(record) {
     return readText(record, "id", "Id");
+}
+
+function formatKanbanCount(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+
+    if (mod10 === 1 && mod100 !== 11) {
+        return `${count} канбан`;
+    }
+
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+        return `${count} канбана`;
+    }
+
+    return `${count} канбанов`;
 }
 
 function readText(record, ...keys) {

@@ -72,8 +72,27 @@ function initSidebar() {
     });
 
     sidebar.addEventListener("click", (event) => {
+        const myTasksButton = event.target.closest("[data-my-tasks-filter]");
         const projectButton = event.target.closest("[data-project]");
         const teamButton = event.target.closest("[data-team]");
+
+        if (myTasksButton) {
+            const filter = myTasksButton.dataset.myTasksFilter || "all";
+
+            if (document.body.classList.contains("my-tasks-body")) {
+                window.dispatchEvent(
+                    new CustomEvent("mytasks:selected", {
+                        detail: { filter },
+                    })
+                );
+
+                closeSidebar();
+                return;
+            }
+
+            window.location.href = `./my-tasks.html?filter=${encodeURIComponent(filter)}`;
+            return;
+        }
 
         if (teamButton) {
             const rawTeamId = teamButton.dataset.team || teamButton.textContent.trim();
@@ -114,7 +133,7 @@ function initSidebar() {
             closeSidebar();
             return;
         }
-
+        
         window.location.href = `./project.html?project=${encodeURIComponent(projectId)}`;
     });
     markActiveProject();

@@ -45,6 +45,9 @@ let memberOverlayMode = "team";
 let targetTeamId = null;
 let selectedMember = null;
 let memberSearchRequestId = 0;
+const REALTIME_TEAMS_REFRESH_DELAY = 250;
+let realtimeTeamsRefreshTimer = null;
+let realtimeTeamsRefreshRequest = null;
 
 const TEAM_ROLES = [
     { value: "Admin", label: "Админ" },
@@ -126,7 +129,7 @@ function createTeamCard(team) {
             <h2 class="team-name">${escapeHtml(team.name)}</h2>
 
             <button class="team-icon-btn team-delete-btn" type="button" aria-label="Удалить команду">
-                🗑
+                <img src="components/images/delete.svg" alt="удалить" style="filter: brightness(0) invert(1);">
             </button>
 
             <button class="team-icon-btn team-edit-btn" type="button" aria-label="Редактировать команду">
@@ -1024,6 +1027,87 @@ function renderSidebar() {
     renderSidebarNavigationRequest(workspaceState, activeProjectId, null);
 }
 
+function handleRealtimeNotification(notification = {}) {
+    const normalizedNotification = normalizeRealtimeNotification(notification);
+
+    if (!shouldRefreshTeamsForNotification(normalizedNotification)) {
+        return;
+    }
+
+    scheduleRealtimeTeamsRefresh(normalizedNotification.teamId);
+    showToast(normalizedNotification.message || "Команды обновлены");
+}
+
+function normalizeRealtimeNotification(notification = {}) {
+    const source = notification && typeof notification === "object" ? notification : {};
+
+    return {
+        id: readValue(source, "id", "Id") || "",
+        teamId: readValue(source, "teamId", "TeamId") || "",
+        type: readValue(source, "type", "Type") || readValue(source, "eventType", "EventType") || "",
+        name: readValue(source, "name", "Name") || "",
+        message: readValue(source, "message", "Message") || "",
+    };
+}
+
+function shouldRefreshTeamsForNotification(notification) {
+    return Boolean(notification.teamId) ||
+        notification.type === "TeamMemberAdded" ||
+        notification.name === "Team Member Added";
+}
+
+function scheduleRealtimeTeamsRefresh(preferredTeamId = null) {
+    window.clearTimeout(realtimeTeamsRefreshTimer);
+    realtimeTeamsRefreshTimer = window.setTimeout(() => {
+        refreshTeamsFromRealtime(preferredTeamId).catch((error) => {
+            console.warn("Failed to refresh teams from realtime notification:", error);
+        });
+    }, REALTIME_TEAMS_REFRESH_DELAY);
+}
+
+async function refreshTeamsFromRealtime(preferredTeamId = null) {
+    if (!loadWorkspaceRequest || !selectProjectFromUrlRequest) {
+        return;
+    }
+
+    if (realtimeTeamsRefreshRequest) {
+        return realtimeTeamsRefreshRequest;
+    }
+
+    realtimeTeamsRefreshRequest = (async () => {
+        const [workspace, loadedUser] = await Promise.all([
+            loadWorkspaceRequest(),
+            loadCurrentUserRequest?.().catch(() => currentUser),
+        ]);
+        const activeProject = selectProjectFromUrlRequest(workspace.projects);
+
+        currentUser = loadedUser ?? currentUser;
+
+        const nextTeams = getInitialTeams(workspace.teams);
+        const currentSelectionStillExists =
+            selectedTeamId && nextTeams.some((team) => team.id === selectedTeamId);
+
+        workspaceState = workspace;
+        activeProjectId = activeProject?.id ?? activeProjectId;
+        teams = nextTeams;
+
+        if (!currentSelectionStillExists) {
+            selectedTeamId =
+                nextTeams.find((team) => team.id === preferredTeamId)?.id ??
+                nextTeams[0]?.id ??
+                null;
+            syncSelectedTeamUrl();
+        }
+
+        renderTeams();
+        renderSidebar();
+    })().finally(() => {
+        realtimeTeamsRefreshRequest = null;
+    });
+
+    return realtimeTeamsRefreshRequest;
+}
+
 async function loadApiModules() {
     const [teamApi, userApi, boardData] = await Promise.all([
         import("./api/teamApi.js"),
@@ -1146,3 +1230,11 @@ window.addEventListener("team:selected", (event) => {
 window.addEventListener("sidebar:loaded", renderSidebar);
 
 init();
+
+try {
+    if (typeof window.connectNotifications === "function") {
+        window.connectNotifications(handleRealtimeNotification);
+    }
+} catch (error) {
+    console.error("Не удалось подключить уведомления:", error);
+}

@@ -1,4 +1,4 @@
-import { fetchJson, getStoredRefreshToken, saveAuthTokens } from "./apiClient.js";
+import { fetchJson, refreshStoredAuthTokens, saveAuthTokens } from "./apiClient.js";
 
 export async function login(email, password) {
     const tokens = await fetchJson("/api/Auth/sessions", {
@@ -13,12 +13,5 @@ export async function login(email, password) {
 }
 
 export async function refreshTokens() {
-    const tokens = await fetchJson("/api/Auth/tokens/refresh", {
-        method: "POST",
-        authToken: getStoredRefreshToken(),
-        errorText: "Не удалось обновить сессию",
-    });
-
-    saveAuthTokens(tokens);
-    return tokens;
+    return refreshStoredAuthTokens();
 }

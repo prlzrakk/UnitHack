@@ -17,6 +17,9 @@ const REFRESH_TOKEN_KEYS = [
     "boardify.refreshToken",
 ];
 
+const REFRESH_PATH = "/api/Auth/tokens/refresh";
+let refreshRequest = null;
+
 export async function fetchJson(path, {
     method = "GET",
     params = new URLSearchParams(),
@@ -28,7 +31,23 @@ export async function fetchJson(path, {
     const url = buildUrl(path, params);
     console.log("API FETCH =>", method, url);
 
-    const response = await fetch(url, {
+    let response = await sendJsonRequest(url, { method, body, authToken, skipAuth });
+
+    if (response.status === 401 && shouldRefreshAuth(path, { authToken, skipAuth })) {
+        await refreshStoredAuthTokens();
+        response = await sendJsonRequest(url, { method, body, authToken, skipAuth });
+    }
+
+    return readJsonResponse(response, errorText);
+}
+
+function sendJsonRequest(url, {
+    method = "GET",
+    body = null,
+    authToken = null,
+    skipAuth = false,
+} = {}) {
+    return fetch(url, {
         method,
         headers: {
             Accept: "application/json",
@@ -37,7 +56,9 @@ export async function fetchJson(path, {
         },
         body: body ? JSON.stringify(body) : null,
     });
+}
 
+async function readJsonResponse(response, errorText) {
     if (!response.ok) {
         const error = new Error(await getResponseErrorText(response, errorText));
         error.status = response.status;
@@ -50,6 +71,51 @@ export async function fetchJson(path, {
 
     const text = await response.text();
     return text ? JSON.parse(text) : null;
+}
+
+function shouldRefreshAuth(path, { authToken = null, skipAuth = false } = {}) {
+    return !skipAuth &&
+        !authToken &&
+        path !== REFRESH_PATH &&
+        Boolean(getStoredRefreshToken());
+}
+
+export async function refreshStoredAuthTokens() {
+    if (refreshRequest) {
+        return refreshRequest;
+    }
+
+    const refreshToken = getStoredRefreshToken();
+
+    if (!refreshToken) {
+        clearAuthTokens();
+        throw new Error("Refresh token is missing");
+    }
+
+    refreshRequest = (async () => {
+        const response = await fetch(REFRESH_PATH, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${refreshToken}`,
+            },
+        });
+
+        if (!response.ok) {
+            clearAuthTokens();
+            const error = new Error(await getResponseErrorText(response, "Failed to refresh session"));
+            error.status = response.status;
+            throw error;
+        }
+
+        const tokens = await readJsonResponse(response, "Failed to refresh session");
+        saveAuthTokens(tokens);
+        return tokens;
+    })().finally(() => {
+        refreshRequest = null;
+    });
+
+    return refreshRequest;
 }
 
 async function getResponseErrorText(response, fallbackText) {
@@ -73,14 +139,19 @@ export function saveAuthTokens(tokens) {
     const refreshToken = tokens?.refreshToken ?? tokens?.RefreshToken;
 
     if (accessToken) {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("boardify.accessToken", accessToken);
+        setStoredValue(ACCESS_TOKEN_KEYS, accessToken);
     }
 
     if (refreshToken) {
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("boardify.refreshToken", refreshToken);
+        setStoredValue(REFRESH_TOKEN_KEYS, refreshToken);
     }
+}
+
+export function clearAuthTokens() {
+    [...ACCESS_TOKEN_KEYS, ...REFRESH_TOKEN_KEYS].forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
 }
 
 export function getStoredAccessToken() {
@@ -109,4 +180,10 @@ function getStoredValue(keys) {
     }
 
     return null;
+}
+
+function setStoredValue(keys, value) {
+    keys.forEach((key) => {
+        localStorage.setItem(key, value);
+    });
 }

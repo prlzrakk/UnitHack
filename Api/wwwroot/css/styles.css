@@ -316,7 +316,9 @@ button {
     border-radius: 22px;
 
     background: transparent;
-
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
     transition:
             transform 0.18s ease,
             border-color 0.18s ease,
@@ -838,8 +840,9 @@ button.section-head:hover {
 }
 
 .matrix-section {
-    width: min(1180px, calc(100% - 72px));
-    margin: 8px auto 0;
+    width: min(1040px, calc(100% - 72px));
+    margin: 60px auto 0;
+    transform: translateY(24px);
 }
 
 .matrix-layout {
@@ -847,15 +850,12 @@ button.section-head:hover {
 }
 
 .matrix-grid {
-    grid-template-columns: repeat(2, minmax(420px, 1fr));
-    gap: 24px 36px;
+    grid-template-columns: repeat(2, minmax(380px, 1fr));
+    gap: 24px 32px;
 }
 
 .quadrant {
-    min-height: 200px;
-    padding: 54px 34px 28px;
-    border-radius: 42px;
-    gap: 18px;
+    min-height: 180px;
 }
 
 .quadrant::after {
@@ -1088,4 +1088,7 @@ button.section-head:hover {
         right: 24px;
     }
 
+}
+.project-color.pink {
+    background: #e6a0a6;
 }
