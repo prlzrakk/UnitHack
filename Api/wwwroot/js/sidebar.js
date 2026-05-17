@@ -71,7 +71,28 @@ function initSidebar() {
             window.location.href = `./kanban.html?project=${projectId}`;
         });
     });
+    document.querySelectorAll("[data-team]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const rawTeamId = button.dataset.team || button.textContent.trim();
+            const teamId = rawTeamId
+                .trim()
+                .toLowerCase()
+                .replaceAll(" ", "-");
 
+            if (document.body.classList.contains("teams-body")) {
+                window.dispatchEvent(
+                    new CustomEvent("team:selected", {
+                        detail: { teamId },
+                    })
+                );
+
+                closeSidebar();
+                return;
+            }
+
+            window.location.href = `./teams.html?team=${encodeURIComponent(teamId)}`;
+        });
+    });
     markActiveProject();
 }
 

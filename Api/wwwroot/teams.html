@@ -1,0 +1,160 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Boardify — Команды</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap"
+            rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/teams.css" />
+</head>
+
+<body class="teams-body">
+<div class="teams-app">
+    <header class="teams-topbar">
+        <button class="teams-menu-btn" id="openSidebar" aria-label="Открыть меню">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <a class="home-link" href="./index.html" aria-label="Назад на главную">←</a>
+
+        <div class="brand">Boardify</div>
+
+        <button class="profile-btn" aria-label="Профиль">
+            <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="14" r="7"></circle>
+                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
+            </svg>
+        </button>
+    </header>
+
+    <div id="sidebarMount"></div>
+
+    <main class="teams-page">
+        <section class="teams-head">
+            <h1>Команды</h1>
+
+            <button class="teams-add-btn" id="openCreateTeam">
+                <span>＋</span>
+                <span>Добавить</span>
+            </button>
+        </section>
+
+        <section class="teams-grid" id="teamsGrid"></section>
+    </main>
+
+    <div class="toast" id="toast">
+        <span class="toast-bell">✓</span>
+        <span id="toastText">Готово</span>
+    </div>
+
+    <!-- CREATE TEAM OVERLAY -->
+    <div class="team-modal-overlay" id="createTeamOverlay">
+        <form class="team-modal create-team-modal" id="createTeamForm">
+            <div class="team-modal-header">
+                <h2 id="createTeamTitle">Создание команды</h2>
+                <button class="modal-close-btn" id="createTeamClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <label class="team-field">
+                <span>Название команды</span>
+                <input
+                        class="team-input"
+                        id="newTeamName"
+                        type="text"
+                        placeholder="Например, 5 кать"
+                        autocomplete="off"
+                        required
+                >
+            </label>
+
+            <label class="team-field">
+                <span>Цвет команды</span>
+                <input class="team-color-input" id="newTeamColor" type="color" value="#42609f">
+            </label>
+
+            <section class="team-members-create">
+                <div class="team-members-create-head">
+                    <h3>Участники:</h3>
+
+                    <button class="small-pill-btn" id="addDraftMemberBtn" type="button">
+                        Добавить
+                    </button>
+                </div>
+
+                <div class="draft-members-box" id="draftMembersBox">
+                    <span class="empty-team-text">участников пока нет</span>
+                </div>
+            </section>
+
+            <div class="team-modal-actions">
+                <button class="modal-action modal-cancel" id="createTeamCancel" type="button">
+                    Выйти без сохранения
+                </button>
+
+                <button class="modal-action modal-save" id="createTeamSubmit" type="submit">
+                    Сохранить изменения
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ADD MEMBER OVERLAY -->
+    <div class="team-modal-overlay" id="addMemberOverlay">
+        <form class="team-modal add-member-modal" id="addMemberForm">
+            <div class="team-modal-header">
+                <h2 id="addMemberTitle">Добавить участника в команду</h2>
+
+                <button class="modal-close-btn" id="addMemberClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <label class="team-field">
+                <span>Найти по имени пользователя или email</span>
+
+                <div class="member-search">
+                    <span class="member-search-icon">⌕</span>
+                    <input
+                            id="memberSearchInput"
+                            type="text"
+                            placeholder="Найти человека"
+                            autocomplete="off"
+                    >
+                </div>
+            </label>
+
+            <div class="member-search-results" id="memberSearchResults"></div>
+
+            <div class="team-modal-actions">
+                <button class="modal-action modal-cancel" id="addMemberCancel" type="button">
+                    Выйти
+                </button>
+
+                <button class="modal-action modal-save" type="submit">
+                    Добавить участника
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="./mocks/kanbanData.js"></script>
+<script src="./js/sidebar.js"></script>
+<script src="./js/teams.js"></script>
+</body>
+</html>
