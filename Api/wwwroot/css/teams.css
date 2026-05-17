@@ -562,6 +562,11 @@ input {
     font-size: 14px;
 }
 
+.draft-member-chip.is-current-user {
+    background: rgba(64, 125, 82, 0.32);
+    color: #d8ffe1;
+}
+
 .draft-member-chip button {
     border: 0;
     background: transparent;
@@ -686,6 +691,15 @@ input {
 
 .modal-save:hover {
     color: #5fb978;
+}
+
+.modal-save.is-waiting-selection {
+    color: #a77a68;
+    cursor: not-allowed;
+}
+
+.modal-save.is-waiting-selection:hover {
+    color: #c08a72;
 }
 
 /* TOAST */

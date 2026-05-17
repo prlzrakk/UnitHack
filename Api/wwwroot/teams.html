@@ -105,7 +105,13 @@
                     Выйти без сохранения
                 </button>
 
-                <button class="modal-action modal-save" id="createTeamSubmit" type="submit">
+                <button
+                        class="modal-action modal-save is-waiting-selection"
+                        id="createTeamSubmit"
+                        type="submit"
+                        disabled
+                        aria-disabled="true"
+                >
                     Сохранить изменения
                 </button>
             </div>
@@ -145,7 +151,7 @@
                     Выйти
                 </button>
 
-                <button class="modal-action modal-save" type="submit">
+                <button class="modal-action modal-save is-waiting-selection" id="addMemberSubmit" type="submit" aria-disabled="true">
                     Добавить участника
                 </button>
             </div>

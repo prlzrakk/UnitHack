@@ -16,6 +16,7 @@ const addMemberForm = document.getElementById("addMemberForm");
 const addMemberTitle = document.getElementById("addMemberTitle");
 const addMemberClose = document.getElementById("addMemberClose");
 const addMemberCancel = document.getElementById("addMemberCancel");
+const addMemberSubmit = document.getElementById("addMemberSubmit");
 const memberSearchInput = document.getElementById("memberSearchInput");
 const memberSearchResults = document.getElementById("memberSearchResults");
 
@@ -23,12 +24,14 @@ const createTeamTitle = document.getElementById("createTeamTitle");
 const createTeamSubmit = document.getElementById("createTeamSubmit");
 
 let createTeamRequest = null;
+let loadCurrentUserRequest = null;
 let loadWorkspaceRequest = null;
 let renderSidebarNavigationRequest = null;
 let selectProjectFromUrlRequest = null;
 
 let activeProjectId = getProjectFromUrl();
 let workspaceState = { teams: [], projects: [] };
+let currentUser = null;
 let teams = [];
 let selectedTeamId = getTeamFromUrl();
 let draftMembers = [];
@@ -242,13 +245,14 @@ function markSelectedTeam() {
 function openCreateTeamOverlay() {
     teamFormMode = "create";
     editingTeamId = null;
-    draftMembers = [];
+    draftMembers = [getCurrentUserMember()];
 
     createTeamForm.reset();
     newTeamColor.value = "#42609f";
 
     createTeamTitle.textContent = "Создание команды";
     createTeamSubmit.textContent = "Сохранить изменения";
+    updateCreateTeamSubmitState();
 
     renderDraftMembers();
 
@@ -264,6 +268,7 @@ function closeCreateTeamOverlay() {
     teamFormMode = "create";
     editingTeamId = null;
     draftMembers = [];
+    updateCreateTeamSubmitState();
 }
 async function createTeamFromForm() {
     const name = newTeamName.value.trim();
@@ -338,6 +343,7 @@ function editTeam(teamId) {
 
     createTeamTitle.textContent = `Изменение команды`;
     createTeamSubmit.textContent = "Сохранить изменения";
+    updateCreateTeamSubmitState();
 
     renderDraftMembers();
 
@@ -390,6 +396,7 @@ function openAddMemberOverlay({ mode, teamId = null }) {
     targetTeamId = teamId;
     selectedMember = null;
     memberSearchInput.value = "";
+    updateAddMemberSubmitState();
 
     const team = getTeam(teamId);
 
@@ -412,6 +419,7 @@ function closeAddMemberOverlay() {
 
     selectedMember = null;
     targetTeamId = null;
+    updateAddMemberSubmitState();
 }
 
 function renderMemberSearchResults(searchValue) {
@@ -451,6 +459,7 @@ function renderMemberSearchResults(searchValue) {
 
         button.addEventListener("click", () => {
             selectedMember = person;
+            updateAddMemberSubmitState();
             renderMemberSearchResults(memberSearchInput.value);
         });
 
@@ -508,6 +517,21 @@ function submitAddMember() {
     showToast(`Участник добавлен в «${team.name}»`);
 }
 
+function updateAddMemberSubmitState() {
+    const isReady = Boolean(selectedMember);
+
+    addMemberSubmit.classList.toggle("is-waiting-selection", !isReady);
+    addMemberSubmit.setAttribute("aria-disabled", String(!isReady));
+}
+
+function updateCreateTeamSubmitState() {
+    const hasName = Boolean(newTeamName.value.trim());
+
+    createTeamSubmit.disabled = !hasName;
+    createTeamSubmit.classList.toggle("is-waiting-selection", !hasName);
+    createTeamSubmit.setAttribute("aria-disabled", String(!hasName));
+}
+
 function renderDraftMembers() {
     draftMembersBox.innerHTML = "";
 
@@ -518,21 +542,41 @@ function renderDraftMembers() {
 
     draftMembers.forEach((member) => {
         const chip = document.createElement("span");
-        chip.className = "draft-member-chip";
+        chip.className = `draft-member-chip ${member.isCurrentUser ? "is-current-user" : ""}`;
 
         chip.innerHTML = `
             <span>${escapeHtml(member.name)}</span>
             <span>${escapeHtml(member.role)}</span>
-            <button type="button" aria-label="Убрать участника">×</button>
+            ${
+                member.isCurrentUser
+                    ? ""
+                    : `<button type="button" aria-label="Убрать участника">×</button>`
+            }
         `;
 
-        chip.querySelector("button").addEventListener("click", () => {
+        chip.querySelector("button")?.addEventListener("click", () => {
             draftMembers = draftMembers.filter((item) => item.id !== member.id);
             renderDraftMembers();
         });
 
         draftMembersBox.appendChild(chip);
     });
+}
+
+function getCurrentUserMember() {
+    const id = readValue(currentUser, "id", "Id") || "current-user";
+    const name =
+        readValue(currentUser, "name", "Name") ||
+        readValue(currentUser, "userName", "UserName") ||
+        readValue(currentUser, "email", "Email") ||
+        "Вы";
+
+    return {
+        id,
+        name,
+        role: "Администратор",
+        isCurrentUser: true,
+    };
 }
 
 function getTeam(teamId) {
@@ -602,12 +646,14 @@ function renderSidebar() {
 }
 
 async function loadApiModules() {
-    const [teamApi, boardData] = await Promise.all([
+    const [teamApi, userApi, boardData] = await Promise.all([
         import("./api/teamApi.js"),
+        import("./api/userApi.js"),
         import("./boardData.js"),
     ]);
 
     createTeamRequest = teamApi.createTeam;
+    loadCurrentUserRequest = userApi.getMe;
     loadWorkspaceRequest = boardData.loadWorkspace;
     renderSidebarNavigationRequest = boardData.renderSidebarNavigation;
     selectProjectFromUrlRequest = boardData.selectProjectFromUrl;
@@ -619,9 +665,13 @@ async function init() {
     try {
         await loadApiModules();
 
-        const workspace = await loadWorkspaceRequest();
+        const [workspace, loadedUser] = await Promise.all([
+            loadWorkspaceRequest(),
+            loadCurrentUserRequest().catch(() => null),
+        ]);
         const activeProject = selectProjectFromUrlRequest(workspace.projects);
 
+        currentUser = loadedUser;
         workspaceState = workspace;
         activeProjectId = activeProject?.id ?? activeProjectId;
         teams = getInitialTeams(workspace.teams);
@@ -648,6 +698,8 @@ async function init() {
 /* EVENTS */
 
 openCreateTeamBtn.addEventListener("click", openCreateTeamOverlay);
+
+newTeamName.addEventListener("input", updateCreateTeamSubmitState);
 
 createTeamClose.addEventListener("click", closeCreateTeamOverlay);
 createTeamCancel.addEventListener("click", closeCreateTeamOverlay);
