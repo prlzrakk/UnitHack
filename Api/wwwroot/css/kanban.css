@@ -5669,3 +5669,86 @@ body.sidebar-closed .kanban-head {
         display: none;
     }
 }
+/* =========================
+   FINAL DARK KANBAN CARDS
+========================= */
+
+.kanban-column {
+    background: #282828;
+    border: 1px solid #3a3a3a;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+}
+
+.column-title {
+    color: #f4f4f4;
+}
+
+.column-count {
+    background: #3a3a3a;
+    color: #f4f4f4;
+}
+
+.column-icon {
+    color: #f4f4f4;
+}
+
+.column-icon-img,
+.task-icon-img {
+    filter: invert(1);
+}
+
+.add-task-btn {
+    color: #f4f4f4;
+}
+
+.task-card {
+    background: #333333;
+    border-color: #454545;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+}
+
+.task-card:hover {
+    background: #383838;
+    border-color: var(--task-color, var(--orange));
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32);
+}
+
+.task-title {
+    color: #f4f4f4;
+}
+
+.task-icon-btn {
+    color: #f4f4f4;
+}
+
+.date-label,
+.task-description {
+    color: #bcbcbc;
+}
+
+.date-pill {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f4f4f4;
+}
+
+.task-tag {
+    color: #ffffff;
+}
+
+.task-user-wrap {
+    background: #454545;
+    color: #f4f4f4;
+}
+
+.task-user {
+    filter: invert(1);
+}
+
+.task-drop-placeholder {
+    background: rgba(244, 134, 77, 0.1);
+    border-color: rgba(244, 134, 77, 0.7);
+}
+
+.add-column-btn {
+    color: #f4f4f4;
+}
