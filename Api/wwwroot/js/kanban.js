@@ -127,6 +127,7 @@ let selectedTaskForDetail = null;
 let detailSubtasks = [];
 let draggedTaskId = null;
 let dragPlaceholder = null;
+let dragPreview = null;
 let pointerDragState = null;
 let suppressTaskClick = false;
 const movingTaskIds = new Set();
@@ -496,11 +497,11 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     ].filter(Boolean);
 
     const card = document.createElement("article");
-    card.className = "task-card";
+    card.className = "task-card is-draggable";
     card.style.setProperty("--task-color", color);
     card.dataset.taskId = task.id;
     card.dataset.columnId = column.id;
-    card.draggable = !movingTaskIds.has(task.id);
+    card.draggable = false;
     card.tabIndex = 0;
     card.setAttribute("role", "button");
     if (movingTaskIds.has(task.id)) {
@@ -609,12 +610,6 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         });
     });
 
-    card.addEventListener("dragstart", (event) => {
-        startTaskDrag(event, task, card);
-    });
-
-    card.addEventListener("dragend", cleanupTaskDrag);
-
     card.addEventListener("pointerdown", (event) => {
         startTaskPointerDrag(event, task, card);
     });
@@ -639,25 +634,6 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     return card;
 }
 
-function startTaskDrag(event, task, card) {
-    const startedOnButton = event.target instanceof Element && event.target.closest("button");
-
-    if (movingTaskIds.has(task.id) || startedOnButton) {
-        event.preventDefault();
-        return;
-    }
-
-    draggedTaskId = task.id;
-    suppressTaskClick = true;
-
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", task.id);
-
-    requestAnimationFrame(() => {
-        card.classList.add("is-dragging");
-    });
-}
-
 function startTaskPointerDrag(event, task, card) {
     const startedOnInteractiveElement =
         event.target instanceof Element &&
@@ -674,6 +650,8 @@ function startTaskPointerDrag(event, task, card) {
         startX: event.clientX,
         startY: event.clientY,
         taskId: task.id,
+        offsetX: 0,
+        offsetY: 0,
     };
 
     document.addEventListener("pointermove", handleTaskPointerMove);
@@ -698,15 +676,18 @@ function handleTaskPointerMove(event) {
         pointerDragState.active = true;
         draggedTaskId = pointerDragState.taskId;
         suppressTaskClick = true;
-        pointerDragState.card.classList.add("is-dragging");
+        beginTaskPointerDrag(event);
     }
 
     event.preventDefault();
+    updateTaskDragPreview(event.clientX, event.clientY);
+    autoScrollKanbanBoard(event.clientX);
 
     const target = document.elementFromPoint(event.clientX, event.clientY);
     const columnEl = getClosestKanbanColumn(target);
 
     if (!columnEl || !state.board?.columns?.some((column) => column.id === columnEl.dataset.columnId)) {
+        clearTaskDropTarget();
         return;
     }
 
@@ -753,6 +734,54 @@ function stopTaskPointerDragListeners() {
     document.removeEventListener("pointermove", handleTaskPointerMove);
     document.removeEventListener("pointerup", handleTaskPointerUp);
     document.removeEventListener("pointercancel", cancelTaskPointerDrag);
+}
+
+function beginTaskPointerDrag(event) {
+    if (!pointerDragState) {
+        return;
+    }
+
+    const { card } = pointerDragState;
+    const rect = card.getBoundingClientRect();
+
+    pointerDragState.offsetX = event.clientX - rect.left;
+    pointerDragState.offsetY = event.clientY - rect.top;
+
+    card.classList.add("is-dragging");
+
+    dragPreview = card.cloneNode(true);
+    dragPreview.classList.remove("is-dragging");
+    dragPreview.classList.add("task-drag-preview");
+    dragPreview.setAttribute("aria-hidden", "true");
+    dragPreview.style.width = `${rect.width}px`;
+
+    document.body.appendChild(dragPreview);
+    updateTaskDragPreview(event.clientX, event.clientY);
+}
+
+function updateTaskDragPreview(clientX, clientY) {
+    if (!dragPreview || !pointerDragState) {
+        return;
+    }
+
+    const left = clientX - pointerDragState.offsetX;
+    const top = clientY - pointerDragState.offsetY;
+    dragPreview.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+}
+
+function autoScrollKanbanBoard(clientX) {
+    const rect = kanbanBoard.getBoundingClientRect();
+    const scrollZone = 88;
+    const maxSpeed = 24;
+
+    if (clientX < rect.left + scrollZone) {
+        kanbanBoard.scrollLeft -= maxSpeed;
+        return;
+    }
+
+    if (clientX > rect.right - scrollZone) {
+        kanbanBoard.scrollLeft += maxSpeed;
+    }
 }
 
 function handleTaskDragOver(event) {
@@ -835,7 +864,12 @@ function moveTaskPlaceholder(columnEl, pointerY) {
         return;
     }
 
-    columnEl.insertBefore(placeholder, addTaskButton);
+    if (addTaskButton) {
+        columnEl.insertBefore(placeholder, addTaskButton);
+        return;
+    }
+
+    columnEl.appendChild(placeholder);
 }
 
 function getTaskPlaceholder() {
@@ -990,6 +1024,8 @@ function cleanupTaskDrag() {
     draggedTaskId = null;
 
     dragPlaceholder?.remove();
+    dragPreview?.remove();
+    dragPreview = null;
     window.setTimeout(() => {
         suppressTaskClick = false;
     }, 0);
@@ -997,6 +1033,14 @@ function cleanupTaskDrag() {
     document.querySelectorAll(".task-card.is-dragging").forEach((card) => {
         card.classList.remove("is-dragging");
     });
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((column) => {
+        column.classList.remove("is-drag-over");
+    });
+}
+
+function clearTaskDropTarget() {
+    dragPlaceholder?.remove();
 
     document.querySelectorAll(".kanban-column.is-drag-over").forEach((column) => {
         column.classList.remove("is-drag-over");

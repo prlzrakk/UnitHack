@@ -975,7 +975,7 @@ body.sidebar-closed .kanban-head {
             box-shadow 0.18s ease;
 }
 
-.task-card[draggable="true"] {
+.task-card.is-draggable {
     cursor: grab;
     touch-action: none;
     user-select: none;
@@ -990,6 +990,19 @@ body.sidebar-closed .kanban-head {
 .task-card.is-moving {
     opacity: 0.68;
     pointer-events: none;
+}
+
+.task-drag-preview {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0.96;
+    cursor: grabbing;
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
+    transform-origin: top left;
+    transition: none;
 }
 
 .task-card:hover {
