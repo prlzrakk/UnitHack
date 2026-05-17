@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Api.Application.Features.Notifications.Common;
 using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
@@ -9,7 +10,8 @@ public class AddTeamMemberHandler(
     ITeamRepository teams,
     ITeamMemberRepository members,
     IUserRepository users,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    INotificationSender notificationSender)
     : IRequestHandler<AddTeamMemberCommand, AddTeamMemberResponse>
 {
     public async Task<AddTeamMemberResponse> Handle(
@@ -33,6 +35,20 @@ public class AddTeamMemberHandler(
 
         var member = await members.AddMemberAsync(team.Id, command.UserId, TeamRole.Member, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        
+        await notificationSender.SendToUserAsync(
+            command.UserId,
+            new
+            {
+                id = Guid.NewGuid(),
+                userId = command.UserId,
+                teamId = team.Id,
+                name = "Team Member Added",
+                message = $"Вас добавили в команду «{team.Name}»",
+                isRead = false,
+                createdAt = DateTime.UtcNow
+            },
+            cancellationToken);
 
         return new AddTeamMemberResponse(member.TeamId, member.UserId, member.Role);
     }
