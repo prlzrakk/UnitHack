@@ -1,7 +1,9 @@
+using System.Text.Json;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
+using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -14,6 +16,7 @@ public class CreateTaskHandler(
     ITagRepository tags,
     ITaskTagRepository taskTags,
     ITeamMemberRepository members,
+    IOutboxRepository outboxes,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateTaskCommand, TaskResponse>
 {
     public async Task<TaskResponse> Handle(CreateTaskCommand command, CancellationToken cancellationToken)
@@ -45,6 +48,27 @@ public class CreateTaskHandler(
             cancellationToken);
 
         await taskTags.ReplaceAsync(task.Id, selectedTags.Select(x => x.Id).ToArray(), cancellationToken);
+
+        var outboxEvent = new OutboxEvent
+        {
+            Id = Guid.NewGuid(),
+            EventType = EventType.TaskCreated,
+            Payload = JsonSerializer.Serialize(new
+            {
+                TaskId = task.Id,
+                KanbanId = kanban.Id,
+                ColumnId = column.Id,
+                UserId = task.UserId,
+                Order = task.Order,
+                CreatedBy = command.CurrentUserId,
+                OccuredAt = DateTime.UtcNow,
+            }),
+            Status = "Pending",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await outboxes.AddAsync(outboxEvent, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(task, selectedTags);
