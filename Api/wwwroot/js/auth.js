@@ -16,6 +16,7 @@ const loginToRegisterBtn = document.getElementById("loginToRegister");
 const registerToLoginBtn = document.getElementById("registerToLogin");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
+const TUTORIAL_PENDING_KEY = "boardify.tutorialPending";
 
 showLoginBtn?.addEventListener("click", () => setMode("login"));
 showRegisterBtn?.addEventListener("click", () => setMode("register"));
@@ -60,6 +61,7 @@ registerForm?.addEventListener("submit", async (event) => {
   await runAuthAction(registerForm, async () => {
     await createUser(email, password, name);
     await login(email, password);
+    markTutorialPending();
     setMessage("Аккаунт создан, открываем Boardify...", "success");
     redirectToApp();
   }, "Не удалось зарегистрироваться. Возможно, email уже занят.");
@@ -132,6 +134,15 @@ function redirectToApp() {
   setTimeout(() => {
     window.location.replace(next);
   }, 250);
+}
+
+function markTutorialPending() {
+  try {
+    localStorage.setItem("boardify.tutorialPending", "true");
+    localStorage.removeItem("boardify.tutorialSeen");
+  } catch {
+    // Registration should continue even if localStorage is unavailable.
+  }
 }
 
 const params = new URLSearchParams(window.location.search);

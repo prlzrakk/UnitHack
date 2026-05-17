@@ -1039,14 +1039,14 @@ body.sidebar-closed .kanban-head {
 .task-card::before {
     content: "";
     position: absolute;
-    left: 1px;
-    top: 1px;
-    bottom: 1px;
+    left: 0;
+    top: 0;
+    bottom: 0;
 
     width: 6px;
 
     background: var(--task-color, var(--orange));
-    border-radius: 3px;
+    border-radius: 12px 0 0 12px;
 }
 
 .task-top {
