@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
@@ -38,28 +39,19 @@ public class UpdateTaskHandler(
         task.UserId = command.UserId;
 
         var responseTags = await GetResponseTagsAsync(task.Id, kanban.Id, command.TagIds, cancellationToken);
-
-        var outboxEvent = new OutboxEvent
+        
+        await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskUpdated, new
         {
-            Id = Guid.NewGuid(),
-            EventType = EventType.TaskUpdated,
-            Payload = JsonSerializer.Serialize(new
-            {
-                TaskId = task.Id,
-                KanbanId = kanban.Id,
-                ColumnId = task.ColumnId,
-                UserId = task.UserId,
-                Priority = task.Priority,
-                Deadline = task.Deadline,
-                UpdatedBy = command.CurrentUserId,
-                OccuredAt = DateTime.UtcNow,
-            }),
-            Status = "Pending",
-            RetryCount = 0,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await outboxes.AddAsync(outboxEvent, cancellationToken);
+            TaskId = task.Id,
+            KanbanId = kanban.Id,
+            ColumnId = task.ColumnId,
+            CreatedBy = command.CurrentUserId,
+            UserId = task.UserId,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            UpdatedBy = command.CurrentUserId,
+            OccurredAt = DateTime.UtcNow,
+        }), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(task, responseTags);

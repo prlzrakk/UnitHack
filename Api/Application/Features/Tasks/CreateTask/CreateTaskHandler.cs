@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
@@ -49,26 +50,18 @@ public class CreateTaskHandler(
 
         await taskTags.ReplaceAsync(task.Id, selectedTags.Select(x => x.Id).ToArray(), cancellationToken);
 
-        var outboxEvent = new OutboxEvent
+        await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskCreated, new
         {
-            Id = Guid.NewGuid(),
-            EventType = EventType.TaskCreated,
-            Payload = JsonSerializer.Serialize(new
-            {
-                TaskId = task.Id,
-                KanbanId = kanban.Id,
-                ColumnId = column.Id,
-                UserId = task.UserId,
-                Order = task.Order,
-                CreatedBy = command.CurrentUserId,
-                OccuredAt = DateTime.UtcNow,
-            }),
-            Status = "Pending",
-            RetryCount = 0,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await outboxes.AddAsync(outboxEvent, cancellationToken);
+            TaskId = task.Id,
+            KanbanId = kanban.Id,
+            ColumnId = column.Id,
+            CreatedBy = command.CurrentUserId,
+            UserId = task.UserId,
+            Order = task.Order,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            OccurredAt = DateTime.UtcNow
+        }), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(task, selectedTags);

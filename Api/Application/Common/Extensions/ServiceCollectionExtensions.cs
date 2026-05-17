@@ -80,6 +80,8 @@ public static class ServiceCollectionExtensions
     {
         builder.Services.Configure<RabbitMqOptions>(
             builder.Configuration.GetSection("RabbitMq"));
+        builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+        builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
         return builder;
     }
 
@@ -128,6 +130,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWorkRepository>();
         builder.Services.AddHostedService<OutboxWorker>();
+        builder.Services.AddHostedService<NotificationWorker>();
         
         return builder;
     }

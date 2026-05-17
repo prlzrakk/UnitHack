@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
@@ -43,29 +44,21 @@ public class MoveTaskHandler(
             toColumn.Tasks.Add(task);
 
         var responseTags = await taskTags.GetTagsByTaskIdAsync(task.Id, cancellationToken);
-
-        var outboxEvent = new OutboxEvent
-        {
-            Id = Guid.NewGuid(),
-            EventType = EventType.TaskMoved,
-            Payload = JsonSerializer.Serialize(new
+        
+        await outboxes.AddAsync(
+            OutboxEventFactory.Create(EventType.TaskMoved, new
             {
                 TaskId = task.Id,
                 KanbanId = kanban.Id,
-                ToColumnId = toColumn.Id,
                 FromColumnId = fromColumnId,
+                ToColumnId = toColumn.Id,
+                UserId = task.UserId,
                 Order = command.Order,
                 MovedBy = command.CurrentUserId,
-                OccuredAt = DateTime.UtcNow,
-            }),
-            Status = "Pending",
-            RetryCount = 0,
-            CreatedAt = DateTime.UtcNow
-        };
+                OccurredAt = DateTime.UtcNow
+            }), cancellationToken);
         
-        await outboxes.AddAsync(outboxEvent, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
         return ToResponse(task, responseTags);
     }
 

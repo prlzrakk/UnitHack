@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
 using Infrastructure.Entities;
 using Infrastructure.Enums;
@@ -27,25 +28,13 @@ public class DeleteTaskHandler(
 
         await tasks.DeleteAsync(task.Id, cancellationToken);
 
-        var outboxEvent = new OutboxEvent
+        await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskDeleted, new
         {
-            Id = Guid.NewGuid(),
-            EventType = EventType.TaskDeleted,
-            Payload = JsonSerializer.Serialize(new
-            {
-                TaskId = task.Id,
-                KanbanId = kanban.Id,
-                ColumnId = task.ColumnId,
-                UserId = task.UserId,
-                DeletedBy = command.CurrentUserId,
-                OccuredAt = DateTime.UtcNow,
-            }),
-            Status = "Pending",
-            RetryCount = 0,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await outboxes.AddAsync(outboxEvent, cancellationToken);
+            TaskId = task.Id,
+            KanbanId = kanban.Id,
+            DeletedBy = command.CurrentUserId,
+            OccurredAt = DateTime.UtcNow
+        }), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
