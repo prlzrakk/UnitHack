@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
 using Infrastructure.Repositories.Interfaces;
@@ -10,6 +11,7 @@ public class MoveTaskHandler(
     IKanbanRepository kanbans,
     IKanbanColumnRepository columns,
     IKanbanTaskRepository tasks,
+    ITaskTagRepository taskTags,
     ITeamMemberRepository members,
     IUnitOfWork unitOfWork) : IRequestHandler<MoveTaskCommand, TaskResponse>
 {
@@ -37,12 +39,13 @@ public class MoveTaskHandler(
         if (!toColumn.Tasks.Contains(task))
             toColumn.Tasks.Add(task);
 
+        var responseTags = await taskTags.GetTagsByTaskIdAsync(task.Id, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(task);
+        return ToResponse(task, responseTags);
     }
 
-    private static TaskResponse ToResponse(KanbanTask task) => new(
+    private static TaskResponse ToResponse(KanbanTask task, IEnumerable<Tag> tags) => new(
         task.Id,
         task.KanbanId,
         task.ColumnId,
@@ -52,5 +55,6 @@ public class MoveTaskHandler(
         task.Priority,
         task.CreatedAt,
         task.Deadline,
-        task.Order);
+        task.Order,
+        tags.ToResponseList());
 }

@@ -11,4 +11,5 @@ public record UpdateTaskCommand(
     string? Description,
     Priority Priority,
     DateTime Deadline,
-    Guid UserId) : IRequest<TaskResponse>;
+    Guid UserId,
+    Guid[]? TagIds) : IRequest<TaskResponse>;

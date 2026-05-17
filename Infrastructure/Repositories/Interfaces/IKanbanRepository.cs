@@ -4,7 +4,7 @@ namespace Infrastructure.Repositories.Interfaces;
 
 public interface IKanbanRepository
 {
-    Task AddAsync(Kanban kanban, CancellationToken cancellationToken = default);
+    Task<Kanban> AddAsync(Guid projectId, string name, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid kanbanId, CancellationToken cancellationToken);
     Task<Kanban?> GetByIdAsync(Guid kanbanId, CancellationToken cancellationToken);
     Task<Kanban?> GetByIdWithProjectAsync(Guid kanbanId, CancellationToken cancellationToken);

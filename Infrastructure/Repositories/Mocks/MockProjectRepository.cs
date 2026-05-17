@@ -5,10 +5,16 @@ namespace Infrastructure.Repositories.Mocks;
 
 public class MockProjectRepository(MockDataStore store) : IProjectRepository
 {
-    public Task<Project> AddAsync(Project project, CancellationToken cancellationToken)
+    public Task<Project> AddAsync(Guid teamId, string name, CancellationToken cancellationToken)
     {
-        var team = store.Teams.First(x => x.Id == project.TeamId);
-        project.Team = team;
+        var team = store.Teams.First(x => x.Id == teamId);
+        var project = new Project
+        {
+            Id = Guid.NewGuid(),
+            TeamId = team.Id,
+            Team = team,
+            Name = name.Trim()
+        };
 
         store.Projects.Add(project);
         team.Projects.Add(project);

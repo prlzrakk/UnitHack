@@ -1,4 +1,5 @@
 using Api.Application.Common.Exceptions;
+using Api.Application.Features.Tags.Common;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -31,7 +32,28 @@ public class GetKanbanHandler(IKanbanRepository kanbanRepository, ITeamMemberRep
                 {
                     Id = column.Id,
                     Name = column.Name,
-                    Order = column.Order
+                    Order = column.Order,
+                    Tasks = kanban.Tasks
+                        .Where(task => task.ColumnId == column.Id)
+                        .OrderBy(task => task.Order)
+                        .Select(task => new GetKanbanTaskResponse
+                        {
+                            Id = task.Id,
+                            KanbanId = task.KanbanId,
+                            ColumnId = task.ColumnId,
+                            UserId = task.UserId,
+                            Name = task.Name,
+                            Description = task.Description,
+                            Priority = task.Priority,
+                            CreatedAt = task.CreatedAt,
+                            Deadline = task.Deadline,
+                            Order = task.Order,
+                            Tags = task.TaskTags
+                                .Select(taskTag => taskTag.Tag.ToResponse())
+                                .OrderBy(tag => tag.Name)
+                                .ToList()
+                        })
+                        .ToList()
                 })
                 .ToList()
         };

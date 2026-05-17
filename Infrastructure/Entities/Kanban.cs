@@ -9,4 +9,5 @@ public class Kanban
     
     public ICollection<KanbanColumn> Columns { get; set; } = new List<KanbanColumn>();
     public ICollection<KanbanTask> Tasks { get; set; } = new List<KanbanTask>();
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }
