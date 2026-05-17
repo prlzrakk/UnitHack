@@ -1,7 +1,10 @@
+using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
+using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -13,6 +16,7 @@ public class UpdateTaskHandler(
     ITagRepository tags,
     ITaskTagRepository taskTags,
     ITeamMemberRepository members,
+    IOutboxRepository outboxes,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateTaskCommand, TaskResponse>
 {
     public async Task<TaskResponse> Handle(UpdateTaskCommand command, CancellationToken cancellationToken)
@@ -35,6 +39,19 @@ public class UpdateTaskHandler(
         task.UserId = command.UserId;
 
         var responseTags = await GetResponseTagsAsync(task.Id, kanban.Id, command.TagIds, cancellationToken);
+        
+        await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskUpdated, new
+        {
+            TaskId = task.Id,
+            KanbanId = kanban.Id,
+            ColumnId = task.ColumnId,
+            CreatedBy = command.CurrentUserId,
+            UserId = task.UserId,
+            Priority = task.Priority,
+            Deadline = task.Deadline,
+            UpdatedBy = command.CurrentUserId,
+            OccurredAt = DateTime.UtcNow,
+        }), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(task, responseTags);

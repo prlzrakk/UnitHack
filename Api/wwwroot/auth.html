@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boardify — Вход</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/auth.css" />
+</head>
+<body class="auth-body auth-mode-start">
+<main class="auth-page" aria-labelledby="authTitle">
+  <div class="auth-orb" aria-hidden="true"></div>
+
+  <header class="auth-header">
+    <a class="auth-brand" id="authTitle" href="./auth.html" aria-label="Boardify">Boardify</a>
+  </header>
+
+  <section class="auth-card auth-card-start" id="startPanel" aria-label="Выбор действия">
+    <button class="auth-outline-btn" id="showLogin" type="button">Войти</button>
+    <button class="auth-outline-btn" id="showRegister" type="button">Зарегистрироваться</button>
+  </section>
+
+  <section class="auth-card auth-form-card" id="loginPanel" aria-label="Вход" hidden>
+    <form class="auth-form" id="loginForm" novalidate>
+      <label class="auth-field">
+        <span class="sr-only">Email</span>
+        <svg class="auth-field-icon" viewBox="0 0 40 32" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="35" height="25" rx="4" />
+          <path d="M5 7l15 11L35 7" />
+        </svg>
+        <input id="loginEmail" name="email" type="email" placeholder="Email" autocomplete="email" required>
+      </label>
+
+      <label class="auth-field">
+        <span class="sr-only">Password</span>
+        <svg class="auth-field-icon" viewBox="0 0 34 44" aria-hidden="true">
+          <rect x="3" y="19" width="28" height="22" rx="4" />
+          <path d="M8 19v-6a9 9 0 0118 0v6" />
+        </svg>
+        <input id="loginPassword" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+      </label>
+
+      <button class="auth-submit" type="submit">Войти</button>
+      <button class="auth-link-btn" id="loginToRegister" type="button">Зарегистрироваться</button>
+    </form>
+  </section>
+
+  <section class="auth-card auth-form-card auth-register-card" id="registerPanel" aria-label="Регистрация" hidden>
+    <form class="auth-form" id="registerForm" novalidate>
+      <label class="auth-field">
+        <span class="sr-only">Email</span>
+        <svg class="auth-field-icon" viewBox="0 0 40 32" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="35" height="25" rx="4" />
+          <path d="M5 7l15 11L35 7" />
+        </svg>
+        <input id="registerEmail" name="email" type="email" placeholder="Email" autocomplete="email" required>
+      </label>
+
+      <label class="auth-field">
+        <span class="sr-only">Name</span>
+        <svg class="auth-field-icon" viewBox="0 0 36 40" aria-hidden="true">
+          <circle cx="18" cy="10" r="7" />
+          <path d="M4 37c1-11 7-17 14-17s13 6 14 17" />
+        </svg>
+        <input id="registerName" name="name" type="text" placeholder="Name" autocomplete="name" required>
+      </label>
+
+      <label class="auth-field">
+        <span class="sr-only">Password</span>
+        <svg class="auth-field-icon" viewBox="0 0 34 44" aria-hidden="true">
+          <rect x="3" y="19" width="28" height="22" rx="4" />
+          <path d="M8 19v-6a9 9 0 0118 0v6" />
+        </svg>
+        <input id="registerPassword" name="password" type="password" placeholder="Password" autocomplete="new-password" minlength="6" required>
+      </label>
+
+      <button class="auth-submit" type="submit">Зарегистрироваться</button>
+      <button class="auth-link-btn" id="registerToLogin" type="button">Войти</button>
+    </form>
+  </section>
+
+  <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+</main>
+
+<script type="module" src="./js/auth.js"></script>
+</body>
+</html>

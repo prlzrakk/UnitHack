@@ -1,4 +1,8 @@
+using System.Text.Json;
+using Api.Application.Common.Events;
 using Api.Application.Common.Exceptions;
+using Infrastructure.Entities;
+using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -8,6 +12,7 @@ public class DeleteTaskHandler(
     IKanbanRepository kanbans,
     IKanbanTaskRepository tasks,
     ITeamMemberRepository members,
+    IOutboxRepository outboxes,
     IUnitOfWork unitOfWork) : IRequestHandler<DeleteTaskCommand>
 {
     public async Task Handle(DeleteTaskCommand command, CancellationToken cancellationToken)
@@ -22,6 +27,14 @@ public class DeleteTaskHandler(
             throw new ForbiddenException("Only team member can delete tasks");
 
         await tasks.DeleteAsync(task.Id, cancellationToken);
+
+        await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskDeleted, new
+        {
+            TaskId = task.Id,
+            KanbanId = kanban.Id,
+            DeletedBy = command.CurrentUserId,
+            OccurredAt = DateTime.UtcNow
+        }), cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

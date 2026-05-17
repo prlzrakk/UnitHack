@@ -4,6 +4,7 @@ export async function createUser(email, password, name = null) {
     return fetchJson("/api/users", {
         method: "POST",
         body: { email, password, name },
+        skipAuth: true,
         errorText: "Failed to create user",
     });
 }

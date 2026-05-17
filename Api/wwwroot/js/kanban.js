@@ -53,6 +53,7 @@ const newTaskTitle = document.getElementById("newTaskTitle");
 const newTaskDescription = document.getElementById("newTaskDescription");
 const newTaskAssigneeSearch = document.getElementById("newTaskAssigneeSearch");
 const assigneeOptions = document.getElementById("assigneeOptions");
+const selectedAssigneesContainer = document.getElementById("selectedAssignees");
 
 const newTaskPriority = document.getElementById("newTaskPriority");
 const newTaskComplexity = document.getElementById("newTaskComplexity");
@@ -61,6 +62,24 @@ const newTaskDeadline = document.getElementById("newTaskDeadline");
 const newTaskTagInput = document.getElementById("newTaskTagInput");
 const addTaskTagBtn = document.getElementById("addTaskTagBtn");
 const createdTags = document.getElementById("createdTags");
+
+const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
+
+/* Task detail modal */
+const taskDetailOverlay = document.getElementById("taskDetailOverlay");
+const taskDetailForm = document.getElementById("taskDetailForm");
+const taskDetailClose = document.getElementById("taskDetailClose");
+const taskDetailCancel = document.getElementById("taskDetailCancel");
+
+const detailTaskTitle = document.getElementById("detailTaskTitle");
+const detailTaskDescription = document.getElementById("detailTaskDescription");
+const detailTaskAssignee = document.getElementById("detailTaskAssignee");
+const detailTaskPriority = document.getElementById("detailTaskPriority");
+const detailTaskComplexity = document.getElementById("detailTaskComplexity");
+const detailTaskDeadline = document.getElementById("detailTaskDeadline");
+const detailSubtaskList = document.getElementById("detailSubtaskList");
+const detailSubtaskInput = document.getElementById("detailSubtaskInput");
+const detailSubtaskAdd = document.getElementById("detailSubtaskAdd");
 
 /* =========================
    STATE
@@ -79,8 +98,10 @@ let state = {
 
 let selectedReminder = null;
 let selectedColumnForNewTask = null;
-let selectedAssignee = null;
+let selectedAssignees = [];
 let selectedTags = [];
+let selectedTaskForDetail = null;
+let detailSubtasks = [];
 
 /* =========================
    SIDEBAR
@@ -146,7 +167,9 @@ async function loadActiveBoard(kanbanId = null) {
             state.activeKanban;
     }
 
-    state.board = await loadBoard(state.activeProject, state.activeKanban?.id ?? null);
+    state.board = hydrateBoardTaskAssignees(
+        await loadBoard(state.activeProject, state.activeKanban?.id ?? null)
+    );
     state.activeKanban = state.board.selectedKanban ?? state.activeKanban;
 
     updateBoardUrl(state.activeProject, state.activeKanban);
@@ -443,6 +466,9 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     const card = document.createElement("article");
     card.className = "task-card";
     card.style.setProperty("--task-color", color);
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `Открыть задачу ${task.title}`);
 
     card.innerHTML = `
         <div class="task-top">
@@ -508,6 +534,7 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
                             type="button"
                             data-user-name="${escapeAttr(user.name)}"
                             data-task-title="${escapeAttr(task.title)}"
+                            title="${escapeAttr(user.name)}"
                             aria-label="Напомнить пользователю ${escapeAttr(user.name)}"
                         >
                             <img
@@ -524,7 +551,7 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
 
     card.querySelector(".task-edit-btn").addEventListener("click", (event) => {
         event.stopPropagation();
-        editTask(task);
+        openTaskDetailOverlay(task);
     });
 
     card.querySelector(".task-delete-btn").addEventListener("click", (event) => {
@@ -543,31 +570,196 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         });
     });
 
+    card.addEventListener("click", () => {
+        openTaskDetailOverlay(task);
+    });
+
+    card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+
+        event.preventDefault();
+        openTaskDetailOverlay(task);
+    });
+
     return card;
 }
 
-async function editTask(task) {
-    const name = prompt("Название задачи", task.title);
+function openTaskDetailOverlay(task) {
+    selectedTaskForDetail = task;
+    detailSubtasks = getTaskSubtasks(task);
 
-    if (!name?.trim()) {
+    detailTaskTitle.value = task.title || "";
+    detailTaskDescription.value = task.description || "";
+    detailTaskAssignee.textContent = getTaskAssigneeName(task);
+    detailTaskPriority.value = normalizePriorityForSelect(task.priority);
+    detailTaskComplexity.value = task.complexity || "";
+    detailTaskDeadline.value = toDateTimeLocalValueSafe(task.deadline);
+
+    renderDetailSubtasks();
+
+    taskDetailOverlay.classList.add("is-open");
+    taskDetailOverlay.setAttribute("aria-hidden", "false");
+
+    setTimeout(() => {
+        detailTaskTitle.focus();
+    }, 0);
+}
+
+function closeTaskDetailOverlay() {
+    taskDetailOverlay.classList.remove("is-open");
+    taskDetailOverlay.setAttribute("aria-hidden", "true");
+    selectedTaskForDetail = null;
+    detailSubtasks = [];
+}
+
+async function saveTaskDetailFromForm() {
+    if (!selectedTaskForDetail) {
         return;
     }
 
-    const description = prompt("Описание задачи", task.description) ?? "";
+    const name = detailTaskTitle.value.trim();
+    const description = detailTaskDescription.value.trim();
+    const userId = selectedTaskForDetail.userId || getCurrentUserId();
+
+    if (!name) {
+        detailTaskTitle.focus();
+        return;
+    }
+
+    if (!userId) {
+        showToast("Нужна авторизация или назначенный исполнитель");
+        return;
+    }
 
     try {
-        await updateTask(task.id, {
-            name: name.trim(),
-            description: description.trim(),
-            priority: task.priority,
-            deadline: task.deadline,
-            userId: task.userId,
+        await updateTask(selectedTaskForDetail.id, {
+            name,
+            description,
+            priority: detailTaskPriority.value || "Medium",
+            deadline: detailTaskDeadline.value
+                ? new Date(detailTaskDeadline.value).toISOString()
+                : selectedTaskForDetail.deadline,
+            userId,
         });
 
-        await reloadBoard(`Задача «${name.trim()}» обновлена`);
+        closeTaskDetailOverlay();
+        await reloadBoard(`Задача «${name}» обновлена`);
     } catch (error) {
         handleActionError(error, "Не удалось обновить задачу");
     }
+}
+
+function getTaskSubtasks(task) {
+    if (!Array.isArray(task.subtasks)) {
+        return [];
+    }
+
+    return task.subtasks.map((subtask, index) => {
+        if (typeof subtask === "string") {
+            return {
+                id: `subtask-${index}`,
+                title: subtask,
+                done: false,
+            };
+        }
+
+        return {
+            id: subtask.id ?? `subtask-${index}`,
+            title: subtask.title ?? subtask.name ?? "Подзадача",
+            done: Boolean(subtask.done ?? subtask.isDone ?? subtask.completed),
+        };
+    });
+}
+
+function renderDetailSubtasks() {
+    detailSubtaskList.innerHTML = "";
+
+    if (!detailSubtasks.length) {
+        detailSubtaskList.innerHTML = `<div class="subtask-empty">Подзадач пока нет</div>`;
+        return;
+    }
+
+    detailSubtasks.forEach((subtask) => {
+        const row = document.createElement("div");
+        row.className = `subtask-item ${subtask.done ? "is-done" : ""}`;
+
+        row.innerHTML = `
+            <input
+                class="subtask-checkbox"
+                type="checkbox"
+                ${subtask.done ? "checked" : ""}
+                aria-label="Отметить подзадачу"
+            >
+            <span class="subtask-title">${escapeHtml(subtask.title)}</span>
+            <button class="subtask-remove-btn" type="button" aria-label="Удалить подзадачу">×</button>
+        `;
+
+        row.querySelector(".subtask-checkbox").addEventListener("change", (event) => {
+            subtask.done = event.target.checked;
+            renderDetailSubtasks();
+        });
+
+        row.querySelector(".subtask-remove-btn").addEventListener("click", () => {
+            detailSubtasks = detailSubtasks.filter((item) => item.id !== subtask.id);
+            renderDetailSubtasks();
+        });
+
+        detailSubtaskList.appendChild(row);
+    });
+}
+
+function addDetailSubtask() {
+    const title = detailSubtaskInput.value.trim();
+
+    if (!title) {
+        detailSubtaskInput.focus();
+        return;
+    }
+
+    detailSubtasks.push({
+        id: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+        title,
+        done: false,
+    });
+
+    detailSubtaskInput.value = "";
+    renderDetailSubtasks();
+}
+
+function getTaskAssigneeName(task) {
+    const user = getTaskUsers(task.users)[0];
+
+    if (user?.name) {
+        return user.name;
+    }
+
+    return task.userId ? `#${task.userId.slice(0, 8)}` : "Не назначен";
+}
+
+function normalizePriorityForSelect(priority) {
+    const value = String(priority || "").toLowerCase();
+
+    if (value === "low") {
+        return "Low";
+    }
+
+    if (value === "high") {
+        return "High";
+    }
+
+    return "Medium";
+}
+
+function toDateTimeLocalValueSafe(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return getDefaultDateTimeLocal();
+    }
+
+    return toDateTimeLocalValue(date);
 }
 
 async function deleteTask(task) {
@@ -579,6 +771,7 @@ async function deleteTask(task) {
 
     try {
         await deleteTaskRequest(task.id);
+        forgetTaskAssignees(task.id);
         await reloadBoard(`Задача «${task.title}» удалена`);
     } catch (error) {
         handleActionError(error, "Не удалось удалить задачу");
@@ -591,7 +784,7 @@ async function deleteTask(task) {
 
 function openCreateTaskModal(column) {
     selectedColumnForNewTask = column;
-    selectedAssignee = null;
+    selectedAssignees = [];
     selectedTags = [];
 
     createTaskForm.reset();
@@ -600,6 +793,7 @@ function openCreateTaskModal(column) {
     newTaskAssigneeSearch.value = "";
 
     renderCreatedTags();
+    renderSelectedAssignees();
     renderAssigneeOptions("");
 
     createTaskOverlay.classList.add("is-open");
@@ -612,7 +806,7 @@ function openCreateTaskModal(column) {
 function closeCreateTaskModal() {
     createTaskOverlay.classList.remove("is-open");
     selectedColumnForNewTask = null;
-    selectedAssignee = null;
+    selectedAssignees = [];
     selectedTags = [];
 }
 
@@ -638,7 +832,7 @@ async function createTaskFromForm() {
         return;
     }
 
-    const userId = selectedAssignee?.id ?? getCurrentUserId();
+    const userId = selectedAssignees[0]?.id ?? getCurrentUserId();
 
     if (!userId) {
         showToast("Нужна авторизация или выбранный исполнитель");
@@ -648,7 +842,7 @@ async function createTaskFromForm() {
     const finalDescription = buildDescriptionWithTags(description, selectedTags);
 
     try {
-        await createTask(state.board.id, {
+        const createdTask = await createTask(state.board.id, {
             name: title,
             description: finalDescription || "Описание не добавлено",
             priority: mapPriorityToApi(priority),
@@ -658,6 +852,13 @@ async function createTaskFromForm() {
             order: null,
             tagIds: [],
         });
+
+        rememberTaskAssignees(
+            readTaskId(createdTask),
+            selectedAssignees.length
+                ? selectedAssignees
+                : [resolveAssigneeById(userId)]
+        );
 
         closeCreateTaskModal();
         await reloadBoard(`Задача «${title}» создана`);
@@ -711,32 +912,51 @@ function buildDescriptionWithTags(description, tags) {
 
 function getProjectAssignees() {
     const assignees = [];
+    const projectTeam = state.activeProject?.team;
+    const members = projectTeam?.members ?? projectTeam?.Members ?? [];
 
-    assignees.push({
-        id: null,
-        name: "Не назначен",
-        color: "#838383",
+    members.forEach((member) => {
+        const memberId =
+            member.userId ??
+            member.UserId ??
+            member.memberId ??
+            member.MemberId ??
+            member.id ??
+            member.Id ??
+            null;
+
+        if (!memberId) {
+            return;
+        }
+
+        assignees.push({
+            id: memberId,
+            name:
+                member.name ||
+                member.Name ||
+                member.userName ||
+                member.UserName ||
+                member.email ||
+                member.Email ||
+                formatAssigneeFallbackName(memberId),
+            color: projectTeam?.color || "#42609f",
+        });
     });
 
-    if (state.currentUser) {
-        assignees.push({
-            id: getCurrentUserId(),
-            name:
-                state.currentUser.name ??
-                state.currentUser.userName ??
-                state.currentUser.email ??
-                "Я",
-            color: "#f4864d",
-        });
-    }
+    const currentUserId = getCurrentUserId();
+    const hasCurrentUser = assignees.some((assignee) =>
+        assignee.id && String(assignee.id) === String(currentUserId)
+    );
 
-    if (Array.isArray(state.workspace?.teams)) {
-        state.workspace.teams.forEach((team) => {
-            assignees.push({
-                id: team.userId ?? team.memberId ?? team.id ?? null,
-                name: team.name ?? team.title ?? "Участник",
-                color: team.color || "#42609f",
-            });
+    if (state.currentUser && !hasCurrentUser) {
+        assignees.push({
+            id: currentUserId,
+            name:
+                state.currentUser.name ||
+                state.currentUser.userName ||
+                state.currentUser.email ||
+                formatAssigneeFallbackName(currentUserId),
+            color: "#f4864d",
         });
     }
 
@@ -747,7 +967,7 @@ function removeDuplicateAssignees(assignees) {
     const seen = new Set();
 
     return assignees.filter((item) => {
-        const key = `${item.id ?? "none"}-${item.name}`;
+        const key = item.id ? String(item.id) : `none-${item.name}`;
 
         if (seen.has(key)) {
             return false;
@@ -761,18 +981,33 @@ function removeDuplicateAssignees(assignees) {
 function renderAssigneeOptions(searchValue) {
     const query = searchValue.trim().toLowerCase();
 
-    const assignees = getProjectAssignees().filter((item) =>
-        item.name.toLowerCase().includes(query)
-    );
-
     assigneeOptions.innerHTML = "";
+
+    if (!query) {
+        return;
+    }
+
+    const assignees = getProjectAssignees().filter((item) => {
+        const isMatch = item.name.toLowerCase().includes(query);
+        const isAlreadySelected = selectedAssignees.some((assignee) =>
+            getAssigneeKey(assignee) === getAssigneeKey(item)
+        );
+
+        return isMatch && !isAlreadySelected;
+    });
+
+    if (assignees.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "assignee-empty";
+        empty.textContent = "Участники не найдены";
+        assigneeOptions.appendChild(empty);
+        return;
+    }
 
     assignees.forEach((assignee) => {
         const button = document.createElement("button");
 
-        button.className = `assignee-option ${
-            selectedAssignee?.name === assignee.name ? "is-selected" : ""
-        }`;
+        button.className = "assignee-option";
 
         button.type = "button";
 
@@ -782,13 +1017,203 @@ function renderAssigneeOptions(searchValue) {
         `;
 
         button.addEventListener("click", () => {
-            selectedAssignee = assignee.id ? assignee : null;
-            newTaskAssigneeSearch.value = assignee.name;
-            renderAssigneeOptions(assignee.name);
+            addSelectedAssignee(assignee);
+            newTaskAssigneeSearch.value = "";
+            assigneeOptions.innerHTML = "";
         });
 
         assigneeOptions.appendChild(button);
     });
+}
+
+function getAssigneeKey(assignee) {
+    return `${assignee.id ?? "none"}-${assignee.name}`;
+}
+
+function addSelectedAssignee(assignee) {
+    if (!assignee.id) {
+        return;
+    }
+
+    const alreadySelected = selectedAssignees.some((item) =>
+        getAssigneeKey(item) === getAssigneeKey(assignee)
+    );
+
+    if (alreadySelected) {
+        return;
+    }
+
+    if (selectedAssignees.length >= 4) {
+        showToast("Можно выбрать не больше 4 исполнителей");
+        return;
+    }
+
+    selectedAssignees.push(assignee);
+    renderSelectedAssignees();
+}
+
+function removeSelectedAssignee(assigneeKey) {
+    selectedAssignees = selectedAssignees.filter((assignee) =>
+        getAssigneeKey(assignee) !== assigneeKey
+    );
+    renderSelectedAssignees();
+}
+
+function renderSelectedAssignees() {
+    if (!selectedAssigneesContainer) {
+        return;
+    }
+
+    selectedAssigneesContainer.innerHTML = "";
+
+    if (selectedAssignees.length === 0) {
+        selectedAssigneesContainer.innerHTML = `
+            <span class="selected-assignees-empty">Можно выбрать до 4 исполнителей</span>
+        `;
+        return;
+    }
+
+    selectedAssignees.forEach((assignee) => {
+        const chip = document.createElement("div");
+        const key = getAssigneeKey(assignee);
+
+        chip.className = "selected-assignee";
+        chip.innerHTML = `
+            <span>${escapeHtml(assignee.name)}</span>
+            <button type="button" aria-label="Убрать исполнителя">×</button>
+        `;
+
+        chip.querySelector("button").addEventListener("click", () => {
+            removeSelectedAssignee(key);
+        });
+
+        selectedAssigneesContainer.appendChild(chip);
+    });
+}
+
+function hydrateBoardTaskAssignees(board) {
+    if (!board?.columns) {
+        return board;
+    }
+
+    board.columns.forEach((column) => {
+        column.tasks = (column.tasks ?? []).map((task) => ({
+            ...task,
+            users: getStoredTaskAssignees(task.id) ?? getFallbackTaskAssignees(task),
+        }));
+    });
+
+    return board;
+}
+
+function getFallbackTaskAssignees(task) {
+    if (!task?.userId) {
+        return task?.users ?? [];
+    }
+
+    return [resolveAssigneeById(task.userId)];
+}
+
+function resolveAssigneeById(userId) {
+    const assignee = getProjectAssignees().find((item) =>
+        item.id && String(item.id) === String(userId)
+    );
+
+    if (assignee) {
+        return normalizeAssignee(assignee);
+    }
+
+    return {
+        id: userId,
+        name: formatAssigneeFallbackName(userId),
+        color: "#838383",
+    };
+}
+
+function formatAssigneeFallbackName(userId) {
+    const shortId = userId ? String(userId).slice(0, 8) : "";
+    return shortId ? `Участник ${shortId}` : "Исполнитель";
+}
+
+function readTaskId(task) {
+    return task?.id ?? task?.Id ?? null;
+}
+
+function rememberTaskAssignees(taskId, assignees) {
+    if (!taskId) {
+        return;
+    }
+
+    const cleanAssignees = assignees
+        .filter((assignee) => assignee?.id)
+        .slice(0, 4)
+        .map(normalizeAssignee);
+
+    if (cleanAssignees.length === 0) {
+        return;
+    }
+
+    const store = readTaskAssigneeStore();
+    store[taskId] = cleanAssignees;
+    writeTaskAssigneeStore(store);
+}
+
+function forgetTaskAssignees(taskId) {
+    if (!taskId) {
+        return;
+    }
+
+    const store = readTaskAssigneeStore();
+    delete store[taskId];
+    writeTaskAssigneeStore(store);
+}
+
+function getStoredTaskAssignees(taskId) {
+    if (!taskId) {
+        return null;
+    }
+
+    const assignees = readTaskAssigneeStore()[taskId];
+
+    if (!Array.isArray(assignees) || assignees.length === 0) {
+        return null;
+    }
+
+    return assignees.slice(0, 4).map(normalizeAssignee);
+}
+
+function normalizeAssignee(assignee = {}) {
+    assignee = assignee ?? {};
+
+    const id =
+        assignee.id ??
+        assignee.userId ??
+        assignee.UserId ??
+        null;
+    const rawName =
+        assignee.name ??
+        assignee.userName ??
+        assignee.email ??
+        "";
+    const name = String(rawName).trim();
+
+    return {
+        id,
+        name: name && !name.startsWith("#") ? name : formatAssigneeFallbackName(id),
+        color: assignee.color || "#838383",
+    };
+}
+
+function readTaskAssigneeStore() {
+    try {
+        return JSON.parse(localStorage.getItem(TASK_ASSIGNEES_STORAGE_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function writeTaskAssigneeStore(store) {
+    localStorage.setItem(TASK_ASSIGNEES_STORAGE_KEY, JSON.stringify(store));
 }
 
 /* =========================
@@ -910,12 +1335,47 @@ createTaskForm?.addEventListener("submit", (event) => {
     createTaskFromForm();
 });
 
+taskDetailClose?.addEventListener("click", closeTaskDetailOverlay);
+taskDetailCancel?.addEventListener("click", closeTaskDetailOverlay);
+
+taskDetailOverlay?.addEventListener("click", (event) => {
+    if (event.target === taskDetailOverlay) {
+        closeTaskDetailOverlay();
+    }
+});
+
+taskDetailForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveTaskDetailFromForm();
+});
+
+detailSubtaskAdd?.addEventListener("click", addDetailSubtask);
+
+detailSubtaskInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+        return;
+    }
+
+    event.preventDefault();
+    addDetailSubtask();
+});
+
 newTaskAssigneeSearch?.addEventListener("input", () => {
     renderAssigneeOptions(newTaskAssigneeSearch.value);
 });
 
 newTaskAssigneeSearch?.addEventListener("focus", () => {
     renderAssigneeOptions(newTaskAssigneeSearch.value);
+});
+
+document.addEventListener("click", (event) => {
+    if (!newTaskAssigneeSearch || !assigneeOptions) {
+        return;
+    }
+
+    if (!event.target.closest(".assignee-picker")) {
+        assigneeOptions.innerHTML = "";
+    }
 });
 
 addTaskTagBtn?.addEventListener("click", addCustomTag);
@@ -936,6 +1396,10 @@ document.addEventListener("keydown", (event) => {
 
     if (createTaskOverlay?.classList.contains("is-open")) {
         closeCreateTaskModal();
+    }
+
+    if (taskDetailOverlay?.classList.contains("is-open")) {
+        closeTaskDetailOverlay();
     }
 });
 
@@ -998,17 +1462,19 @@ function getTaskUsers(users) {
         return users
             .map((user, index) => {
                 if (typeof user === "string") {
+                    const name = user.trim();
+
                     return {
-                        name: user,
+                        name: name.startsWith("#")
+                            ? `Участник ${name.slice(1)}`
+                            : name || `Участник ${index + 1}`,
                     };
                 }
 
+                const assignee = normalizeAssignee(user);
+
                 return {
-                    name:
-                        user.name ??
-                        user.userName ??
-                        user.email ??
-                        `Участник ${index + 1}`,
+                    name: assignee.name || `Участник ${index + 1}`,
                 };
             })
             .filter(Boolean);
