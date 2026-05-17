@@ -318,24 +318,42 @@ function renderSidebarTaskStats(taskStats) {
     }
 
     if (!taskStats) {
-        list.innerHTML = `<div class="sidebar-empty">Задачи загрузятся на доске</div>`;
+        list.innerHTML = `
+            <button class="project-item" data-my-tasks-filter="all">
+                <span class="project-color orange"></span>
+                <span class="project-name">Все задачи</span>
+                <span class="project-meta">→</span>
+            </button>
+        `;
         return;
     }
 
     list.innerHTML = `
-        <button class="project-item">
+        <button class="project-item" data-my-tasks-filter="all">
+            <span class="project-color peach"></span>
+            <span class="project-name">Все задачи</span>
+            <span class="project-meta">→</span>
+        </button>
+
+        <button class="project-item" data-my-tasks-filter="urgent">
             <span class="project-color orange"></span>
             <span class="project-name">Срочные</span>
             <span class="project-meta">${taskStats.urgent}</span>
         </button>
-        <button class="project-item">
+
+        <button class="project-item" data-my-tasks-filter="week">
             <span class="project-color blue"></span>
             <span class="project-name">На неделе</span>
             <span class="project-meta">${taskStats.week}</span>
         </button>
+
+        <button class="project-item" data-my-tasks-filter="overdue">
+            <span class="project-color pink"></span>
+            <span class="project-name">Просроченные</span>
+            <span class="project-meta">!</span>
+        </button>
     `;
 }
-
 function readId(record) {
     return readText(record, "id", "Id");
 }

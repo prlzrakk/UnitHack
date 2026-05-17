@@ -126,7 +126,7 @@ function createTeamCard(team) {
             <h2 class="team-name">${escapeHtml(team.name)}</h2>
 
             <button class="team-icon-btn team-delete-btn" type="button" aria-label="Удалить команду">
-                🗑
+                <img src="components/images/delete.svg" alt="удалить" style="filter: brightness(0) invert(1);">
             </button>
 
             <button class="team-icon-btn team-edit-btn" type="button" aria-label="Редактировать команду">

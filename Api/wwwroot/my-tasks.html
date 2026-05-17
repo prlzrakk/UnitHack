@@ -1,0 +1,70 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Boardify — Мои задачи</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap"
+            rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/my-tasks.css" />
+
+    <script type="module" src="./js/authGuard.js"></script>
+</head>
+
+<body class="my-tasks-body">
+<div class="my-tasks-app">
+    <header class="my-tasks-topbar">
+        <button class="my-tasks-menu-btn" id="openSidebar" aria-label="Открыть меню">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <a class="brand" href="./index.html" aria-label="Назад на главную">Boardify</a>
+
+        <a class="profile-btn" href="./user.html" aria-label="Профиль">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="14" r="7"></circle>
+                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
+            </svg>
+        </a>
+    </header>
+
+    <div id="sidebarMount"></div>
+
+    <main class="my-tasks-page">
+        <section class="my-tasks-head">
+            <div>
+                <p class="my-tasks-eyebrow" id="myTasksUser">Мои задачи</p>
+                <h1 id="myTasksTitle">Мои задачи</h1>
+            </div>
+        </section>
+
+        <section class="my-tasks-filters" aria-label="Фильтры задач">
+            <button class="my-task-filter is-active" type="button" data-filter="all">Все</button>
+            <button class="my-task-filter" type="button" data-filter="urgent">Срочные</button>
+            <button class="my-task-filter" type="button" data-filter="week">На неделе</button>
+            <button class="my-task-filter" type="button" data-filter="overdue">Просроченные</button>
+        </section>
+
+        <section class="my-tasks-grid" id="myTasksGrid"></section>
+    </main>
+
+    <div class="toast" id="toast">
+        <span class="toast-bell">✓</span>
+        <span id="toastText">Готово</span>
+    </div>
+</div>
+
+<script src="./js/sidebar.js"></script>
+<script type="module" src="./js/my-tasks.js"></script>
+</body>
+</html>
