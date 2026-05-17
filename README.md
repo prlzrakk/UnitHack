@@ -3,7 +3,7 @@
 
 <p align="center">
   <a href="http://51.250.102.19/index.html" target="_blank">
-    <img src="https://img.shields.io/badge/Открыть%20сайт-UnitHack-f4864d?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Открыть сайт Boardify">
+    <img src="https://img.shields.io/badge/Открыть%20сайт-Boardify-f4864d?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Открыть сайт Boardify">
   </a>
 </p>
 
