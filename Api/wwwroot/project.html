@@ -1,0 +1,65 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Boardify — Доски проекта</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap"
+            rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/project.css" />
+
+    <script type="module" src="./js/authGuard.js"></script>
+</head>
+
+<body class="project-body">
+<div class="project-app">
+    <header class="project-topbar">
+        <button class="project-menu-btn" id="openSidebar" aria-label="Открыть меню">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <a class="home-link" href="./index.html" aria-label="Назад на главную">←</a>
+
+        <div class="brand">Boardify</div>
+
+        <a class="profile-btn" href="./user.html" aria-label="Профиль">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="14" r="7"></circle>
+                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
+            </svg>
+        </a>
+    </header>
+
+    <div id="sidebarMount"></div>
+
+    <main class="project-page">
+        <section class="project-head">
+            <div>
+                <p class="project-eyebrow" id="projectTeam">Проект</p>
+                <h1 id="projectTitle">Доски проекта</h1>
+            </div>
+        </section>
+
+        <section class="kanban-list" id="kanbanList"></section>
+    </main>
+
+    <div class="toast" id="toast">
+        <span class="toast-bell">✓</span>
+        <span id="toastText">Готово</span>
+    </div>
+</div>
+
+<script src="./js/sidebar.js"></script>
+<script type="module" src="./js/project.js"></script>
+</body>
+</html>
