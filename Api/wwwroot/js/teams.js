@@ -295,12 +295,29 @@ async function createTeamFromForm() {
             return;
         }
 
-        team.name = name;
-        team.color = newTeamColor.value || "#f4864d";
-        team.members = [...draftMembers];
+        const previousTeam = {
+            color: team.color,
+            members: [...team.members],
+            name: team.name,
+        };
+
+        try {
+            team.name = name;
+            team.color = newTeamColor.value || "#f4864d";
+            team.members = await persistEditedTeamMembers(team, draftMembers);
+        } catch (error) {
+            console.error(error);
+            team.name = previousTeam.name;
+            team.color = previousTeam.color;
+            team.members = previousTeam.members;
+            renderTeams();
+            showToast(getRequestErrorMessage(error, "Не удалось сохранить участников"));
+            return;
+        }
 
         closeCreateTeamOverlay();
         renderTeams();
+        renderSidebar();
         selectTeam(team.id);
 
         showToast(`Команда «${name}» обновлена`);
@@ -350,6 +367,47 @@ async function createTeamFromForm() {
         console.error(error);
         showToast("Не удалось создать команду");
     }
+}
+
+async function persistEditedTeamMembers(team, nextMembers) {
+    if (!isGuid(team.id)) {
+        throw new Error("Нельзя сохранить участников локальной команды");
+    }
+
+    const previousMembers = team.members;
+    const previousMemberIds = new Set(previousMembers.map((member) => String(member.id)));
+    const nextMemberIds = new Set(nextMembers.map((member) => String(member.id)));
+    const addedMembers = nextMembers.filter((member) => !previousMemberIds.has(String(member.id)));
+    const removedMembers = previousMembers.filter((member) => !nextMemberIds.has(String(member.id)));
+
+    if (addedMembers.some((member) => !isGuid(member.id))) {
+        throw new Error("Добавление доступно только для пользователей из API");
+    }
+
+    if (removedMembers.some((member) => !isGuid(member.id))) {
+        throw new Error("Удаление доступно только для пользователей из API");
+    }
+
+    if ((addedMembers.length && !addTeamMemberRequest) || (removedMembers.length && !removeTeamMemberRequest)) {
+        throw new Error("API участников команды еще загружается");
+    }
+
+    const persistedMembers = [...nextMembers];
+
+    for (const member of addedMembers) {
+        const addedMember = await addTeamMemberRequest(team.id, member.id);
+        const persistedMember = persistedMembers.find((item) => item.id === member.id);
+
+        if (persistedMember) {
+            persistedMember.role = normalizeTeamRole(readValue(addedMember, "role", "Role") || persistedMember.role);
+        }
+    }
+
+    for (const member of removedMembers) {
+        await removeTeamMemberRequest(team.id, member.id);
+    }
+
+    return persistedMembers;
 }
 
 function editTeam(teamId) {
