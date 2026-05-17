@@ -1,4 +1,6 @@
 let notificationConnection = null;
+let notificationStartRequest = null;
+const notificationHandlers = new Set();
 const ACCESS_TOKEN_KEYS = [
     "accessToken",
     "AccessToken",
@@ -8,6 +10,14 @@ const ACCESS_TOKEN_KEYS = [
 ];
 
 window.connectNotifications = function (onNotification) {
+    if (typeof onNotification === "function") {
+        notificationHandlers.add(onNotification);
+    }
+
+    if (notificationConnection) {
+        return notificationStartRequest ?? Promise.resolve(notificationConnection);
+    }
+
     notificationConnection = new signalR.HubConnectionBuilder()
         .withUrl("/hubs/notifications", {
             accessTokenFactory: function () {
@@ -24,18 +34,30 @@ window.connectNotifications = function (onNotification) {
             return;
         }
 
-        if (onNotification) {
-            onNotification(notification);
-        }
+        notificationHandlers.forEach((handler) => {
+            try {
+                handler(notification);
+            } catch (error) {
+                console.error("Notification handler failed:", error);
+            }
+        });
     });
 
-    notificationConnection.start()
+    notificationStartRequest = notificationConnection.start()
         .then(function () {
             console.log("SignalR notifications connected");
+            return notificationConnection;
         })
         .catch(function (error) {
             console.error("SignalR connection error:", error);
+            notificationConnection = null;
+            return null;
+        })
+        .finally(function () {
+            notificationStartRequest = null;
         });
+
+    return notificationStartRequest;
 };
 
 window.disconnectNotifications = function () {
@@ -43,6 +65,12 @@ window.disconnectNotifications = function () {
         notificationConnection.stop();
         notificationConnection = null;
     }
+
+    notificationHandlers.clear();
+};
+
+window.disconnectNotificationHandler = function (onNotification) {
+    notificationHandlers.delete(onNotification);
 };
 
 function isNotificationForCurrentUser(notification) {

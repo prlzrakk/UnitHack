@@ -2349,45 +2349,6 @@ async function markAllNotificationsAsRead() {
 function handleRealtimeNotification(notification) {
     const normalizedNotification = normalizeNotification(notification);
 
-    if (!normalizedNotification.id) {
-        syncRealtimeStateForNotification(normalizedNotification);
-        showToast(normalizedNotification.message || "Новое уведомление");
-        return;
-    }
-
-    if (!normalizedNotification.isPersisted) {
-        syncRealtimeStateForNotification(normalizedNotification);
-        showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
-        return;
-    }
-
-    const alreadyExists = state.notifications.some(
-        (item) => item.id === normalizedNotification.id
-    );
-
-    if (!alreadyExists && !normalizedNotification.isRead) {
-        state.notificationUnreadCount += 1;
-    }
-
-    if (isNotificationsOpen()) {
-        const shouldShow =
-            !state.notificationsUnreadOnly || !normalizedNotification.isRead;
-
-        state.notifications = upsertNotification(
-            state.notifications,
-            normalizedNotification
-        );
-
-        if (!shouldShow) {
-            state.notifications = state.notifications.filter(
-                (item) => item.id !== normalizedNotification.id
-            );
-        }
-
-        renderNotifications();
-    }
-
-    updateNotificationButton();
     syncRealtimeStateForNotification(normalizedNotification);
     showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
 }
@@ -2684,17 +2645,6 @@ reminderYes?.addEventListener("click", () => {
    EVENT LISTENERS
 ========================= */
 
-notificationOpen?.addEventListener("click", openNotificationsOverlay);
-notificationClose?.addEventListener("click", closeNotificationsOverlay);
-notificationReadAll?.addEventListener("click", markAllNotificationsAsRead);
-notificationUnreadOnly?.addEventListener("change", handleNotificationFilterChange);
-
-notificationOverlay?.addEventListener("click", (event) => {
-    if (event.target === notificationOverlay) {
-        closeNotificationsOverlay();
-    }
-});
-
 createTaskClose?.addEventListener("click", closeCreateTaskModal);
 createTaskCancel?.addEventListener("click", closeCreateTaskModal);
 
@@ -2788,7 +2738,6 @@ document.addEventListener("keydown", (event) => {
     }
 
     closeReminderModal();
-    closeNotificationsOverlay();
 
     if (createTaskOverlay?.classList.contains("is-open")) {
         closeCreateTaskModal();

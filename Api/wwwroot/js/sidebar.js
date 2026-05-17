@@ -24,6 +24,12 @@ function initSidebar() {
         return;
     }
 
+    if (sidebar.dataset.initialized === "true") {
+        return;
+    }
+
+    sidebar.dataset.initialized = "true";
+
     function openSidebar() {
         sidebar.classList.add("is-open");
         overlay.classList.add("is-open");
@@ -157,3 +163,4 @@ function markActiveProject(projectIdFromEvent) {
 }
 
 loadSidebar();
+window.addEventListener("header:loaded", initSidebar);

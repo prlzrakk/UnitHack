@@ -1,0 +1,69 @@
+<header class="app-header" data-app-header>
+    <button class="app-header-menu-btn" id="openSidebar" type="button" aria-label="Открыть меню">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <a class="app-header-brand" href="./index.html" aria-label="На главную">Boardify</a>
+
+    <div class="app-header-actions">
+        <a class="app-header-profile-btn" href="./user.html" aria-label="Профиль">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="14" r="7"></circle>
+                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>
+            </svg>
+        </a>
+
+        <button
+                class="notify-btn app-header-notify-btn"
+                id="notificationOpen"
+                type="button"
+                aria-label="Уведомления"
+                data-unread-count="0"
+        >
+            <img src="components/images/hasNotifications.svg" alt="">
+            <span class="notify-count" id="notificationBadge" aria-hidden="true">0</span>
+        </button>
+    </div>
+</header>
+
+<div class="notification-overlay" id="notificationOverlay" aria-hidden="true">
+    <section
+            class="notification-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notificationTitle"
+            tabindex="-1"
+    >
+        <div class="notification-panel-head">
+            <h2 id="notificationTitle">Уведомления</h2>
+
+            <label class="notification-filter" for="notificationUnreadOnly">
+                <span>Показать только непрочитанные</span>
+                <input id="notificationUnreadOnly" type="checkbox" checked>
+                <span class="notification-switch" aria-hidden="true"></span>
+            </label>
+
+            <button
+                    class="notification-close"
+                    id="notificationClose"
+                    type="button"
+                    aria-label="Закрыть уведомления"
+            >
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+
+        <div class="notification-line"></div>
+
+        <div class="notification-actions">
+            <button class="notification-read-all" id="notificationReadAll" type="button">
+                Прочитать все
+            </button>
+        </div>
+
+        <div class="notification-list" id="notificationList" aria-live="polite"></div>
+    </section>
+</div>
