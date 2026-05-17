@@ -108,7 +108,7 @@ async function runAuthAction(form, action, fallbackMessage) {
     await action();
   } catch (error) {
     console.error(error);
-    setMessage(fallbackMessage);
+    setMessage(error?.message || fallbackMessage);
   } finally {
     setFormDisabled(form, false);
   }

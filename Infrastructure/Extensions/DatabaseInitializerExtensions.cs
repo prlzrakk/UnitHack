@@ -23,12 +23,82 @@ public static class DatabaseInitializerExtensions
         else
             context.Database.EnsureCreated();
 
+        EnsureOutboxSchema(context);
+        EnsureNotificationSchema(context);
+
         var userId = SeedDevUser(context, hasher);
         SeedDevWorkspace(context, userId);
 
         context.SaveChanges();
 
         return app;
+    }
+
+    private static void EnsureOutboxSchema(DatabaseContext context)
+    {
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "OutboxEvents" (
+                "Id" uuid NOT NULL,
+                "EventType" text NOT NULL,
+                "Payload" jsonb NOT NULL,
+                "Status" character varying(50) NOT NULL,
+                "RetryCount" integer NOT NULL,
+                "LastError" text NULL,
+                "CreatedAt" timestamp with time zone NOT NULL,
+                "PublishedAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_OutboxEvents" PRIMARY KEY ("Id")
+            );
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS "IX_OutboxEvents_Status_CreatedAt"
+            ON "OutboxEvents" ("Status", "CreatedAt");
+            """);
+    }
+
+    private static void EnsureNotificationSchema(DatabaseContext context)
+    {
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "Notifications" (
+                "Id" uuid NOT NULL,
+                "Name" character varying(100) NOT NULL,
+                "UserId" uuid NOT NULL,
+                "TaskId" uuid NOT NULL,
+                "KanbanId" uuid NOT NULL,
+                "Message" character varying(200) NOT NULL,
+                "IsRead" boolean NOT NULL DEFAULT false,
+                "CreatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "ReadAt" timestamp with time zone NULL,
+                CONSTRAINT "PK_Notifications" PRIMARY KEY ("Id"),
+                CONSTRAINT "FK_Notifications_Kanbans_KanbanId" FOREIGN KEY ("KanbanId") REFERENCES "Kanbans" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_Notifications_Tasks_TaskId" FOREIGN KEY ("TaskId") REFERENCES "Tasks" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_Notifications_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE RESTRICT
+            );
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            ALTER TABLE "Notifications"
+            ADD COLUMN IF NOT EXISTS "IsRead" boolean NOT NULL DEFAULT false,
+            ADD COLUMN IF NOT EXISTS "CreatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+            ADD COLUMN IF NOT EXISTS "ReadAt" timestamp with time zone NULL;
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId"
+            ON "Notifications" ("UserId");
+
+            CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId_IsRead"
+            ON "Notifications" ("UserId", "IsRead");
+
+            CREATE INDEX IF NOT EXISTS "IX_Notifications_UserId_CreatedAt"
+            ON "Notifications" ("UserId", "CreatedAt");
+
+            CREATE INDEX IF NOT EXISTS "IX_Notifications_TaskId"
+            ON "Notifications" ("TaskId");
+
+            CREATE INDEX IF NOT EXISTS "IX_Notifications_KanbanId"
+            ON "Notifications" ("KanbanId");
+            """);
     }
 
     private static Guid SeedDevUser(DatabaseContext context, IPasswordHasher hasher)
