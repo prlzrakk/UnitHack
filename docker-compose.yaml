@@ -20,7 +20,7 @@ services:
       - "127.0.0.1:8080:8080"
       
   db:
-    image: postgres:18
+    image: postgres:16
     environment:
       POSTGRES_DB:  ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
