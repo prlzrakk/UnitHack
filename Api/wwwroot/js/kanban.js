@@ -89,6 +89,8 @@ const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
 const TASK_DRAG_THRESHOLD = 6;
 const TASK_ORDER_STEP = 1000;
 const TASK_SUBTASKS_STORAGE_KEY = "boardifyTaskSubtasks";
+const REALTIME_BOARD_REFRESH_DELAY = 250;
+const REALTIME_WORKSPACE_REFRESH_DELAY = 250;
 
 /* Task detail modal */
 const taskDetailOverlay = document.getElementById("taskDetailOverlay");
@@ -137,6 +139,9 @@ let dragPreview = null;
 let pointerDragState = null;
 let suppressTaskClick = false;
 const movingTaskIds = new Set();
+let realtimeBoardRefreshTimer = null;
+let realtimeWorkspaceRefreshTimer = null;
+let workspaceRefreshRequest = null;
 
 /* =========================
    SIDEBAR
@@ -2346,7 +2351,110 @@ function handleRealtimeNotification(notification) {
     }
 
     updateNotificationButton();
+    syncRealtimeStateForNotification(normalizedNotification);
     showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
+}
+
+function syncRealtimeStateForNotification(notification) {
+    if (shouldRefreshBoardForNotification(notification)) {
+        scheduleRealtimeBoardRefresh();
+    }
+
+    if (shouldRefreshWorkspaceForNotification(notification)) {
+        scheduleRealtimeWorkspaceRefresh();
+    }
+}
+
+function shouldRefreshBoardForNotification(notification) {
+    return Boolean(notification.taskId) &&
+        Boolean(notification.kanbanId) &&
+        sameId(notification.kanbanId, state.activeKanban?.id ?? state.board?.id);
+}
+
+function shouldRefreshWorkspaceForNotification(notification) {
+    return Boolean(notification.teamId) ||
+        notification.type === "TeamMemberAdded" ||
+        notification.name === "Team Member Added";
+}
+
+function scheduleRealtimeBoardRefresh() {
+    window.clearTimeout(realtimeBoardRefreshTimer);
+    realtimeBoardRefreshTimer = window.setTimeout(() => {
+        refreshActiveBoardFromRealtime().catch((error) => {
+            console.warn("Failed to refresh board from realtime notification:", error);
+        });
+    }, REALTIME_BOARD_REFRESH_DELAY);
+}
+
+function scheduleRealtimeWorkspaceRefresh() {
+    window.clearTimeout(realtimeWorkspaceRefreshTimer);
+    realtimeWorkspaceRefreshTimer = window.setTimeout(() => {
+        refreshWorkspaceFromRealtime().catch((error) => {
+            console.warn("Failed to refresh workspace from realtime notification:", error);
+        });
+    }, REALTIME_WORKSPACE_REFRESH_DELAY);
+}
+
+async function refreshActiveBoardFromRealtime() {
+    if (!state.activeProject || !state.activeKanban?.id) {
+        return;
+    }
+
+    const scrollLeft = kanbanBoard.scrollLeft;
+    const refreshedBoard = hydrateBoardTaskAssignees(
+        await loadBoard(state.activeProject, state.activeKanban.id)
+    );
+
+    state.board = refreshedBoard;
+    state.activeKanban = refreshedBoard.selectedKanban ?? state.activeKanban;
+
+    const refreshedSelectedTask = selectedTaskForDetail
+        ? getTaskLocation(selectedTaskForDetail.id)?.task ?? null
+        : null;
+
+    if (refreshedSelectedTask && !taskDetailOverlay?.classList.contains("is-open")) {
+        selectedTaskForDetail = refreshedSelectedTask;
+    }
+
+    renderSidebar();
+    renderKanban(state.board);
+    kanbanBoard.scrollLeft = scrollLeft;
+}
+
+async function refreshWorkspaceFromRealtime() {
+    if (workspaceRefreshRequest) {
+        return workspaceRefreshRequest;
+    }
+
+    workspaceRefreshRequest = (async () => {
+        const previousProjectId = state.activeProject?.id ?? null;
+        const previousKanbanId = state.activeKanban?.id ?? null;
+        const workspace = await loadWorkspace();
+        const activeProject =
+            workspace.projects.find((project) => sameId(project.id, previousProjectId)) ??
+            selectProjectFromUrl(workspace.projects) ??
+            workspace.projects[0] ??
+            null;
+
+        state.workspace = workspace;
+        state.activeProject = activeProject;
+
+        if (activeProject && previousKanbanId) {
+            state.activeKanban =
+                activeProject.kanbans?.find((kanban) => sameId(kanban.id, previousKanbanId)) ??
+                state.activeKanban;
+        }
+
+        if (state.board) {
+            state.board.project = activeProject;
+        }
+
+        renderSidebar();
+    })().finally(() => {
+        workspaceRefreshRequest = null;
+    });
+
+    return workspaceRefreshRequest;
 }
 
 function handleNotificationFilterChange() {
@@ -2410,8 +2518,10 @@ function normalizeNotification(notification = {}) {
     return {
         id: readNotificationValue(source, "id", "Id") || "",
         userId: readNotificationValue(source, "userId", "UserId") || "",
+        teamId: readNotificationValue(source, "teamId", "TeamId") || "",
         taskId: readNotificationValue(source, "taskId", "TaskId") || "",
         kanbanId: readNotificationValue(source, "kanbanId", "KanbanId") || "",
+        type: readNotificationValue(source, "type", "Type", "eventType", "EventType") || "",
         name,
         message,
         isRead: Boolean(readNotificationValue(source, "isRead", "IsRead")),
@@ -2711,6 +2821,10 @@ function getTaskUsers(users) {
     return Array.from({ length: count }).map((_, index) => ({
         name: `Участник ${index + 1}`,
     }));
+}
+
+function sameId(left, right) {
+    return Boolean(left && right) && String(left) === String(right);
 }
 
 function getCurrentUserId() {

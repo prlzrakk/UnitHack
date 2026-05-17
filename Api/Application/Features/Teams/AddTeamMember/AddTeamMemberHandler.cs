@@ -43,6 +43,7 @@ public class AddTeamMemberHandler(
                 id = Guid.NewGuid(),
                 userId = command.UserId,
                 teamId = team.Id,
+                type = "TeamMemberAdded",
                 name = "Team Member Added",
                 message = $"Вас добавили в команду «{team.Name}»",
                 isRead = false,
