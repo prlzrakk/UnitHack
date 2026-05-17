@@ -24,14 +24,14 @@ export async function addTeamMember(teamId, userId) {
     return fetchJson(`/api/teams/${teamId}/members`, {
         method: "POST",
         body: { userId },
-        errorText: "Failed to add team member",
+        errorText: "Не удалось добавить участника",
     });
 }
 
 export async function removeTeamMember(teamId, userId) {
     return fetchJson(`/api/teams/${teamId}/members/${userId}`, {
         method: "DELETE",
-        errorText: "Failed to remove team member",
+        errorText: "Не удалось удалить участника",
     });
 }
 
@@ -39,6 +39,6 @@ export async function changeTeamMemberRole(teamId, userId, role) {
     return fetchJson(`/api/teams/${teamId}/members/${userId}/role`, {
         method: "PATCH",
         body: { role },
-        errorText: "Failed to change team member role",
+        errorText: "Не удалось изменить роль",
     });
 }

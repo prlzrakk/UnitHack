@@ -23,7 +23,11 @@ public class GetTeamHandler(ITeamRepository teams, ITeamMemberRepository members
             team.Id,
             team.Name,
             teamMembers
-                .Select(x => new TeamMemberResponse(x.UserId, x.Role))
+                .Select(x => new TeamMemberResponse(
+                    x.UserId,
+                    x.User?.Name ?? $"#{x.UserId.ToString()[..8]}",
+                    x.User?.Email ?? string.Empty,
+                    x.Role))
                 .ToList());
     }
 }

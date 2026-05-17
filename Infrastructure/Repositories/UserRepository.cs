@@ -51,6 +51,21 @@ public class UserRepository(DatabaseContext context, IPasswordHasher hasher) : I
             .FirstOrDefaultAsync(x => x.Id == userId);
     }
 
+    public async Task<List<User>> SearchUsers(string query, int limit, CancellationToken cancellationToken)
+    {
+        var normalizedQuery = query.Trim().ToLowerInvariant();
+        var safeLimit = Math.Clamp(limit, 1, 20);
+
+        return await context.Users
+            .Where(x =>
+                x.Email.ToLower().Contains(normalizedQuery) ||
+                x.Name.ToLower().Contains(normalizedQuery))
+            .OrderBy(x => x.Name)
+            .ThenBy(x => x.Email)
+            .Take(safeLimit)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> ChangeDisplayName(string email, string newName)
     {
         var normalizedEmail = NormalizeEmail(email);

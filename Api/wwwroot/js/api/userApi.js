@@ -13,3 +13,13 @@ export async function getMe() {
         errorText: "Failed to fetch current user",
     });
 }
+
+export async function searchUsers(query, limit = 10) {
+    return fetchJson("/api/users", {
+        params: new URLSearchParams({
+            query,
+            limit: String(limit),
+        }),
+        errorText: "Failed to search users",
+    });
+}
