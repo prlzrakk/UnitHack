@@ -473,6 +473,7 @@ body.sidebar-closed .kanban-head {
     position: relative;
 
     padding: 30px 45px 32px;
+    outline: none;
     border-radius: 20px;
     background: #282828;
     color: white;
@@ -532,32 +533,34 @@ body.sidebar-closed .kanban-head {
 .notification-switch {
     width: 64px;
     height: 28px;
-    padding: 2px;
+    position: relative;
     border-radius: 999px;
     background: #353535;
-
-    display: inline-flex;
-    align-items: center;
 }
 
 .notification-switch::before {
     content: "";
+    position: absolute;
+    left: 18px;
+    top: 9px;
+
     width: 1px;
     height: 10px;
-    margin-left: 16px;
     background: white;
     opacity: 0.7;
 }
 
 .notification-switch::after {
     content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+
     width: 34px;
     height: 24px;
-    margin-left: auto;
     border-radius: 999px;
     background: white;
 
-    transform: translateX(-34px);
     transition: transform 0.2s ease;
 }
 
@@ -566,7 +569,7 @@ body.sidebar-closed .kanban-head {
 }
 
 .notification-filter input:checked + .notification-switch::after {
-    transform: translateX(0);
+    transform: translateX(26px);
 }
 
 .notification-close {
