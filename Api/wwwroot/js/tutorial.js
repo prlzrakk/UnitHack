@@ -1,9 +1,10 @@
 const TUTORIAL_STORAGE_KEY = "boardify.tutorialSeen";
+const TUTORIAL_PENDING_KEY = "boardify.tutorialPending";
 const TUTORIAL_CSS_ID = "boardifyTutorialStyles";
 const TUTORIAL_CSS_HREF = "./css/tutorial.css";
 
 export function showFirstLoginTutorial() {
-    if (wasTutorialSeen() || document.querySelector("[data-tutorial-overlay]")) {
+    if (!shouldShowTutorial() || document.querySelector("[data-tutorial-overlay]")) {
         return;
     }
 
@@ -21,6 +22,7 @@ export function showFirstLoginTutorial() {
 
     overlay.querySelector("[data-tutorial-close]")?.addEventListener("click", close);
     overlay.querySelector("[data-tutorial-done]")?.addEventListener("click", close);
+
     overlay.addEventListener("click", (event) => {
         if (event.target === overlay) {
             close();
@@ -34,6 +36,7 @@ export function showFirstLoginTutorial() {
     };
 
     document.addEventListener("keydown", onKeyDown);
+
     overlay.cleanupTutorial = () => {
         document.removeEventListener("keydown", onKeyDown);
     };
@@ -53,6 +56,7 @@ function createTutorialMarkup() {
             </button>
 
             <p class="tutorial-eyebrow">Быстрый старт</p>
+
             <h2 id="tutorialTitle">С чего начать?</h2>
 
             <ol class="tutorial-steps">
@@ -60,18 +64,22 @@ function createTutorialMarkup() {
                     <span class="tutorial-step-index">1</span>
                     <span>Откройте меню: нажмите на три полоски слева сверху.</span>
                 </li>
+
                 <li>
                     <span class="tutorial-step-index">2</span>
                     <span>Перейдите в «Команды» и нажмите «Добавить»: задайте название, цвет и пригласите участников по имени или email.</span>
                 </li>
+
                 <li>
                     <span class="tutorial-step-index">3</span>
                     <span>Откройте «Проекты» и создайте первый проект для своей команды.</span>
                 </li>
+
                 <li>
                     <span class="tutorial-step-index">4</span>
                     <span>Внутри проекта добавьте kanban-доску.</span>
                 </li>
+
                 <li>
                     <span class="tutorial-step-index">5</span>
                     <span>Готово: как админ команды вы можете создавать колонки, задачи и подзадачи.</span>
@@ -87,8 +95,11 @@ function createTutorialMarkup() {
 
 function closeTutorial(overlay) {
     markTutorialSeen();
+    clearTutorialPending();
+
     overlay.classList.remove("is-open");
     document.body.classList.remove("tutorial-locked");
+
     overlay.cleanupTutorial?.();
 
     setTimeout(() => {
@@ -105,12 +116,19 @@ function ensureTutorialStyles() {
     link.id = TUTORIAL_CSS_ID;
     link.rel = "stylesheet";
     link.href = TUTORIAL_CSS_HREF;
+
     document.head.appendChild(link);
 }
 
-function wasTutorialSeen() {
+function shouldShowTutorial() {
     try {
-        return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
+        const isPending = localStorage.getItem(TUTORIAL_PENDING_KEY) === "true";
+
+        if (isPending) {
+            return true;
+        }
+
+        return false;
     } catch {
         return false;
     }
@@ -120,6 +138,14 @@ function markTutorialSeen() {
     try {
         localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
     } catch {
-        // Ignore storage errors: closing the dialog should still work.
+        // Ignore storage errors.
+    }
+}
+
+function clearTutorialPending() {
+    try {
+        localStorage.removeItem(TUTORIAL_PENDING_KEY);
+    } catch {
+        // Ignore storage errors.
     }
 }

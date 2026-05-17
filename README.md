@@ -107,6 +107,11 @@ docker compose up -d --build
 * RabbitMQ Management UI: `http://localhost:15672`
 * Swagger в Development-режиме: `http://localhost:8080/swagger`
 
+Тестовый пользователь для входа:
+
+* логин: `test@gmail.com`
+* пароль: `testirovka`
+
 Для запуска тестов:
 
 ```bash

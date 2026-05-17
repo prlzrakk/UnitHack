@@ -37,8 +37,9 @@ input {
 
 .user-page {
   width: min(100vw, 1440px);
-  min-height: 100vh;
+  min-height: calc(100vh - 120px);
   margin: 0 auto;
+  padding: 72px 0 48px;
   position: relative;
   overflow: hidden;
   background: var(--bg);

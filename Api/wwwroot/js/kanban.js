@@ -272,7 +272,7 @@ function renderEmpty(message) {
 function renderKanban(board) {
     kanbanTitle.textContent = board.title || "Kanban";
     kanbanBoard.innerHTML = "";
-    const canRenameColumns = isActiveProjectTeamAdmin();
+    const canManageColumns = isActiveProjectTeamAdmin();
 
     if (!board.id) {
         renderEmpty("У проекта пока нет канбанов");
@@ -337,22 +337,27 @@ function renderKanban(board) {
         const editColumnBtn = columnEl.querySelector(".column-edit-btn");
         const columnTitle = columnEl.querySelector("[data-column-title]");
 
-        if (!canRenameColumns) {
+        if (!canManageColumns) {
+            deleteColumnBtn?.remove();
             editColumnBtn?.remove();
+        } else {
+            deleteColumnBtn?.addEventListener("click", (event) => {
+                event.stopPropagation();
+                deleteColumn(column);
+            });
+
+            editColumnBtn?.addEventListener("click", (event) => {
+                event.stopPropagation();
+                startEditColumnTitle(columnTitle, column);
+            });
         }
-
-        deleteColumnBtn.addEventListener("click", (event) => {
-            event.stopPropagation();
-            deleteColumn(column);
-        });
-
-        editColumnBtn?.addEventListener("click", (event) => {
-            event.stopPropagation();
-            startEditColumnTitle(columnTitle, column);
-        });
 
         kanbanBoard.appendChild(columnEl);
     });
+
+    if (!canManageColumns) {
+        return;
+    }
 
     const addColumn = document.createElement("button");
     addColumn.className = "add-column-btn";
@@ -369,6 +374,11 @@ function renderKanban(board) {
 ========================= */
 
 async function addColumnToBoard() {
+    if (!isActiveProjectTeamAdmin()) {
+        showToast("Создавать колонки может только админ команды");
+        return;
+    }
+
     if (!state.board?.id) {
         showToast("Сначала выбери канбан");
         return;
@@ -478,6 +488,11 @@ function startEditColumnTitle(titleEl, column) {
 }
 
 async function deleteColumn(column) {
+    if (!isActiveProjectTeamAdmin()) {
+        showToast("Удалять колонки может только админ команды");
+        return;
+    }
+
     const confirmed = confirm(
         `Удалить колонку «${column.title}» вместе с задачами: ${column.tasks.length}?`
     );
@@ -2349,45 +2364,6 @@ async function markAllNotificationsAsRead() {
 function handleRealtimeNotification(notification) {
     const normalizedNotification = normalizeNotification(notification);
 
-    if (!normalizedNotification.id) {
-        syncRealtimeStateForNotification(normalizedNotification);
-        showToast(normalizedNotification.message || "Новое уведомление");
-        return;
-    }
-
-    if (!normalizedNotification.isPersisted) {
-        syncRealtimeStateForNotification(normalizedNotification);
-        showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
-        return;
-    }
-
-    const alreadyExists = state.notifications.some(
-        (item) => item.id === normalizedNotification.id
-    );
-
-    if (!alreadyExists && !normalizedNotification.isRead) {
-        state.notificationUnreadCount += 1;
-    }
-
-    if (isNotificationsOpen()) {
-        const shouldShow =
-            !state.notificationsUnreadOnly || !normalizedNotification.isRead;
-
-        state.notifications = upsertNotification(
-            state.notifications,
-            normalizedNotification
-        );
-
-        if (!shouldShow) {
-            state.notifications = state.notifications.filter(
-                (item) => item.id !== normalizedNotification.id
-            );
-        }
-
-        renderNotifications();
-    }
-
-    updateNotificationButton();
     syncRealtimeStateForNotification(normalizedNotification);
     showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
 }
@@ -2684,17 +2660,6 @@ reminderYes?.addEventListener("click", () => {
    EVENT LISTENERS
 ========================= */
 
-notificationOpen?.addEventListener("click", openNotificationsOverlay);
-notificationClose?.addEventListener("click", closeNotificationsOverlay);
-notificationReadAll?.addEventListener("click", markAllNotificationsAsRead);
-notificationUnreadOnly?.addEventListener("change", handleNotificationFilterChange);
-
-notificationOverlay?.addEventListener("click", (event) => {
-    if (event.target === notificationOverlay) {
-        closeNotificationsOverlay();
-    }
-});
-
 createTaskClose?.addEventListener("click", closeCreateTaskModal);
 createTaskCancel?.addEventListener("click", closeCreateTaskModal);
 
@@ -2788,7 +2753,6 @@ document.addEventListener("keydown", (event) => {
     }
 
     closeReminderModal();
-    closeNotificationsOverlay();
 
     if (createTaskOverlay?.classList.contains("is-open")) {
         closeCreateTaskModal();

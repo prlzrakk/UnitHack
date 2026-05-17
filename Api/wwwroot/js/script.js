@@ -9,6 +9,8 @@ import {
     selectProjectFromUrl,
 } from "./boardData.js";
 
+import { showFirstLoginTutorial } from "./tutorial.js";
+
 const matrix = document.querySelector("#taskMatrix");
 
 const GROUPS = [
@@ -28,14 +30,8 @@ let realtimeWorkspaceRefreshTimer = null;
 let realtimeWorkspaceRefreshRequest = null;
 
 function row(task) {
-    const el = document.createElement("a");
-
-    const projectId = task.projectId || task.project?.id || "";
-    const kanbanId = task.kanbanId || task.kanban?.id || "";
-
+    const el = document.createElement("article");
     el.className = "task-row";
-    el.href = `./kanban.html?project=${encodeURIComponent(projectId)}&kanban=${encodeURIComponent(kanbanId)}`;
-
     el.innerHTML = `
     <div class="task-title">${escapeHtml(task.title)}</div>
     <div class="divider"></div>
@@ -43,7 +39,6 @@ function row(task) {
     <div class="divider"></div>
     <div class="task-meta"><span>Дедлайн через</span><span>${escapeHtml(formatTimeLeft(task.deadline))}</span></div>
   `;
-
     return el;
 }
 
@@ -56,13 +51,16 @@ function renderMatrix(tasks) {
         q.dataset.label = group.label;
 
         const groupTasks = tasks.filter((task) =>
-            isImportant(task) === group.important && isUrgent(task) === group.urgent
+            isImportant(task) === group.important &&
+            isUrgent(task) === group.urgent
         );
 
         if (groupTasks.length === 0) {
             q.appendChild(emptyRow("Нет задач"));
         } else {
-            groupTasks.slice(0, 4).forEach((task) => q.appendChild(row(task)));
+            groupTasks.slice(0, 4).forEach((task) => {
+                q.appendChild(row(task));
+            });
         }
 
         matrix.appendChild(q);
@@ -73,6 +71,7 @@ function emptyRow(text) {
     const el = document.createElement("p");
     el.className = "empty-state";
     el.textContent = text;
+
     return el;
 }
 
@@ -88,6 +87,7 @@ function isUrgent(task) {
     }
 
     const diffMs = deadline.getTime() - Date.now();
+
     return diffMs <= 3 * 24 * 60 * 60 * 1000;
 }
 
@@ -96,7 +96,9 @@ async function init() {
 
     try {
         const workspace = await loadWorkspace();
+
         const activeProject = selectProjectFromUrl(workspace.projects);
+        
         const boards = await Promise.all(
             workspace.projects.map((project) =>
                 loadBoard(project).catch(() => null)
@@ -122,21 +124,31 @@ async function init() {
 
         renderSidebar();
         renderMatrix(tasks);
+
+        showFirstLoginTutorial();
     } catch (error) {
         console.error(error);
+
         matrix.innerHTML = "";
+
         GROUPS.forEach((group) => {
             const q = document.createElement("section");
             q.className = "quadrant";
             q.dataset.label = group.label;
+
             q.appendChild(emptyRow("Не удалось загрузить API"));
+
             matrix.appendChild(q);
         });
     }
 }
 
 function renderSidebar() {
-    renderSidebarNavigation(state.workspace, state.activeProjectId, getTaskStats(state.tasks));
+    renderSidebarNavigation(
+        state.workspace,
+        state.activeProjectId,
+        getTaskStats(state.tasks)
+    );
 }
 
 function handleRealtimeNotification(notification = {}) {

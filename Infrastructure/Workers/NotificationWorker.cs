@@ -69,31 +69,72 @@ public class NotificationWorker(
         var (name, message) = BuildNotificationMessage(eventType);
         var notifications = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-
         var notificationSender = scope.ServiceProvider.GetRequiredService<INotificationSender>();
-        var notification = await notifications.AddAsync(
-            userId,
-            taskId,
+        var recipientUserIds = await ResolveRecipientUserIdsAsync(
+            scope.ServiceProvider,
             kanbanId,
-            name,
-            message,
-            cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        await notificationSender.SendToUserAsync(
             userId,
-            new
-            {
-                id = notification.Id,
-                userId = userId,
-                taskId = taskId,
-                kanbanId = kanbanId,
-                type = eventType,
-                name = name,
-                message = message,
-                isRead = false,
-                createdAt = DateTime.UtcNow
-            },
             cancellationToken);
+
+        var createdNotifications = new List<(Guid UserId, Guid NotificationId, DateTime CreatedAt)>();
+
+        foreach (var recipientUserId in recipientUserIds)
+        {
+            var notification = await notifications.AddAsync(
+                recipientUserId,
+                taskId,
+                kanbanId,
+                name,
+                message,
+                cancellationToken);
+
+            createdNotifications.Add((recipientUserId, notification.Id, notification.CreatedAt));
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        foreach (var createdNotification in createdNotifications)
+        {
+            await notificationSender.SendToUserAsync(
+                createdNotification.UserId,
+                new
+                {
+                    id = createdNotification.NotificationId,
+                    userId = createdNotification.UserId,
+                    taskId = taskId,
+                    kanbanId = kanbanId,
+                    type = eventType,
+                    name = name,
+                    message = message,
+                    isRead = false,
+                    createdAt = createdNotification.CreatedAt
+                },
+                cancellationToken);
+        }
+    }
+
+    private static async Task<IReadOnlyCollection<Guid>> ResolveRecipientUserIdsAsync(
+        IServiceProvider serviceProvider,
+        Guid kanbanId,
+        Guid fallbackUserId,
+        CancellationToken cancellationToken)
+    {
+        var kanbans = serviceProvider.GetRequiredService<IKanbanRepository>();
+        var members = serviceProvider.GetRequiredService<ITeamMemberRepository>();
+
+        var kanban = await kanbans.GetByIdWithProjectAsync(kanbanId, cancellationToken);
+        if (kanban?.Project is null)
+            return [fallbackUserId];
+
+        var teamMembers = await members.GetMembersByTeamIdAsync(kanban.Project.TeamId, cancellationToken);
+        var recipientUserIds = teamMembers
+            .Select(member => member.UserId)
+            .Distinct()
+            .ToArray();
+
+        return recipientUserIds.Length > 0
+            ? recipientUserIds
+            : [fallbackUserId];
     }
 
     private static (string name, string message) BuildNotificationMessage(string eventType)

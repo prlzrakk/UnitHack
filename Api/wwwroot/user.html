@@ -9,20 +9,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="./css/header.css" />
   <link rel="stylesheet" href="./css/user.css" />
   <script type="module" src="./js/authGuard.js"></script>
 </head>
 <body class="user-body">
-<main class="user-page" aria-labelledby="userTitle">
+<div id="headerMount"></div>
+<main class="user-page" aria-labelledby="profileTitle">
   <div class="user-orb" aria-hidden="true"></div>
-
-  <header class="user-header">
-    <a class="user-brand" id="userTitle" href="./index.html" aria-label="Boardify">Boardify</a>
-  </header>
 
   <section class="user-card" aria-label="Профиль пользователя">
     <div class="user-card-head">
-      <h1>Профиль</h1>
+      <h1 id="profileTitle">Профиль</h1>
       <a class="user-close" href="./index.html" aria-label="На главную">
         <span></span>
         <span></span>
@@ -66,5 +64,8 @@
 </main>
 
 <script type="module" src="./js/user.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script src="./js/api/notificationConnection.js"></script>
+<script type="module" src="./js/header.js"></script>
 </body>
 </html>
