@@ -60,6 +60,9 @@ input {
 }
 
 .brand {
+    text-decoration: none;
+    display: block;
+
     font-family: var(--serif);
     font-size: clamp(72px, 7vw, 96px);
     line-height: 1;
@@ -935,4 +938,12 @@ body.modal-locked {
     .team-members-create-head h3 {
         font-size: 20px;
     }
+}
+
+.teams-topbar .brand,
+.teams-topbar .brand:visited,
+.teams-topbar .brand:hover,
+.teams-topbar .brand:focus {
+    text-decoration: none;
+    color: #000;
 }
