@@ -73,6 +73,7 @@ function normalizeTeam(team, index) {
         id,
         name: readValue(team, "name", "Name") || "Команда",
         color: readValue(team, "color", "Color") || pickTeamColor(index),
+        role: normalizeTeamRole(readValue(team, "role", "Role")),
         members: Array.isArray(members)
             ? members.map(normalizeMember)
             : [],
@@ -136,7 +137,7 @@ function createTeamCard(team) {
         <div class="team-members">
             ${
         team.members.length
-            ? team.members.map((member) => memberRow(member, team.id)).join("")
+            ? team.members.map((member) => memberRow(member, team)).join("")
             : `<div class="team-empty">участников пока нет</div>`
     }
         </div>
@@ -188,32 +189,43 @@ function createTeamCard(team) {
     return panel;
 }
 
-function memberRow(member, teamId) {
+function memberRow(member, team) {
     const role = normalizeTeamRole(member.role);
     const isCurrentUser = isCurrentUserMember(member);
+    const canChangeRoles = currentUserCanChangeRoles(team);
 
     return `
         <div class="team-member-row">
             <div class="team-member-name">${escapeHtml(member.name)}</div>
-            <div
-                class="team-role-dropdown"
-                data-role-dropdown
-                data-member-role="${escapeAttr(member.id)}"
-            >
-                <button
-                    class="team-role-toggle"
-                    type="button"
-                    data-role-toggle
-                    aria-expanded="false"
-                    aria-label="Роль участника ${escapeAttr(member.name)}"
+            ${
+                canChangeRoles
+                    ? `
+                <div
+                    class="team-role-dropdown"
+                    data-role-dropdown
+                    data-member-role="${escapeAttr(member.id)}"
                 >
-                    <span>${escapeHtml(getTeamRoleLabel(role))}</span>
-                    <span class="team-role-chevron"></span>
-                </button>
-                <div class="team-role-menu" role="menu">
-                    ${renderRoleOptions(role)}
+                    <button
+                        class="team-role-toggle"
+                        type="button"
+                        data-role-toggle
+                        aria-expanded="false"
+                        aria-label="Роль участника ${escapeAttr(member.name)}"
+                    >
+                        <span>${escapeHtml(getTeamRoleLabel(role))}</span>
+                        <span class="team-role-chevron"></span>
+                    </button>
+                    <div class="team-role-menu" role="menu">
+                        ${renderRoleOptions(role)}
+                    </div>
                 </div>
-            </div>
+                    `
+                    : `
+                <div class="team-role-static" aria-label="Роль участника ${escapeAttr(member.name)}">
+                    ${escapeHtml(getTeamRoleLabel(role))}
+                </div>
+                    `
+            }
             <button
                 class="member-delete-btn"
                 type="button"
@@ -644,6 +656,19 @@ function normalizeTeamRole(role) {
 function getTeamRoleLabel(role) {
     const normalizedRole = normalizeTeamRole(role);
     return TEAM_ROLES.find((item) => item.value === normalizedRole)?.label ?? "Участник";
+}
+
+function currentUserCanChangeRoles(team) {
+    if (normalizeTeamRole(team?.role) === "Admin") {
+        return true;
+    }
+
+    const currentUserId = getCurrentUserId();
+    const currentMember = team?.members?.find((member) =>
+        currentUserId && String(member.id) === String(currentUserId)
+    );
+
+    return normalizeTeamRole(currentMember?.role) === "Admin";
 }
 
 function openAddMemberOverlay({ mode, teamId = null }) {
