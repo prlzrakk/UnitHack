@@ -39,7 +39,9 @@ export async function fetchJson(path, {
     });
 
     if (!response.ok) {
-        throw new Error(`${errorText}: ${response.status}`);
+        const error = new Error(await getResponseErrorText(response, errorText));
+        error.status = response.status;
+        throw error;
     }
 
     if (response.status === 204) {
@@ -48,6 +50,22 @@ export async function fetchJson(path, {
 
     const text = await response.text();
     return text ? JSON.parse(text) : null;
+}
+
+async function getResponseErrorText(response, fallbackText) {
+    const text = await response.text().catch(() => "");
+
+    if (!text) {
+        return `${fallbackText}: ${response.status}`;
+    }
+
+    try {
+        const data = JSON.parse(text);
+        const message = data?.message ?? data?.Message;
+        return message ? `${fallbackText}: ${message}` : `${fallbackText}: ${response.status}`;
+    } catch {
+        return `${fallbackText}: ${response.status}`;
+    }
 }
 
 export function saveAuthTokens(tokens) {

@@ -15,12 +15,16 @@ public class RemoveTeamMemberHandler(
         var team = await teams.GetTeam(command.TeamId, cancellationToken)
                    ?? throw new NotFoundException("Team not found");
 
-        var currentUserCanRemove = await members.IsAdminAsync(team.Id, command.CurrentUserId, cancellationToken);
-        if (!currentUserCanRemove)
-            throw new ForbiddenException("Only team admin can remove members");
-
         var member = await members.GetMemberAsync(team.Id, command.UserId, cancellationToken)
                      ?? throw new NotFoundException("Team member not found");
+
+        var currentUserLeavesTeam = command.CurrentUserId == command.UserId;
+        if (!currentUserLeavesTeam)
+        {
+            var currentUserCanRemove = await members.IsAdminAsync(team.Id, command.CurrentUserId, cancellationToken);
+            if (!currentUserCanRemove)
+                throw new ForbiddenException("Only team admin can remove members");
+        }
 
         if (member.Role == TeamRole.Admin)
         {

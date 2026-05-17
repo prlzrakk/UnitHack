@@ -79,6 +79,28 @@ public class UserRepositoryMock(IPasswordHasher hasher) : IUserRepository
         }
     }
 
+    public Task<List<User>> SearchUsers(string query, int limit, CancellationToken cancellationToken)
+    {
+        lock (Sync)
+        {
+            SeedDefaultUser();
+
+            var normalizedQuery = query.Trim().ToLowerInvariant();
+            var safeLimit = Math.Clamp(limit, 1, 20);
+            var result = Users.Values
+                .Where(user =>
+                    user.Name.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase) ||
+                    user.Email.Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(user => user.Name)
+                .ThenBy(user => user.Email)
+                .Take(safeLimit)
+                .Select(ToUser)
+                .ToList();
+
+            return Task.FromResult(result);
+        }
+    }
+
     public Task<bool> ChangeDisplayName(string email, string newName)
     {
         var normalizedEmail = NormalizeEmail(email);

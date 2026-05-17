@@ -9,7 +9,10 @@ using MediatR;
 
 namespace Api.Application.Features.Users.Register;
 
-public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher)
+public class RegisterUserHandler(
+    IUserRepository users,
+    IPasswordHasher hasher,
+    IUnitOfWork unitOfWork)
     : IRequestHandler<RegisterUserCommand, RegisterUserResponse>
 {
     public async Task<RegisterUserResponse> Handle(RegisterUserCommand command,
@@ -19,9 +22,10 @@ public class RegisterUserHandler(IUserRepository users, IPasswordHasher hasher)
 
         var hash = hasher.Hash(command.Password);
         var name = command.Name.Trim();
-        var createdUser = await users.RegisterUser(username,name, hash)
-                          ?? throw new InternalServerErrorException($"User {username} creation failed");
+        var createdUser = await users.RegisterUser(username, name, hash)
+                          ?? throw new BadRequestException($"User {username} already exists");
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new RegisterUserResponse(true);
     }

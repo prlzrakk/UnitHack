@@ -5,12 +5,22 @@ export async function createUser(email, password, name = null) {
         method: "POST",
         body: { email, password, name },
         skipAuth: true,
-        errorText: "Failed to create user",
+        errorText: "Не удалось зарегистрироваться",
     });
 }
 
 export async function getMe() {
     return fetchJson("/api/users/me", {
         errorText: "Failed to fetch current user",
+    });
+}
+
+export async function searchUsers(query, limit = 10) {
+    return fetchJson("/api/users", {
+        params: new URLSearchParams({
+            query,
+            limit: String(limit),
+        }),
+        errorText: "Failed to search users",
     });
 }

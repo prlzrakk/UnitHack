@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using System.Text.Json.Serialization;
+using Api.Application.Features.Notifications.Common;
+using Api.Application.Hubs;
 using Api.Middleware;
 using Client.Models.Configs;
 using FluentValidation;
@@ -85,6 +87,12 @@ public static class ServiceCollectionExtensions
         return builder;
     }
 
+    public static WebApplicationBuilder AddSignalR(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddSignalR();
+        return builder;
+    }
+
     public static WebApplicationBuilder AddSwaggerWithAuth(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
@@ -130,6 +138,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWorkRepository>();
         builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
+        builder.Services.AddScoped<INotificationSender, NotificationSender>();
         builder.Services.AddHostedService<OutboxWorker>();
         builder.Services.AddHostedService<NotificationWorker>();
         
@@ -165,6 +174,7 @@ public static class ServiceCollectionExtensions
             {
                 policy
                     .WithOrigins("http://localhost:63342")
+                    .WithOrigins("http://localhost:5180")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -225,7 +235,12 @@ public static class ServiceCollectionExtensions
     public static WebApplication MapApiControllers(this WebApplication app)
     {
         app.MapControllers();
+        return app;
+    }
 
+    public static WebApplication MapNotificationsHub(this WebApplication app)
+    {
+        app.MapHub<NotificationsHub>("/hubs/notifications");
         return app;
     }
 }

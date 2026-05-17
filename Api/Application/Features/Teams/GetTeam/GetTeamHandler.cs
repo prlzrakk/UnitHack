@@ -25,7 +25,7 @@ public class GetTeamHandler(ITeamRepository teams, ITeamMemberRepository members
             teamMembers
                 .Select(x => new TeamMemberResponse(
                     x.UserId,
-                    x.User?.Name ?? string.Empty,
+                    x.User?.Name ?? $"#{x.UserId.ToString()[..8]}",
                     x.User?.Email ?? string.Empty,
                     x.Role))
                 .ToList());

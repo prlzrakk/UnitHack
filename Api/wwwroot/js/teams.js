@@ -16,6 +16,7 @@ const addMemberForm = document.getElementById("addMemberForm");
 const addMemberTitle = document.getElementById("addMemberTitle");
 const addMemberClose = document.getElementById("addMemberClose");
 const addMemberCancel = document.getElementById("addMemberCancel");
+const addMemberSubmit = document.getElementById("addMemberSubmit");
 const memberSearchInput = document.getElementById("memberSearchInput");
 const memberSearchResults = document.getElementById("memberSearchResults");
 
@@ -23,12 +24,18 @@ const createTeamTitle = document.getElementById("createTeamTitle");
 const createTeamSubmit = document.getElementById("createTeamSubmit");
 
 let createTeamRequest = null;
+let loadCurrentUserRequest = null;
 let loadWorkspaceRequest = null;
 let renderSidebarNavigationRequest = null;
 let selectProjectFromUrlRequest = null;
+let changeTeamMemberRoleRequest = null;
+let removeTeamMemberRequest = null;
+let addTeamMemberRequest = null;
+let searchUsersRequest = null;
 
 let activeProjectId = getProjectFromUrl();
 let workspaceState = { teams: [], projects: [] };
+let currentUser = null;
 let teams = [];
 let selectedTeamId = getTeamFromUrl();
 let draftMembers = [];
@@ -37,38 +44,11 @@ let editingTeamId = null;
 let memberOverlayMode = "team";
 let targetTeamId = null;
 let selectedMember = null;
+let memberSearchRequestId = 0;
 
-const PEOPLE = [
-    {
-        id: "arina",
-        name: "Кискина Арина",
-        role: "Фронтенд",
-        email: "arina@example.com",
-    },
-    {
-        id: "katya",
-        name: "Катя Смирнова",
-        role: "Дизайн",
-        email: "katya@example.com",
-    },
-    {
-        id: "max",
-        name: "Макс Иванов",
-        role: "Бэкенд",
-        email: "max@example.com",
-    },
-    {
-        id: "danya",
-        name: "Даня Орлов",
-        role: "QA",
-        email: "danya@example.com",
-    },
-    {
-        id: "anya",
-        name: "Аня Котова",
-        role: "Менеджер",
-        email: "anya@example.com",
-    },
+const TEAM_ROLES = [
+    { value: "Admin", label: "Админ" },
+    { value: "Member", label: "Участник" },
 ];
 
 function getProjectFromUrl() {
@@ -82,16 +62,7 @@ function getTeamFromUrl() {
 }
 
 function getInitialTeams(sourceTeams = []) {
-    const baseTeams = sourceTeams.length
-        ? sourceTeams
-        : [
-            { name: "5 кать", color: "#42609f" },
-            { name: "абоба", color: "#ef6a35" },
-            { name: "какуля", color: "#ffe3d8" },
-            { name: "пупуня", color: "#e3a5a8" },
-        ];
-
-    return baseTeams.map(normalizeTeam);
+    return sourceTeams.map(normalizeTeam);
 }
 
 function normalizeTeam(team, index) {
@@ -104,18 +75,22 @@ function normalizeTeam(team, index) {
         color: readValue(team, "color", "Color") || pickTeamColor(index),
         members: Array.isArray(members)
             ? members.map(normalizeMember)
-            : getDemoMembers(index),
+            : [],
     };
 }
 
 function normalizeMember(member, index) {
     const id = readValue(member, "id", "Id") || readValue(member, "userId", "UserId") || `member-${index}`;
-    const name = readValue(member, "name", "Name") || `#${String(id).slice(0, 8)}`;
+    const name =
+        readValue(member, "name", "Name") ||
+        readValue(member, "email", "Email") ||
+        `#${String(id).slice(0, 8)}`;
 
     return {
         id,
         name,
-        role: readValue(member, "role", "Role") || "Участник",
+        role: normalizeTeamRole(readValue(member, "role", "Role")),
+        isCurrentUser: isCurrentUserId(id),
     };
 }
 
@@ -126,20 +101,6 @@ function pickTeamColor(index) {
 
 function readValue(source, camelKey, pascalKey) {
     return source?.[camelKey] ?? source?.[pascalKey] ?? null;
-}
-
-function getDemoMembers(index) {
-    if (index === 0) {
-        return [
-            { id: "arina", name: "Кискина Арина", role: "Фронтенд" },
-            { id: "katya", name: "Катя Смирнова", role: "Дизайн" },
-        ];
-    }
-
-    return [
-        { id: `demo-${index}-1`, name: "чччччччч", role: "Фронтенд" },
-        { id: `demo-${index}-2`, name: "чччччччч", role: "Бэкенд" },
-    ];
 }
 
 function renderTeams() {
@@ -195,8 +156,29 @@ function createTeamCard(team) {
         });
     });
 
+    panel.querySelectorAll("[data-role-dropdown]").forEach((dropdown) => {
+        dropdown.addEventListener("click", (event) => {
+            event.stopPropagation();
+        });
+    });
+
+    panel.querySelectorAll("[data-role-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const dropdown = button.closest("[data-role-dropdown]");
+            toggleRoleDropdown(dropdown);
+        });
+    });
+
+    panel.querySelectorAll("[data-role-option]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const dropdown = button.closest("[data-role-dropdown]");
+            closeRoleDropdowns();
+            changeMemberRole(team.id, dropdown.dataset.memberRole, button.dataset.roleOption);
+        });
+    });
+
     panel.addEventListener("click", (event) => {
-        if (event.target.closest("button")) {
+        if (event.target.closest("button, [data-role-dropdown]")) {
             return;
         }
 
@@ -207,15 +189,36 @@ function createTeamCard(team) {
 }
 
 function memberRow(member, teamId) {
+    const role = normalizeTeamRole(member.role);
+    const isCurrentUser = isCurrentUserMember(member);
+
     return `
         <div class="team-member-row">
             <div class="team-member-name">${escapeHtml(member.name)}</div>
-            <div class="team-member-role">${escapeHtml(member.role || "Участник")}</div>
+            <div
+                class="team-role-dropdown"
+                data-role-dropdown
+                data-member-role="${escapeAttr(member.id)}"
+            >
+                <button
+                    class="team-role-toggle"
+                    type="button"
+                    data-role-toggle
+                    aria-expanded="false"
+                    aria-label="Роль участника ${escapeAttr(member.name)}"
+                >
+                    <span>${escapeHtml(getTeamRoleLabel(role))}</span>
+                    <span class="team-role-chevron"></span>
+                </button>
+                <div class="team-role-menu" role="menu">
+                    ${renderRoleOptions(role)}
+                </div>
+            </div>
             <button
                 class="member-delete-btn"
                 type="button"
                 data-delete-member="${escapeAttr(member.id)}"
-                aria-label="Удалить участника"
+                aria-label="${isCurrentUser ? "Выйти из команды" : "Удалить участника"}"
             >
                 ×
             </button>
@@ -225,12 +228,22 @@ function memberRow(member, teamId) {
 
 function selectTeam(teamId) {
     selectedTeamId = teamId;
-
-    const url = new URL(window.location.href);
-    url.searchParams.set("team", teamId);
-    window.history.pushState({}, "", url);
+    syncSelectedTeamUrl();
 
     markSelectedTeam();
+}
+
+function syncSelectedTeamUrl() {
+    if (!selectedTeamId) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("team");
+        window.history.pushState({}, "", url);
+        return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("team", selectedTeamId);
+    window.history.pushState({}, "", url);
 }
 
 function markSelectedTeam() {
@@ -242,13 +255,14 @@ function markSelectedTeam() {
 function openCreateTeamOverlay() {
     teamFormMode = "create";
     editingTeamId = null;
-    draftMembers = [];
+    draftMembers = [getCurrentUserMember()];
 
     createTeamForm.reset();
     newTeamColor.value = "#42609f";
 
     createTeamTitle.textContent = "Создание команды";
     createTeamSubmit.textContent = "Сохранить изменения";
+    updateCreateTeamSubmitState();
 
     renderDraftMembers();
 
@@ -264,6 +278,7 @@ function closeCreateTeamOverlay() {
     teamFormMode = "create";
     editingTeamId = null;
     draftMembers = [];
+    updateCreateTeamSubmitState();
 }
 async function createTeamFromForm() {
     const name = newTeamName.value.trim();
@@ -299,11 +314,26 @@ async function createTeamFromForm() {
 
     try {
         const createdTeam = await createTeamRequest(name);
+        const createdTeamId = readValue(createdTeam, "id", "Id");
+        const persistedMembers = [getCurrentUserMember()];
+
+        for (const member of draftMembers.filter((item) => !item.isCurrentUser)) {
+            if (!addTeamMemberRequest || !isGuid(createdTeamId) || !isGuid(member.id)) {
+                continue;
+            }
+
+            const addedMember = await addTeamMemberRequest(createdTeamId, member.id);
+            persistedMembers.push({
+                ...member,
+                role: normalizeTeamRole(readValue(addedMember, "role", "Role") || "Member"),
+            });
+        }
+
         const newTeam = normalizeTeam(
             {
                 ...createdTeam,
                 color: newTeamColor.value || "#f4864d",
-                members: [...draftMembers],
+                members: persistedMembers,
             },
             teams.length
         );
@@ -338,6 +368,7 @@ function editTeam(teamId) {
 
     createTeamTitle.textContent = `Изменение команды`;
     createTeamSubmit.textContent = "Сохранить изменения";
+    updateCreateTeamSubmitState();
 
     renderDraftMembers();
 
@@ -372,17 +403,189 @@ function deleteTeam(teamId) {
     showToast(`Команда «${team.name}» удалена`);
 }
 
-function deleteMember(teamId, memberId) {
+async function deleteMember(teamId, memberId) {
     const team = getTeam(teamId);
+    const member = team?.members.find((item) => item.id === memberId);
 
-    if (!team) {
+    if (!team || !member) {
         return;
     }
 
-    team.members = team.members.filter((member) => member.id !== memberId);
+    if (isCurrentUserMember(member)) {
+        await leaveTeam(team, member);
+        return;
+    }
 
+    if (!canRemoveMember(team, member)) {
+        alert("Нельзя удалить единственного админа команды");
+        return;
+    }
+
+    await removeMemberFromTeam(team, member, {
+        onSuccess: () => {
+            showToast("Участник удалён");
+        },
+        errorText: "Не удалось удалить участника",
+    });
+}
+
+async function leaveTeam(team, member) {
+    if (!canRemoveMember(team, member)) {
+        alert("Перед выходом назначьте другого участника админом");
+        return;
+    }
+
+    const confirmed = confirm(`Вы уверены, что хотите выйти из команды «${team.name}»?`);
+
+    if (!confirmed) {
+        return;
+    }
+
+    await removeMemberFromTeam(team, member, {
+        onSuccess: () => {
+            teams = teams.filter((item) => item.id !== team.id);
+            workspaceState = {
+                ...workspaceState,
+                teams: workspaceState.teams.filter((item) => item.id !== team.id),
+            };
+
+            if (selectedTeamId === team.id) {
+                selectedTeamId = teams[0]?.id ?? null;
+                syncSelectedTeamUrl();
+            }
+
+            renderTeams();
+            renderSidebar();
+            showToast(`Вы вышли из команды «${team.name}»`);
+        },
+        errorText: "Не удалось выйти из команды",
+    });
+}
+
+async function removeMemberFromTeam(team, member, { onSuccess, errorText = "Не удалось удалить участника" }) {
+    const previousMembers = [...team.members];
+
+    team.members = team.members.filter((item) => item.id !== member.id);
     renderTeams();
-    showToast("Участник удалён");
+
+    if (!removeTeamMemberRequest || !isGuid(team.id) || !isGuid(member.id)) {
+        team.members = previousMembers;
+        renderTeams();
+        showToast(errorText);
+        return;
+    }
+
+    try {
+        await removeTeamMemberRequest(team.id, member.id);
+        onSuccess();
+    } catch (error) {
+        console.error(error);
+        team.members = previousMembers;
+        renderTeams();
+        showToast(getRequestErrorMessage(error, errorText));
+    }
+}
+
+function canRemoveMember(team, member) {
+    if (normalizeTeamRole(member.role) !== "Admin") {
+        return true;
+    }
+
+    return team.members.some((item) => {
+        return item.id !== member.id && normalizeTeamRole(item.role) === "Admin";
+    });
+}
+
+function isCurrentUserMember(member) {
+    return member.isCurrentUser || isCurrentUserId(member.id);
+}
+
+async function changeMemberRole(teamId, memberId, role) {
+    const team = getTeam(teamId);
+    const member = team?.members.find((item) => item.id === memberId);
+
+    if (!team || !member) {
+        return;
+    }
+
+    const nextRole = normalizeTeamRole(role);
+    const previousRole = normalizeTeamRole(member.role);
+
+    member.role = nextRole;
+    renderTeams();
+
+    if (!changeTeamMemberRoleRequest || !isGuid(teamId) || !isGuid(memberId)) {
+        member.role = previousRole;
+        renderTeams();
+        showToast("Не удалось изменить роль через API");
+        return;
+    }
+
+    try {
+        const updatedMember = await changeTeamMemberRoleRequest(teamId, memberId, nextRole);
+        member.role = normalizeTeamRole(readValue(updatedMember, "role", "Role") || nextRole);
+        renderTeams();
+        showToast("Роль обновлена");
+    } catch (error) {
+        console.error(error);
+        member.role = previousRole;
+        renderTeams();
+        showToast(getRequestErrorMessage(error, "Не удалось изменить роль"));
+    }
+}
+
+function renderRoleOptions(selectedRole) {
+    return TEAM_ROLES.map((role) => `
+        <button
+            class="team-role-option ${role.value === selectedRole ? "is-selected" : ""}"
+            type="button"
+            data-role-option="${role.value}"
+            role="menuitemradio"
+            aria-checked="${role.value === selectedRole}"
+        >
+            ${role.label}
+        </button>
+    `).join("");
+}
+
+function toggleRoleDropdown(dropdown) {
+    if (!dropdown) {
+        return;
+    }
+
+    const shouldOpen = !dropdown.classList.contains("is-open");
+
+    closeRoleDropdowns(dropdown);
+    dropdown.classList.toggle("is-open", shouldOpen);
+    dropdown.querySelector("[data-role-toggle]")?.setAttribute("aria-expanded", String(shouldOpen));
+}
+
+function closeRoleDropdowns(exceptDropdown = null) {
+    document.querySelectorAll("[data-role-dropdown].is-open").forEach((dropdown) => {
+        if (dropdown === exceptDropdown) {
+            return;
+        }
+
+        dropdown.classList.remove("is-open");
+        dropdown.querySelector("[data-role-toggle]")?.setAttribute("aria-expanded", "false");
+    });
+}
+
+function normalizeTeamRole(role) {
+    const normalized = String(role ?? "")
+        .trim()
+        .toLowerCase();
+
+    if (normalized === "admin" || normalized === "админ" || normalized === "администратор" || normalized === "0") {
+        return "Admin";
+    }
+
+    return "Member";
+}
+
+function getTeamRoleLabel(role) {
+    const normalizedRole = normalizeTeamRole(role);
+    return TEAM_ROLES.find((item) => item.value === normalizedRole)?.label ?? "Участник";
 }
 
 function openAddMemberOverlay({ mode, teamId = null }) {
@@ -390,6 +593,7 @@ function openAddMemberOverlay({ mode, teamId = null }) {
     targetTeamId = teamId;
     selectedMember = null;
     memberSearchInput.value = "";
+    updateAddMemberSubmitState();
 
     const team = getTeam(teamId);
 
@@ -412,22 +616,60 @@ function closeAddMemberOverlay() {
 
     selectedMember = null;
     targetTeamId = null;
+    updateAddMemberSubmitState();
 }
 
-function renderMemberSearchResults(searchValue) {
-    const query = searchValue.trim().toLowerCase();
-
-    const people = PEOPLE.filter((person) => {
-        return (
-            person.name.toLowerCase().includes(query) ||
-            person.email.toLowerCase().includes(query) ||
-            person.role.toLowerCase().includes(query)
-        );
-    });
+async function renderMemberSearchResults(searchValue) {
+    const query = searchValue.trim();
+    const requestId = ++memberSearchRequestId;
 
     memberSearchResults.innerHTML = "";
 
-    if (people.length === 0) {
+    if (query.length < 2) {
+        memberSearchResults.innerHTML = `
+            <div class="member-result">
+                <span>Введите минимум 2 символа</span>
+                <span class="member-result-role">—</span>
+            </div>
+        `;
+        return;
+    }
+
+    memberSearchResults.innerHTML = `
+        <div class="member-result">
+            <span>Ищем...</span>
+            <span class="member-result-role">—</span>
+        </div>
+    `;
+
+    let people = [];
+
+    try {
+        await ensureUserSearchRequest();
+        people = await searchUsersRequest(query);
+    } catch (error) {
+        console.error(error);
+
+        if (requestId !== memberSearchRequestId) {
+            return;
+        }
+
+        memberSearchResults.innerHTML = `
+            <div class="member-result">
+                <span>Не удалось найти пользователей</span>
+                <span class="member-result-role">—</span>
+            </div>
+        `;
+        return;
+    }
+
+    if (requestId !== memberSearchRequestId) {
+        return;
+    }
+
+    memberSearchResults.innerHTML = "";
+
+    if (!people.length) {
         memberSearchResults.innerHTML = `
             <div class="member-result">
                 <span>Ничего не найдено</span>
@@ -437,7 +679,7 @@ function renderMemberSearchResults(searchValue) {
         return;
     }
 
-    people.forEach((person) => {
+    people.map(normalizeUserSearchResult).forEach((person) => {
         const button = document.createElement("button");
         button.className = `member-result ${
             selectedMember?.id === person.id ? "is-selected" : ""
@@ -446,16 +688,43 @@ function renderMemberSearchResults(searchValue) {
 
         button.innerHTML = `
             <span>${escapeHtml(person.name)}</span>
-            <span class="member-result-role">${escapeHtml(person.role)}</span>
+            <span class="member-result-role">${escapeHtml(person.email)}</span>
         `;
 
         button.addEventListener("click", () => {
             selectedMember = person;
+            updateAddMemberSubmitState();
             renderMemberSearchResults(memberSearchInput.value);
         });
 
         memberSearchResults.appendChild(button);
     });
+}
+
+async function ensureUserSearchRequest() {
+    if (searchUsersRequest) {
+        return;
+    }
+
+    const userApi = await import(`./api/userApi.js?v=${Date.now()}`);
+    searchUsersRequest = userApi.searchUsers;
+
+    if (!searchUsersRequest) {
+        throw new Error("User search API is not available");
+    }
+}
+
+function normalizeUserSearchResult(user) {
+    const id = readValue(user, "id", "Id");
+
+    return {
+        id,
+        name:
+            readValue(user, "name", "Name") ||
+            readValue(user, "email", "Email") ||
+            `#${String(id).slice(0, 8)}`,
+        email: readValue(user, "email", "Email") || "",
+    };
 }
 function openOverlay(overlay) {
     overlay.classList.add("is-open");
@@ -471,7 +740,7 @@ function closeOverlay(overlay) {
         document.body.classList.remove("modal-locked");
     }
 }
-function submitAddMember() {
+async function submitAddMember() {
     if (!selectedMember) {
         showToast("Выбери участника");
         return;
@@ -480,7 +749,7 @@ function submitAddMember() {
     const member = {
         id: selectedMember.id,
         name: selectedMember.name,
-        role: selectedMember.role,
+        role: "Member",
     };
 
     if (memberOverlayMode === "draft") {
@@ -499,13 +768,46 @@ function submitAddMember() {
         return;
     }
 
-    if (!team.members.some((item) => item.id === member.id)) {
-        team.members.push(member);
+    if (team.members.some((item) => item.id === member.id)) {
+        showToast("Пользователь уже в команде");
+        return;
+    }
+
+    if (!addTeamMemberRequest || !isGuid(team.id) || !isGuid(member.id)) {
+        showToast("Добавление доступно только для пользователей из API");
+        return;
+    }
+
+    try {
+        const addedMember = await addTeamMemberRequest(team.id, member.id);
+        team.members.push({
+            ...member,
+            role: normalizeTeamRole(readValue(addedMember, "role", "Role") || "Member"),
+        });
+    } catch (error) {
+        console.error(error);
+        showToast(getRequestErrorMessage(error, "Не удалось добавить участника"));
+        return;
     }
 
     closeAddMemberOverlay();
     renderTeams();
     showToast(`Участник добавлен в «${team.name}»`);
+}
+
+function updateAddMemberSubmitState() {
+    const isReady = Boolean(selectedMember);
+
+    addMemberSubmit.classList.toggle("is-waiting-selection", !isReady);
+    addMemberSubmit.setAttribute("aria-disabled", String(!isReady));
+}
+
+function updateCreateTeamSubmitState() {
+    const hasName = Boolean(newTeamName.value.trim());
+
+    createTeamSubmit.disabled = !hasName;
+    createTeamSubmit.classList.toggle("is-waiting-selection", !hasName);
+    createTeamSubmit.setAttribute("aria-disabled", String(!hasName));
 }
 
 function renderDraftMembers() {
@@ -518,21 +820,55 @@ function renderDraftMembers() {
 
     draftMembers.forEach((member) => {
         const chip = document.createElement("span");
-        chip.className = "draft-member-chip";
+        chip.className = `draft-member-chip ${member.isCurrentUser ? "is-current-user" : ""}`;
 
         chip.innerHTML = `
             <span>${escapeHtml(member.name)}</span>
-            <span>${escapeHtml(member.role)}</span>
-            <button type="button" aria-label="Убрать участника">×</button>
+            <span>${escapeHtml(getTeamRoleLabel(member.role))}</span>
+            ${
+                member.isCurrentUser
+                    ? ""
+                    : `<button type="button" aria-label="Убрать участника">×</button>`
+            }
         `;
 
-        chip.querySelector("button").addEventListener("click", () => {
+        chip.querySelector("button")?.addEventListener("click", () => {
             draftMembers = draftMembers.filter((item) => item.id !== member.id);
             renderDraftMembers();
         });
 
         draftMembersBox.appendChild(chip);
     });
+}
+
+function getCurrentUserMember() {
+    const id = getCurrentUserId() || "current-user";
+    const name =
+        readValue(currentUser, "name", "Name") ||
+        readValue(currentUser, "userName", "UserName") ||
+        readValue(currentUser, "email", "Email") ||
+        "Вы";
+
+    return {
+        id,
+        name,
+        role: "Admin",
+        isCurrentUser: true,
+    };
+}
+
+function getCurrentUserId() {
+    return readValue(currentUser, "id", "Id");
+}
+
+function isCurrentUserId(userId) {
+    const currentUserId = getCurrentUserId();
+
+    return Boolean(currentUserId && String(userId) === String(currentUserId));
+}
+
+function isGuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value));
 }
 
 function getTeam(teamId) {
@@ -589,6 +925,10 @@ function showToast(text) {
     }, 2200);
 }
 
+function getRequestErrorMessage(error, fallbackText) {
+    return error?.message || fallbackText;
+}
+
 function renderSidebar() {
     if (!renderSidebarNavigationRequest) {
         return;
@@ -602,12 +942,18 @@ function renderSidebar() {
 }
 
 async function loadApiModules() {
-    const [teamApi, boardData] = await Promise.all([
+    const [teamApi, userApi, boardData] = await Promise.all([
         import("./api/teamApi.js"),
+        import("./api/userApi.js"),
         import("./boardData.js"),
     ]);
 
     createTeamRequest = teamApi.createTeam;
+    addTeamMemberRequest = teamApi.addTeamMember;
+    changeTeamMemberRoleRequest = teamApi.changeTeamMemberRole;
+    removeTeamMemberRequest = teamApi.removeTeamMember;
+    loadCurrentUserRequest = userApi.getMe;
+    searchUsersRequest = userApi.searchUsers;
     loadWorkspaceRequest = boardData.loadWorkspace;
     renderSidebarNavigationRequest = boardData.renderSidebarNavigation;
     selectProjectFromUrlRequest = boardData.selectProjectFromUrl;
@@ -619,9 +965,13 @@ async function init() {
     try {
         await loadApiModules();
 
-        const workspace = await loadWorkspaceRequest();
+        const [workspace, loadedUser] = await Promise.all([
+            loadWorkspaceRequest(),
+            loadCurrentUserRequest().catch(() => null),
+        ]);
         const activeProject = selectProjectFromUrlRequest(workspace.projects);
 
+        currentUser = loadedUser;
         workspaceState = workspace;
         activeProjectId = activeProject?.id ?? activeProjectId;
         teams = getInitialTeams(workspace.teams);
@@ -634,12 +984,8 @@ async function init() {
         renderSidebar();
     } catch (error) {
         console.error(error);
-        teams = getInitialTeams();
-
-        if (!selectedTeamId && teams[0]) {
-            selectedTeamId = teams[0].id;
-        }
-
+        teams = [];
+        selectedTeamId = null;
         renderTeams();
         showToast("Не удалось загрузить команды из API");
     }
@@ -648,6 +994,8 @@ async function init() {
 /* EVENTS */
 
 openCreateTeamBtn.addEventListener("click", openCreateTeamOverlay);
+
+newTeamName.addEventListener("input", updateCreateTeamSubmitState);
 
 createTeamClose.addEventListener("click", closeCreateTeamOverlay);
 createTeamCancel.addEventListener("click", closeCreateTeamOverlay);
@@ -687,10 +1035,16 @@ memberSearchInput.addEventListener("input", () => {
     renderMemberSearchResults(memberSearchInput.value);
 });
 
+document.addEventListener("click", () => {
+    closeRoleDropdowns();
+});
+
 document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") {
         return;
     }
+
+    closeRoleDropdowns();
 
     if (addMemberOverlay.classList.contains("is-open")) {
         closeAddMemberOverlay();

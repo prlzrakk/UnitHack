@@ -13,7 +13,7 @@ public class TaskEvent
     public Kanban? Kanban { get; set; }
     
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
     
     public EventType EventType { get; set; }
     
