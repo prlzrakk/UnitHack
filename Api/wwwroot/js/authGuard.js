@@ -8,4 +8,12 @@ if (!hasToken) {
 
   authUrl.searchParams.set("next", current);
   window.location.replace(authUrl);
+} else {
+  import("./tutorial.js")
+    .then(({ showFirstLoginTutorial }) => {
+      showFirstLoginTutorial();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 }
