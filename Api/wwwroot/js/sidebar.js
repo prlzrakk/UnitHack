@@ -50,6 +50,16 @@ function initSidebar() {
         button.addEventListener("click", (event) => {
             event.stopPropagation();
 
+            if (event.target.closest("[data-projects-page-label]")) {
+                if (document.body.classList.contains("project-body")) {
+                    closeSidebar();
+                    return;
+                }
+
+                window.location.href = "./project.html";
+                return;
+            }
+
             const section = button.closest(".sidebar-section");
 
             if (!section) {
