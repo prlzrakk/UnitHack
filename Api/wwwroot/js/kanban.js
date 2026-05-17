@@ -523,7 +523,25 @@ function selectElementText(element) {
 ========================= */
 
 function createTaskCard(task, column, columnIndex, taskIndex) {
-    const color = task.color || column.color || "#ef6a35";
+    const columnTitle = String(
+        column.title ??
+        column.name ??
+        column.Title ??
+        column.Name ??
+        ""
+    ).trim().toLowerCase();
+
+    const isDoneColumn =
+        column.done === true ||
+        column.isDone === true ||
+        column.Done === true ||
+        column.IsDone === true ||
+        columnTitle === "done" ||
+        columnTitle === "готово";
+
+    const color = isDoneColumn
+        ? "#407d52"
+        : task.color || column.color || "#ef6a35";
     const doneLabel = column.done ? "Дата выполнения" : "Дедлайн";
 
     const tags = [
@@ -534,6 +552,8 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
 
     const card = document.createElement("article");
     card.className = "task-card is-draggable";
+    console.log("COLUMN:", column);
+    console.log("TASK:", task.title, "COLOR:", color);
     card.style.setProperty("--task-color", color);
     card.dataset.taskId = task.id;
     card.dataset.columnId = column.id;
