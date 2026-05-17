@@ -108,7 +108,7 @@
                 </section>
 
                 <section class="create-task-block create-task-settings-block">
-                    <label class="create-row">
+                    <label class="create-row create-assignee-row">
                         <span class="create-row-label">Исполнитель</span>
 
                         <div class="assignee-picker">
@@ -122,6 +122,8 @@
 
                             <div class="assignee-options" id="assigneeOptions"></div>
                         </div>
+
+                        <div class="selected-assignees" id="selectedAssignees"></div>
                     </label>
 
                     <label class="create-row">
@@ -148,7 +150,7 @@
                         </select>
                     </label>
 
-                    <label class="create-row">
+                    <label class="create-row create-deadline-row">
                         <span class="create-row-label">Дедлайн</span>
 
                         <input

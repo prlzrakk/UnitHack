@@ -251,7 +251,10 @@ function normalizeTask(task) {
         order: Number(task?.order ?? task?.Order ?? 0),
         time: formatTimeLeft(deadline),
         tags,
-        users: [{ name: userId ? `#${userId.slice(0, 8)}` : "Исполнитель" }],
+        users: [{
+            id: userId,
+            name: userId ? `Участник ${userId.slice(0, 8)}` : "Исполнитель",
+        }],
     };
 }
 

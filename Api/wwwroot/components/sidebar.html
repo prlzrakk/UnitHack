@@ -8,7 +8,7 @@
 
     <div class="sidebar-inner">
         <section class="sidebar-section">
-            <button class="section-head" data-collapse>
+            <button class="section-head" data-collapse aria-expanded="true" type="button">
                 <span>Проекты</span>
                 <span class="chevron"></span>
             </button>
@@ -19,10 +19,18 @@
         </section>
 
         <section class="sidebar-section">
-            <button class="section-head" data-collapse>
-                <span>Команды</span>
-                <span class="chevron"></span>
-            </button>
+            <div class="section-head section-head--split">
+                <a class="section-head-link" href="./teams.html">Команды</a>
+                <button
+                        class="section-arrow"
+                        data-collapse
+                        aria-expanded="true"
+                        aria-label="Свернуть или развернуть команды"
+                        type="button"
+                >
+                    <span class="chevron"></span>
+                </button>
+            </div>
 
             <div class="collapsible-content team-grid" data-sidebar-teams>
                 <div class="sidebar-empty">Загрузка команд...</div>
@@ -30,7 +38,7 @@
         </section>
 
         <section class="sidebar-section">
-            <button class="section-head" data-collapse>
+            <button class="section-head" data-collapse aria-expanded="true" type="button">
                 <span>Мои задачи</span>
                 <span class="chevron"></span>
             </button>

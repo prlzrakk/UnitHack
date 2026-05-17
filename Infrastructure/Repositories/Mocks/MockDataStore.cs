@@ -30,6 +30,22 @@ public class MockDataStore
             Name = "Test Team"
         };
 
+        var user = new User
+        {
+            Id = SeedUserId,
+            Name = DevSeedDefaults.UserName,
+            Email = DevSeedDefaults.UserEmail,
+            HashPassword = string.Empty
+        };
+
+        var user2 = new User
+        {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111112"),
+            Name = "Aboba",
+            Email = "test@example1.com",
+            HashPassword = string.Empty
+        };
+
         var project = new Project
         {
             Id = projectId,
@@ -43,6 +59,16 @@ public class MockDataStore
             TeamId = teamId,
             Team = team,
             UserId = SeedUserId,
+            User = user,
+            Role = TeamRole.Admin
+        };
+        
+        var teamMember2 = new TeamMember
+        {
+            TeamId = teamId,
+            Team = team,
+            UserId = user2.Id,
+            User = user2,
             Role = TeamRole.Admin
         };
 
@@ -77,10 +103,12 @@ public class MockDataStore
         Teams.Add(team);
         Projects.Add(project);
         TeamMembers.Add(teamMember);
+        TeamMembers.Add(teamMember2);
         Kanbans.Add(kanban);
         KanbanColumns.AddRange(columns);
 
         team.Members.Add(teamMember);
+        team.Members.Add(teamMember2);
         team.Projects.Add(project);
         project.Kanbans.Add(kanban);
 
