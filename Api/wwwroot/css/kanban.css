@@ -349,7 +349,7 @@ body.sidebar-closed .kanban-sidebar {
     height: auto;
     min-height: 0;
 
-    padding: 70px 72px 64px 144px;
+    padding: 70px 72px 64px 70px;
 
     /* не режем контент по вертикали */
     overflow: visible;
@@ -552,15 +552,21 @@ body.sidebar-closed .kanban-head {
     min-height: 0;
     padding: 18px 14px 20px 18px;
     position: relative;
+    z-index: 0;
 
     background: white;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 12px;
     border: 1px solid #e0e0e0;
 
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.task-card:hover,
+.task-card:focus-within {
+    z-index: 30;
 }
 
 .task-card::before {
@@ -675,15 +681,24 @@ body.sidebar-closed .kanban-head {
     flex: 0 0 auto;
 }
 
-.task-user {
+.task-user-wrap {
     width: 20px;
     height: 20px;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
     background: #eeeeef;
     display: grid;
     place-items: center;
     color: black;
     font-size: 12px;
+    cursor: pointer;
+}
+
+.task-user {
+    width: 14px;
+    height: 14px;
+    display: block;
 }
 
 /* ADD */
@@ -769,24 +784,22 @@ body.sidebar-closed .kanban-head {
 }
 /* USER TOOLTIP */
 
-.task-user {
+.task-user-wrap {
     position: relative;
-    border: 0;
-    cursor: pointer;
     transition:
             transform 0.18s ease,
             background 0.18s ease,
             box-shadow 0.18s ease;
 }
 
-.task-user:hover {
+.task-user-wrap:hover {
     transform: translateY(-2px) scale(1.08);
     background: var(--task-color, var(--orange));
     color: white;
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
 }
 
-.task-user::after {
+.task-user-wrap::after {
     content: attr(data-user-name);
     position: absolute;
     left: 50%;
@@ -796,8 +809,8 @@ body.sidebar-closed .kanban-head {
     opacity: 0;
     pointer-events: none;
 
-    min-width: max-content;
-    max-width: 160px;
+    width: max-content;
+    max-width: none;
 
     padding: 6px 10px;
     border-radius: 10px;
@@ -816,10 +829,10 @@ body.sidebar-closed .kanban-head {
     transition:
             opacity 0.18s ease,
             transform 0.18s ease;
-    z-index: 20;
+    z-index: 60;
 }
 
-.task-user::before {
+.task-user-wrap::before {
     content: "";
     position: absolute;
     left: 50%;
@@ -837,11 +850,11 @@ body.sidebar-closed .kanban-head {
     transition:
             opacity 0.18s ease,
             transform 0.18s ease;
-    z-index: 19;
+    z-index: 59;
 }
 
-.task-user:hover::after,
-.task-user:hover::before {
+.task-user-wrap:hover::after,
+.task-user-wrap:hover::before {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
@@ -1156,7 +1169,7 @@ body.sidebar-closed .kanban-head {
 .create-task-settings-block {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
 }
 
 .create-field {
@@ -1217,10 +1230,22 @@ body.sidebar-closed .kanban-head {
     gap: 18px;
 }
 
+.create-assignee-row,
+.create-deadline-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+}
+
+.create-deadline-row {
+    margin-top: 6px;
+}
+
 .create-select,
 .create-date-time,
 .create-select-like {
     width: 100%;
+    min-width: 0;
     min-height: 38px;
 
     padding: 8px 14px;
@@ -1228,7 +1253,7 @@ body.sidebar-closed .kanban-head {
     outline: none;
     border-radius: 999px;
 
-    background: #42609f;
+    background: rgba(118, 118, 128, 0.12);
     color: white;
 
     font-family: var(--sans);
@@ -1243,10 +1268,10 @@ body.sidebar-closed .kanban-head {
 }
 
 .create-date-time {
-    background: rgba(118, 118, 128, 0.12);
     border-bottom: 1px solid #ef6a35;
     color: #d8d8d8;
     color-scheme: dark;
+    font-size: 13px;
 }
 
 /* ASSIGNEE SEARCH */
@@ -1256,13 +1281,28 @@ body.sidebar-closed .kanban-head {
 }
 
 .assignee-options {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 15;
+
     max-height: 116px;
-    margin-top: 8px;
+    padding: 8px;
 
     display: grid;
     gap: 6px;
 
     overflow-y: auto;
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    background: #333333;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+.assignee-options:empty {
+    display: none;
 }
 
 .assignee-option {
@@ -1292,11 +1332,87 @@ body.sidebar-closed .kanban-head {
     background: rgba(244, 134, 77, 0.14);
 }
 
+.assignee-empty {
+    min-height: 34px;
+
+    padding: 0 12px;
+    border-radius: 999px;
+
+    color: #a7a7a7;
+
+    display: flex;
+    align-items: center;
+
+    font-family: var(--label);
+    font-size: 14px;
+}
+
 .assignee-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
     flex: 0 0 auto;
+}
+
+.selected-assignees {
+    min-height: 76px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+}
+
+.selected-assignee {
+    max-width: 100%;
+    min-height: 28px;
+
+    padding: 0 8px 0 10px;
+    border: 1px solid rgba(244, 134, 77, 0.56);
+    border-radius: 999px;
+
+    background: rgba(244, 134, 77, 0.12);
+    color: white;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    font-family: var(--label);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.selected-assignee span:first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selected-assignee button {
+    width: 16px;
+    height: 16px;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+
+    cursor: pointer;
+
+    line-height: 1;
+}
+
+.selected-assignees-empty {
+    color: #838383;
+
+    display: flex;
+    align-items: center;
+
+    font-family: var(--label);
+    font-size: 13px;
 }
 
 /* TAGS */

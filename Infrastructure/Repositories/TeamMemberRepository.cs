@@ -31,6 +31,7 @@ public class TeamMemberRepository(DatabaseContext context) : ITeamMemberReposito
     public async Task<List<TeamMember>> GetMembersByTeamIdAsync(Guid teamId, CancellationToken cancellationToken)
     {
         return await context.TeamMembers
+            .Include(x => x.User)
             .Where(x => x.TeamId == teamId)
             .ToListAsync(cancellationToken);
     }
