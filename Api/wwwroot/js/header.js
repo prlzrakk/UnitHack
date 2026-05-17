@@ -285,9 +285,12 @@ async function markAllNotificationsAsRead() {
     }
 
     try {
+        const localUnreadCount = getLocalNotifications()
+            .filter((notification) => !notification.isRead)
+            .length;
         const hasPersistedUnread = state.notifications.some(
             (notification) => notification.isPersisted && !notification.isRead
-        );
+        ) || state.notificationUnreadCount > localUnreadCount;
 
         if (hasPersistedUnread) {
             await readAllNotifications();
