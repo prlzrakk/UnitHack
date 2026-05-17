@@ -4,12 +4,10 @@
     --panel-line: #3a3a3a;
     --text: #f4f4f4;
     --muted: #838383;
-
     --orange: #f4864d;
     --blue: #42609f;
     --green: #407d52;
     --peach: #ffe3d8;
-
     --serif: "Yeseva One", Georgia, serif;
     --sans: Inter, Arial, sans-serif;
     --label: Raleway, Inter, Arial, sans-serif;
@@ -49,11 +47,9 @@ select {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
     border-bottom-right-radius: 14px;
     border-bottom-left-radius: 14px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     position: sticky;
     top: 0;
     z-index: 40;
@@ -62,7 +58,6 @@ select {
 .brand {
     text-decoration: none;
     display: block;
-
     font-family: var(--serif);
     font-size: clamp(72px, 7vw, 96px);
     line-height: 1;
@@ -76,10 +71,8 @@ select {
 .home-link {
     position: absolute;
     top: 42px;
-
     width: 38px;
     height: 38px;
-
     border: 0;
     background: transparent;
     color: var(--orange);
@@ -136,7 +129,6 @@ select {
 
 .project-head {
     margin-bottom: 38px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -145,7 +137,6 @@ select {
 
 .project-head h1 {
     margin: 0;
-
     color: white;
     font-family: var(--label);
     font-size: 64px;
@@ -158,16 +149,12 @@ select {
     border: 0;
     background: transparent;
     color: white;
-
     display: inline-flex;
     align-items: center;
     gap: 9px;
-
     cursor: pointer;
-
     font-family: var(--label);
     font-weight: 500;
-
     transition: color 0.2s ease;
 }
 
@@ -192,17 +179,14 @@ select {
 
 .project-panel {
     min-height: 300px;
-
     padding: 24px 26px;
     background: var(--panel);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
     border: 1px solid transparent;
     border-radius: 30px;
-
     display: flex;
     flex-direction: column;
     gap: 18px;
-
     cursor: pointer;
     transition:
             border-color 0.2s ease,
@@ -221,45 +205,57 @@ select {
 }
 
 .project-panel-head {
+    position: relative;
+    min-height: 58px;
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) auto;
+    grid-template-columns: 24px minmax(260px, 1fr) auto;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .project-color-dot {
     width: 21px;
     height: 21px;
     border-radius: 50%;
+    z-index: 3;
 }
 
 .project-title-block {
     min-width: 0;
+    z-index: 3;
 }
 
 .project-team-name {
-    margin: 0 0 8px;
+    margin: 0;
+    max-width: none;
     color: var(--orange);
     font-family: var(--label);
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.1;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: left;
+    overflow: visible;
+    text-overflow: unset;
     white-space: nowrap;
 }
 
 .project-card-name {
-    min-width: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    max-width: 360px;
     margin: 0;
-
+    transform: translate(-50%, -50%);
     color: white;
     font-family: var(--label);
     font-size: 38px;
     font-weight: 700;
     line-height: 1;
-
-    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1;
 }
 
 .project-board-count {
@@ -267,25 +263,23 @@ select {
     padding: 0 14px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
-
     color: var(--muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     font-family: var(--label);
     font-size: 15px;
     white-space: nowrap;
+    justify-self: end;
+    z-index: 3;
 }
 
 .project-boards {
     flex: 1;
     min-height: 180px;
-
     border: 1px solid white;
     border-radius: 20px;
     overflow: hidden;
-
     display: flex;
     flex-direction: column;
 }
@@ -298,18 +292,14 @@ select {
 
 .project-board-row {
     min-height: 66px;
-
     padding: 14px 20px;
-
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(150px, 0.6fr) 32px;
     align-items: center;
     gap: 24px;
-
     border-bottom: 1px solid rgba(255, 255, 255, 0.9);
     color: white;
     text-decoration: none;
-
     transition:
             background 0.2s ease,
             color 0.2s ease;
@@ -332,12 +322,10 @@ select {
 .project-board-name,
 .project-board-meta {
     min-width: 0;
-
     font-family: var(--label);
     font-size: 24px;
     font-weight: 400;
     line-height: 1.25;
-
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -358,10 +346,8 @@ select {
 
 .project-empty {
     flex: 1;
-
     display: grid;
     place-items: center;
-
     color: var(--orange);
     font-family: var(--serif);
     font-size: 24px;
@@ -369,17 +355,13 @@ select {
 
 .project-state {
     min-height: 220px;
-
     padding: 36px;
     border: 1px solid var(--panel-line);
     border-radius: 30px;
-
     background: var(--panel);
     color: var(--muted);
-
     display: grid;
     place-items: center;
-
     text-align: center;
     font-family: var(--label);
     font-size: 24px;
@@ -395,17 +377,13 @@ body.modal-locked {
     position: fixed;
     inset: 0;
     z-index: 999;
-
     display: grid;
     place-items: center;
-
     padding: 24px;
     background: rgba(0, 0, 0, 0.62);
     backdrop-filter: blur(3px);
-
     opacity: 0;
     pointer-events: none;
-
     transition: opacity 0.22s ease;
 }
 
@@ -417,19 +395,15 @@ body.modal-locked {
 .project-modal {
     width: min(720px, calc(100vw - 36px));
     max-height: calc(100vh - 48px);
-
     padding: 28px;
     border: 0;
     border-radius: 22px;
-
     background: var(--panel);
     color: white;
     box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
-
     display: flex;
     flex-direction: column;
     gap: 26px;
-
     overflow-y: auto;
     transform: translateY(18px) scale(0.97);
     transition: transform 0.22s ease;
@@ -452,7 +426,6 @@ body.modal-locked {
 
 .project-modal-header h2 {
     margin: 0;
-
     color: white;
     font-family: var(--label);
     font-size: 30px;
@@ -462,10 +435,8 @@ body.modal-locked {
 
 .project-modal-close {
     position: relative;
-
     width: 42px;
     height: 42px;
-
     border: 0;
     background: transparent;
     cursor: pointer;
@@ -475,10 +446,8 @@ body.modal-locked {
     position: absolute;
     left: 6px;
     top: 19px;
-
     width: 32px;
     height: 4px;
-
     border-radius: 999px;
     background: white;
 }
@@ -513,15 +482,12 @@ body.modal-locked {
 .project-select {
     width: 100%;
     min-height: 48px;
-
     padding: 0 18px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 12px;
     outline: none;
-
     background: rgba(255, 255, 255, 0.06);
     color: white;
-
     font-size: 16px;
 }
 
@@ -542,7 +508,6 @@ body.modal-locked {
 
 .project-modal-actions {
     margin-top: auto;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -551,12 +516,9 @@ body.modal-locked {
 
 .project-modal-action {
     min-height: 42px;
-
     border: 0;
     background: transparent;
-
     cursor: pointer;
-
     font-family: var(--label);
     font-size: 18px;
     font-weight: 500;
@@ -595,24 +557,18 @@ body.modal-locked {
     left: 50%;
     bottom: 46px;
     z-index: 250;
-
     transform: translateX(-50%) translateY(20px);
     opacity: 0;
     pointer-events: none;
-
     min-height: 34px;
     padding: 0 14px;
     border-radius: 10px;
-
     background: white;
     color: #111;
-
     display: flex;
     align-items: center;
     gap: 8px;
-
     font-size: 14px;
-
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -628,6 +584,8 @@ body.modal-locked {
     text-decoration: none;
     color: #000;
 }
+
+/* MOBILE */
 
 @media (max-width: 800px) {
     .project-topbar {
@@ -664,16 +622,51 @@ body.modal-locked {
     }
 
     .project-panel-head {
-        grid-template-columns: 18px minmax(0, 1fr);
+        min-height: auto;
+        grid-template-columns: 20px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+    }
+
+    .project-color-dot {
+        width: 18px;
+        height: 18px;
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .project-title-block {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+    }
+
+    .project-team-name {
+        max-width: 100%;
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .project-card-name {
+        position: static;
+        max-width: 100%;
+        transform: none;
+        text-align: left;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        font-size: 30px;
     }
 
     .project-board-count {
         width: max-content;
         grid-column: 2;
-    }
-
-    .project-card-name {
-        font-size: 30px;
+        grid-row: 2;
+        justify-self: start;
     }
 
     .project-board-row {

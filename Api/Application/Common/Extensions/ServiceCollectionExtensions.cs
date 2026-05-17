@@ -15,6 +15,7 @@ using Infrastructure.Workers;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi;
 
 namespace Api.Application.Common;
@@ -89,6 +90,7 @@ public static class ServiceCollectionExtensions
 
     public static WebApplicationBuilder AddSignalR(this WebApplicationBuilder builder)
     {
+        builder.Services.AddSingleton<IUserIdProvider, NotificationUserIdProvider>();
         builder.Services.AddSignalR();
         return builder;
     }
