@@ -10,7 +10,8 @@ public class CreateNotificationHandler(
     IKanbanRepository kanbans,
     IKanbanTaskRepository tasks,
     INotificationRepository notifications,
-    IUnitOfWork unitOfWork) : IRequestHandler<CreateNotificationCommand, NotificationResponse>
+    IUnitOfWork unitOfWork,
+    INotificationSender sender) : IRequestHandler<CreateNotificationCommand, NotificationResponse>
 {
     public async Task<NotificationResponse> Handle(
         CreateNotificationCommand command,
@@ -35,7 +36,8 @@ public class CreateNotificationHandler(
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return notification.ToResponse();
+        var response = notification.ToResponse();
+        await sender.SendToUserAsync(command.UserId, response, cancellationToken);
+        return response;
     }
 }

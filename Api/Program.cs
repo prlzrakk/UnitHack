@@ -14,7 +14,8 @@ builder
     .AddDatabase()
     .AddInfrastructureServices()
     .AddCorsPolicy()
-    .AddForwardedHeaders();
+    .AddForwardedHeaders()
+    .AddSignalR();
 
 var app = builder.Build();
 
@@ -26,6 +27,7 @@ app
     .UseFrontendFiles()
     .UseConfiguredCors()
     .UseAuth()
-    .MapApiControllers();
+    .MapApiControllers()
+    .MapNotificationsHub();
 
 app.Run();

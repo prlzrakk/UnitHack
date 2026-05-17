@@ -93,7 +93,7 @@ function initSidebar() {
 
         const projectId = projectButton.dataset.project;
 
-        if (document.body.classList.contains("kanban-body")) {
+        if (document.body.classList.contains("project-body")) {
             window.dispatchEvent(
                 new CustomEvent("project:selected", {
                     detail: { projectId },
@@ -105,7 +105,7 @@ function initSidebar() {
             return;
         }
 
-        window.location.href = `./kanban.html?project=${projectId}`;
+        window.location.href = `./project.html?project=${encodeURIComponent(projectId)}`;
     });
     markActiveProject();
 }
