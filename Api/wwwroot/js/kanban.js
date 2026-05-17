@@ -185,7 +185,7 @@ async function init() {
         });
     } catch (error) {
         console.error(error);
-        renderError("Не удалось загрузить доску. Проверь авторизацию и доступ к API.");
+        renderError("Не удалось загрузить канбан. Проверь авторизацию и доступ к API.");
     }
 }
 
@@ -244,7 +244,7 @@ function renderSidebar() {
 
 function renderLoading() {
     kanbanTitle.textContent = "Kanban";
-    kanbanBoard.innerHTML = `<div class="kanban-state">Загрузка доски...</div>`;
+    kanbanBoard.innerHTML = `<div class="kanban-state">Загрузка канбана...</div>`;
 }
 
 function renderError(message) {
@@ -275,7 +275,7 @@ function renderKanban(board) {
     const canRenameColumns = isActiveProjectTeamAdmin();
 
     if (!board.id) {
-        renderEmpty("У проекта пока нет досок");
+        renderEmpty("У проекта пока нет канбанов");
         return;
     }
 
@@ -370,7 +370,7 @@ function renderKanban(board) {
 
 async function addColumnToBoard() {
     if (!state.board?.id) {
-        showToast("Сначала выбери доску");
+        showToast("Сначала выбери канбан");
         return;
     }
 
@@ -1370,7 +1370,7 @@ async function createTaskFromForm() {
     }
 
     if (!state.board?.id) {
-        showToast("Доска не выбрана");
+        showToast("Канбан не выбран");
         return;
     }
 
@@ -2320,7 +2320,14 @@ function handleRealtimeNotification(notification) {
     const normalizedNotification = normalizeNotification(notification);
 
     if (!normalizedNotification.id) {
+        syncRealtimeStateForNotification(normalizedNotification);
         showToast(normalizedNotification.message || "Новое уведомление");
+        return;
+    }
+
+    if (!normalizedNotification.isPersisted) {
+        syncRealtimeStateForNotification(normalizedNotification);
+        showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
         return;
     }
 
@@ -2373,7 +2380,10 @@ function shouldRefreshBoardForNotification(notification) {
 
 function shouldRefreshWorkspaceForNotification(notification) {
     return Boolean(notification.teamId) ||
+        Boolean(notification.projectId) ||
         notification.type === "TeamMemberAdded" ||
+        notification.type === "ProjectCreated" ||
+        notification.type === "KanbanCreated" ||
         notification.name === "Team Member Added";
 }
 
@@ -2443,6 +2453,15 @@ async function refreshWorkspaceFromRealtime() {
             state.activeKanban =
                 activeProject.kanbans?.find((kanban) => sameId(kanban.id, previousKanbanId)) ??
                 state.activeKanban;
+        }
+
+        const activeKanbanStillExists =
+            state.activeKanban?.id &&
+            activeProject?.kanbans?.some((kanban) => sameId(kanban.id, state.activeKanban.id));
+
+        if (activeProject && (!state.activeKanban?.id || !activeKanbanStillExists)) {
+            await loadActiveBoard(activeProject.kanbans?.[0]?.id ?? null);
+            return;
         }
 
         if (state.board) {
@@ -2519,12 +2538,14 @@ function normalizeNotification(notification = {}) {
         id: readNotificationValue(source, "id", "Id") || "",
         userId: readNotificationValue(source, "userId", "UserId") || "",
         teamId: readNotificationValue(source, "teamId", "TeamId") || "",
+        projectId: readNotificationValue(source, "projectId", "ProjectId") || "",
         taskId: readNotificationValue(source, "taskId", "TaskId") || "",
         kanbanId: readNotificationValue(source, "kanbanId", "KanbanId") || "",
         type: readNotificationValue(source, "type", "Type", "eventType", "EventType") || "",
         name,
         message,
         isRead: Boolean(readNotificationValue(source, "isRead", "IsRead")),
+        isPersisted: getNotificationPersistence(source),
         createdAt:
             readNotificationValue(source, "createdAt", "CreatedAt") ||
             new Date().toISOString(),
@@ -2540,6 +2561,19 @@ function readNotificationValue(source, ...keys) {
     }
 
     return null;
+}
+
+function getNotificationPersistence(source) {
+    const explicitValue = readNotificationValue(source, "isPersisted", "IsPersisted");
+
+    if (explicitValue !== null) {
+        return explicitValue === true || explicitValue === "true";
+    }
+
+    return Boolean(
+        readNotificationValue(source, "taskId", "TaskId") &&
+        readNotificationValue(source, "kanbanId", "KanbanId")
+    );
 }
 
 function formatNotificationTime(value) {

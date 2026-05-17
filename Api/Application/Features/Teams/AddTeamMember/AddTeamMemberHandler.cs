@@ -47,6 +47,7 @@ public class AddTeamMemberHandler(
                 name = "Team Member Added",
                 message = $"Вас добавили в команду «{team.Name}»",
                 isRead = false,
+                isPersisted = false,
                 createdAt = DateTime.UtcNow
             },
             cancellationToken);
