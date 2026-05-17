@@ -81,12 +81,12 @@ function createProjectCard(project) {
 
     panel.innerHTML = `
         <div class="project-panel-head">
-            <span class="project-color-dot" style="background:${escapeHtml(project.color)}"></span>
-
-            <div class="project-title-block">
+            <div class="project-team-inline">
+                <span class="project-color-dot" style="background:${escapeHtml(project.color)}"></span>
                 <p class="project-team-name">${escapeHtml(project.team?.name || "Без команды")}</p>
-                <h2 class="project-card-name">${escapeHtml(project.name || "Проект")}</h2>
             </div>
+
+            <h2 class="project-card-name">${escapeHtml(project.name || "Проект")}</h2>
 
             <span class="project-board-count">${escapeHtml(formatBoardCount(project.kanbans?.length ?? 0))}</span>
         </div>
