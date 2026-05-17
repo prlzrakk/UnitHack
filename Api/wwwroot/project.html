@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Boardify — Доски проекта</title>
+    <title>Boardify — Проекты</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,18 +42,95 @@
 
     <main class="project-page">
         <section class="project-head">
-            <div>
-                <p class="project-eyebrow" id="projectTeam">Проект</p>
-                <h1 id="projectTitle">Доски проекта</h1>
-            </div>
+            <h1>Проекты</h1>
+
+            <button class="project-add-btn" id="openCreateProject" type="button">
+                <span>＋</span>
+                <span>Добавить</span>
+            </button>
         </section>
 
-        <section class="kanban-list" id="kanbanList"></section>
+        <section class="projects-grid" id="projectsGrid"></section>
     </main>
 
     <div class="toast" id="toast">
         <span class="toast-bell">✓</span>
         <span id="toastText">Готово</span>
+    </div>
+
+    <div class="project-modal-overlay" id="createProjectOverlay">
+        <form class="project-modal" id="createProjectForm">
+            <div class="project-modal-header">
+                <h2>Создание проекта</h2>
+
+                <button class="project-modal-close" id="createProjectClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <label class="project-field">
+                <span>Название проекта</span>
+                <input
+                        class="project-input"
+                        id="newProjectName"
+                        type="text"
+                        placeholder="Например, редизайн кабинета"
+                        autocomplete="off"
+                        required
+                >
+            </label>
+
+            <label class="project-field">
+                <span>Команда</span>
+                <select class="project-select" id="newProjectTeam" required></select>
+            </label>
+
+            <div class="project-modal-actions">
+                <button class="project-modal-action project-modal-cancel" id="createProjectCancel" type="button">
+                    Выйти
+                </button>
+
+                <button class="project-modal-action project-modal-save is-waiting-selection" id="createProjectSubmit" type="submit" disabled>
+                    Создать проект
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="project-modal-overlay" id="createBoardOverlay">
+        <form class="project-modal project-board-modal" id="createBoardForm">
+            <div class="project-modal-header">
+                <h2 id="createBoardTitle">Создание доски</h2>
+
+                <button class="project-modal-close" id="createBoardClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <label class="project-field">
+                <span>Название доски</span>
+                <input
+                        class="project-input"
+                        id="newBoardName"
+                        type="text"
+                        placeholder="Например, основной канбан"
+                        autocomplete="off"
+                        required
+                >
+            </label>
+
+            <div class="project-modal-actions">
+                <button class="project-modal-action project-modal-cancel" id="createBoardCancel" type="button">
+                    Выйти
+                </button>
+
+                <button class="project-modal-action project-modal-save is-waiting-selection" id="createBoardSubmit" type="submit" disabled>
+                    Создать доску
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --bg: #1f1f1f;
     --panel: #282828;
     --panel-line: #3a3a3a;
@@ -28,7 +28,9 @@ body {
     font-family: var(--sans);
 }
 
-button {
+button,
+input,
+select {
     font: inherit;
 }
 
@@ -58,6 +60,9 @@ button {
 }
 
 .brand {
+    text-decoration: none;
+    display: block;
+
     font-family: var(--serif);
     font-size: clamp(72px, 7vw, 96px);
     line-height: 1;
@@ -133,17 +138,9 @@ button {
     margin-bottom: 38px;
 
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 24px;
-}
-
-.project-eyebrow {
-    margin: 0 0 12px;
-    color: var(--orange);
-    font-family: var(--label);
-    font-size: 18px;
-    font-weight: 700;
 }
 
 .project-head h1 {
@@ -156,57 +153,105 @@ button {
     line-height: 1;
 }
 
-/* KANBAN LIST */
+.project-add-btn,
+.project-add-board {
+    border: 0;
+    background: transparent;
+    color: white;
 
-.kanban-list {
-    display: grid;
-    gap: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-weight: 500;
+
+    transition: color 0.2s ease;
 }
 
-.kanban-card {
-    min-height: 150px;
+.project-add-btn {
+    font-size: 25px;
+}
 
-    padding: 28px 32px;
-    border: 1px solid var(--panel-line);
+.project-add-btn:hover,
+.project-add-btn:focus-visible,
+.project-add-board:hover,
+.project-add-board:focus-visible {
+    color: var(--orange);
+    outline: none;
+}
+
+/* PROJECT CARDS */
+
+.projects-grid {
+    display: grid;
+    gap: 34px;
+}
+
+.project-panel {
+    min-height: 300px;
+
+    padding: 24px 26px;
+    background: var(--panel);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+    border: 1px solid transparent;
     border-radius: 30px;
 
-    background: var(--panel);
-    color: white;
-    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 
-    display: grid;
-    grid-template-columns: 26px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 22px;
-
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
-
+    cursor: pointer;
     transition:
-            transform 0.2s ease,
             border-color 0.2s ease,
-            background 0.2s ease,
-            box-shadow 0.2s ease;
+            box-shadow 0.2s ease,
+            transform 0.2s ease;
 }
 
-.kanban-card:hover,
-.kanban-card:focus-visible {
-    outline: none;
-    transform: translateY(-3px);
-    border-color: var(--orange);
-    background: #303030;
+.project-panel:hover,
+.project-panel.is-selected {
+    border-color: rgba(244, 134, 77, 0.78);
     box-shadow: 0 22px 54px rgba(0, 0, 0, 0.34);
 }
 
-.kanban-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 9px;
-    background: var(--orange);
+.project-panel.is-selected {
+    transform: translateY(-2px);
 }
 
-.kanban-card-title {
+.project-panel-head {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+}
+
+.project-color-dot {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+}
+
+.project-title-block {
     min-width: 0;
-    margin: 0 0 10px;
+}
+
+.project-team-name {
+    margin: 0 0 8px;
+    color: var(--orange);
+    font-family: var(--label);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-card-name {
+    min-width: 0;
+    margin: 0;
 
     color: white;
     font-family: var(--label);
@@ -217,17 +262,109 @@ button {
     overflow-wrap: anywhere;
 }
 
-.kanban-card-meta {
+.project-board-count {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+
     color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     font-family: var(--label);
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.project-boards {
+    flex: 1;
+    min-height: 180px;
+
+    border: 1px solid white;
+    border-radius: 20px;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.project-add-board {
+    width: max-content;
+    margin-top: auto;
+    font-size: 22px;
+}
+
+.project-board-row {
+    min-height: 66px;
+
+    padding: 14px 20px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, 0.6fr) 32px;
+    align-items: center;
+    gap: 24px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+    color: white;
+    text-decoration: none;
+
+    transition:
+            background 0.2s ease,
+            color 0.2s ease;
+}
+
+.project-board-row:last-child {
+    border-bottom: 0;
+}
+
+.project-board-row:nth-child(even) {
+    background: #353535;
+}
+
+.project-board-row:hover,
+.project-board-row:focus-visible {
+    outline: none;
+    background: rgba(244, 134, 77, 0.18);
+}
+
+.project-board-name,
+.project-board-meta {
+    min-width: 0;
+
+    font-family: var(--label);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.25;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-board-meta {
+    color: var(--muted);
     font-size: 18px;
 }
 
-.kanban-open {
+.project-board-open {
     color: var(--orange);
     font-family: var(--label);
-    font-size: 34px;
+    font-size: 28px;
     line-height: 1;
+    text-align: right;
+}
+
+.project-empty {
+    flex: 1;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--orange);
+    font-family: var(--serif);
+    font-size: 24px;
 }
 
 .project-state {
@@ -246,6 +383,209 @@ button {
     text-align: center;
     font-family: var(--label);
     font-size: 24px;
+}
+
+/* MODALS */
+
+body.modal-locked {
+    overflow: hidden;
+}
+
+.project-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+
+    display: grid;
+    place-items: center;
+
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.22s ease;
+}
+
+.project-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.project-modal {
+    width: min(720px, calc(100vw - 36px));
+    max-height: calc(100vh - 48px);
+
+    padding: 28px;
+    border: 0;
+    border-radius: 22px;
+
+    background: var(--panel);
+    color: white;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
+
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+
+    overflow-y: auto;
+    transform: translateY(18px) scale(0.97);
+    transition: transform 0.22s ease;
+}
+
+.project-modal-overlay.is-open .project-modal {
+    transform: translateY(0) scale(1);
+}
+
+.project-board-modal {
+    width: min(640px, calc(100vw - 36px));
+}
+
+.project-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.project-modal-header h2 {
+    margin: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1.15;
+}
+
+.project-modal-close {
+    position: relative;
+
+    width: 42px;
+    height: 42px;
+
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.project-modal-close span {
+    position: absolute;
+    left: 6px;
+    top: 19px;
+
+    width: 32px;
+    height: 4px;
+
+    border-radius: 999px;
+    background: white;
+}
+
+.project-modal-close span:first-child {
+    transform: rotate(45deg);
+}
+
+.project-modal-close span:last-child {
+    transform: rotate(-45deg);
+}
+
+.project-modal-close:hover span,
+.project-modal-close:focus-visible span {
+    background: var(--orange);
+}
+
+.project-field {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.project-field span {
+    color: white;
+    font-family: var(--label);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.project-input,
+.project-select {
+    width: 100%;
+    min-height: 48px;
+
+    padding: 0 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    outline: none;
+
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+
+    font-size: 16px;
+}
+
+.project-select {
+    cursor: pointer;
+}
+
+.project-select option {
+    background: #202020;
+    color: white;
+}
+
+.project-input:focus,
+.project-select:focus {
+    border-color: rgba(244, 134, 77, 0.8);
+    box-shadow: 0 0 0 2px rgba(244, 134, 77, 0.25);
+}
+
+.project-modal-actions {
+    margin-top: auto;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+}
+
+.project-modal-action {
+    min-height: 42px;
+
+    border: 0;
+    background: transparent;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.project-modal-cancel {
+    color: var(--muted);
+}
+
+.project-modal-cancel:hover,
+.project-modal-cancel:focus-visible {
+    color: white;
+    outline: none;
+}
+
+.project-modal-save {
+    color: var(--green);
+}
+
+.project-modal-save:hover,
+.project-modal-save:focus-visible {
+    color: #5fb978;
+    outline: none;
+}
+
+.project-modal-save.is-waiting-selection,
+.project-modal-save.is-busy {
+    color: #a77a68;
+    cursor: not-allowed;
 }
 
 /* TOAST */
@@ -281,6 +621,14 @@ button {
     transform: translateX(-50%) translateY(0);
 }
 
+.project-topbar .brand,
+.project-topbar .brand:visited,
+.project-topbar .brand:hover,
+.project-topbar .brand:focus {
+    text-decoration: none;
+    color: #000;
+}
+
 @media (max-width: 800px) {
     .project-topbar {
         height: 82px;
@@ -301,28 +649,72 @@ button {
         padding-top: 48px;
     }
 
+    .project-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
     .project-head h1 {
-        font-size: 46px;
+        font-size: 48px;
     }
 
-    .kanban-card {
-        min-height: 120px;
-        padding: 22px;
-        grid-template-columns: 20px minmax(0, 1fr) auto;
-        border-radius: 24px;
+    .project-panel {
+        min-height: 260px;
+        padding: 20px;
     }
 
-    .kanban-dot {
-        width: 18px;
-        height: 18px;
-        border-radius: 7px;
+    .project-panel-head {
+        grid-template-columns: 18px minmax(0, 1fr);
     }
 
-    .kanban-card-title {
-        font-size: 28px;
+    .project-board-count {
+        width: max-content;
+        grid-column: 2;
     }
 
-    .kanban-card-meta {
+    .project-card-name {
+        font-size: 30px;
+    }
+
+    .project-board-row {
+        grid-template-columns: minmax(0, 1fr) 32px;
+        gap: 8px 12px;
+    }
+
+    .project-board-meta {
+        grid-column: 1;
+        grid-row: 2;
         font-size: 15px;
+    }
+
+    .project-board-open {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
+    .project-add-board {
+        font-size: 19px;
+    }
+
+    .project-modal {
+        width: calc(100vw - 24px);
+        padding: 22px;
+    }
+
+    .project-modal-header h2 {
+        font-size: 24px;
+    }
+
+    .project-field span {
+        font-size: 20px;
+    }
+
+    .project-modal-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .project-modal-action {
+        width: 100%;
     }
 }
