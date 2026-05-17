@@ -10,11 +10,17 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       ASPNETCORE_URLS: ${ASPNETCORE_URLS}
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      JWT_SECRET: ${JWT_SECRET}
+      RabbitMq__Host: ${RabbitMq__Host}
+      RabbitMq__Port: ${RabbitMq__Port}
+      RabbitMq__Username: ${RabbitMq__Username}
+      RabbitMq__Password: ${RabbitMq__Password}
+      RabbitMq__Exchange: ${RabbitMq__Exchange}
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
     expose:
       - "8080"
     ports:
@@ -43,10 +49,14 @@ services:
       - "5672:5672"   # AMQP
       - "15672:15672" # Management UI
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RabbitMq__Username}
+      RABBITMQ_DEFAULT_PASS: ${RabbitMq__Password}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 5s
+      retries: 10
   
   nginx:
     image: nginx

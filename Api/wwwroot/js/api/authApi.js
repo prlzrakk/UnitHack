@@ -5,7 +5,7 @@ export async function login(email, password) {
         method: "POST",
         body: { email, password },
         skipAuth: true,
-        errorText: "Failed to create auth session",
+        errorText: "Не удалось войти",
     });
 
     saveAuthTokens(tokens);
@@ -16,7 +16,7 @@ export async function refreshTokens() {
     const tokens = await fetchJson("/api/Auth/tokens/refresh", {
         method: "POST",
         authToken: getStoredRefreshToken(),
-        errorText: "Failed to refresh tokens",
+        errorText: "Не удалось обновить сессию",
     });
 
     saveAuthTokens(tokens);

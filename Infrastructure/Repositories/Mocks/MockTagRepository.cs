@@ -26,7 +26,7 @@ public class MockTagRepository(MockDataStore store) : ITagRepository
     {
         var tag = store.Tags.FirstOrDefault(x => x.Id == tagId);
         if (tag is not null)
-            tag.Kanban ??= store.Kanbans.FirstOrDefault(x => x.Id == tag.KanbanId);
+            tag.Kanban ??= store.Kanbans.First(x => x.Id == tag.KanbanId);
 
         return Task.FromResult(tag);
     }

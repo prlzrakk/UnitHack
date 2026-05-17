@@ -40,8 +40,8 @@ public class MockNotificationRepository(MockDataStore store) : INotificationRepo
         CancellationToken cancellationToken)
     {
         var user = new User { Id = userId };
-        var task = store.Tasks.FirstOrDefault(x => x.Id == taskId);
-        var kanban = store.Kanbans.FirstOrDefault(x => x.Id == kanbanId);
+        var task = store.Tasks.First(x => x.Id == taskId);
+        var kanban = store.Kanbans.First(x => x.Id == kanbanId);
         var notification = new Notification
         {
             Id = Guid.NewGuid(),

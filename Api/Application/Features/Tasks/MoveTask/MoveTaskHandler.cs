@@ -44,7 +44,7 @@ public class MoveTaskHandler(
             toColumn.Tasks.Add(task);
 
         var responseTags = await taskTags.GetTagsByTaskIdAsync(task.Id, cancellationToken);
-        
+
         await outboxes.AddAsync(
             OutboxEventFactory.Create(EventType.TaskMoved, new
             {
@@ -57,7 +57,7 @@ public class MoveTaskHandler(
                 MovedBy = command.CurrentUserId,
                 OccurredAt = DateTime.UtcNow
             }), cancellationToken);
-        
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return ToResponse(task, responseTags);
     }

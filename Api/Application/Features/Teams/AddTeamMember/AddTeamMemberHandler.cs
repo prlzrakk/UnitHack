@@ -35,7 +35,7 @@ public class AddTeamMemberHandler(
 
         var member = await members.AddMemberAsync(team.Id, command.UserId, TeamRole.Member, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         await notificationSender.SendToUserAsync(
             command.UserId,
             new

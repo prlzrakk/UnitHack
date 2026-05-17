@@ -39,7 +39,7 @@ public class UpdateTaskHandler(
         task.UserId = command.UserId;
 
         var responseTags = await GetResponseTagsAsync(task.Id, kanban.Id, command.TagIds, cancellationToken);
-        
+
         await outboxes.AddAsync(OutboxEventFactory.Create(EventType.TaskUpdated, new
         {
             TaskId = task.Id,

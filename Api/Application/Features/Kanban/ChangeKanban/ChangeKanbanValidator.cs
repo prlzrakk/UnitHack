@@ -10,7 +10,7 @@ public class ChangeKanbanValidator : AbstractValidator<ChangeKanbanCommand>
 
         RuleFor(x => x.CurrentUserId)
             .NotEmpty();
-        
+
         RuleFor(x => x.Name)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()

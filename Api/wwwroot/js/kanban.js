@@ -21,6 +21,7 @@ import {
 import {
     createTask,
     deleteTask as deleteTaskRequest,
+    moveTask,
     updateTask,
 } from "./api/taskApi.js";
 
@@ -85,6 +86,8 @@ const createSubtaskAssignee = document.getElementById("createSubtaskAssignee");
 const createSubtaskAdd = document.getElementById("createSubtaskAdd");
 
 const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
+const TASK_DRAG_THRESHOLD = 6;
+const TASK_ORDER_STEP = 1000;
 const TASK_SUBTASKS_STORAGE_KEY = "boardifyTaskSubtasks";
 
 /* Task detail modal */
@@ -128,6 +131,12 @@ let selectedTags = [];
 let createSubtasks = [];
 let selectedTaskForDetail = null;
 let detailSubtasks = [];
+let draggedTaskId = null;
+let dragPlaceholder = null;
+let dragPreview = null;
+let pointerDragState = null;
+let suppressTaskClick = false;
+const movingTaskIds = new Set();
 
 /* =========================
    SIDEBAR
@@ -267,6 +276,7 @@ function renderKanban(board) {
     board.columns.forEach((column, columnIndex) => {
         const columnEl = document.createElement("section");
         columnEl.className = "kanban-column";
+        columnEl.dataset.columnId = column.id;
 
         columnEl.innerHTML = `
             <div class="column-head">
@@ -493,10 +503,17 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     ].filter(Boolean);
 
     const card = document.createElement("article");
-    card.className = "task-card";
+    card.className = "task-card is-draggable";
     card.style.setProperty("--task-color", color);
+    card.dataset.taskId = task.id;
+    card.dataset.columnId = column.id;
+    card.draggable = false;
     card.tabIndex = 0;
     card.setAttribute("role", "button");
+    if (movingTaskIds.has(task.id)) {
+        card.classList.add("is-moving");
+        card.setAttribute("aria-busy", "true");
+    }
     card.setAttribute("aria-label", `Открыть задачу ${task.title}`);
 
     card.innerHTML = `
@@ -599,7 +616,15 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         });
     });
 
+    card.addEventListener("pointerdown", (event) => {
+        startTaskPointerDrag(event, task, card);
+    });
+
     card.addEventListener("click", () => {
+        if (draggedTaskId || suppressTaskClick) {
+            return;
+        }
+
         openTaskDetailOverlay(task);
     });
 
@@ -613,6 +638,419 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     });
 
     return card;
+}
+
+function startTaskPointerDrag(event, task, card) {
+    const startedOnInteractiveElement =
+        event.target instanceof Element &&
+        event.target.closest("button, input, textarea, select, a");
+
+    if (event.button !== 0 || movingTaskIds.has(task.id) || startedOnInteractiveElement) {
+        return;
+    }
+
+    pointerDragState = {
+        active: false,
+        card,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        taskId: task.id,
+        offsetX: 0,
+        offsetY: 0,
+    };
+
+    document.addEventListener("pointermove", handleTaskPointerMove);
+    document.addEventListener("pointerup", handleTaskPointerUp);
+    document.addEventListener("pointercancel", cancelTaskPointerDrag);
+}
+
+function handleTaskPointerMove(event) {
+    if (!pointerDragState || pointerDragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const deltaX = event.clientX - pointerDragState.startX;
+    const deltaY = event.clientY - pointerDragState.startY;
+    const distance = Math.hypot(deltaX, deltaY);
+
+    if (!pointerDragState.active) {
+        if (distance < TASK_DRAG_THRESHOLD) {
+            return;
+        }
+
+        pointerDragState.active = true;
+        draggedTaskId = pointerDragState.taskId;
+        suppressTaskClick = true;
+        beginTaskPointerDrag(event);
+    }
+
+    event.preventDefault();
+    updateTaskDragPreview(event.clientX, event.clientY);
+    autoScrollKanbanBoard(event.clientX);
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const columnEl = getClosestKanbanColumn(target);
+
+    if (!columnEl || !state.board?.columns?.some((column) => column.id === columnEl.dataset.columnId)) {
+        clearTaskDropTarget();
+        return;
+    }
+
+    moveTaskPlaceholder(columnEl, event.clientY);
+}
+
+async function handleTaskPointerUp(event) {
+    if (!pointerDragState || pointerDragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const { active, taskId } = pointerDragState;
+    stopTaskPointerDragListeners();
+
+    if (!active) {
+        pointerDragState = null;
+        return;
+    }
+
+    event.preventDefault();
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const columnEl = dragPlaceholder?.parentElement ?? getClosestKanbanColumn(target);
+    const toColumnId = columnEl?.dataset.columnId ?? null;
+    const dropIndex = columnEl ? getTaskDropIndex(columnEl) : null;
+
+    pointerDragState = null;
+    cleanupTaskDrag();
+
+    if (!toColumnId || dropIndex === null) {
+        return;
+    }
+
+    await moveTaskToColumn(taskId, toColumnId, dropIndex);
+}
+
+function cancelTaskPointerDrag() {
+    stopTaskPointerDragListeners();
+    pointerDragState = null;
+    cleanupTaskDrag();
+}
+
+function stopTaskPointerDragListeners() {
+    document.removeEventListener("pointermove", handleTaskPointerMove);
+    document.removeEventListener("pointerup", handleTaskPointerUp);
+    document.removeEventListener("pointercancel", cancelTaskPointerDrag);
+}
+
+function beginTaskPointerDrag(event) {
+    if (!pointerDragState) {
+        return;
+    }
+
+    const { card } = pointerDragState;
+    const rect = card.getBoundingClientRect();
+
+    pointerDragState.offsetX = event.clientX - rect.left;
+    pointerDragState.offsetY = event.clientY - rect.top;
+
+    card.classList.add("is-dragging");
+
+    dragPreview = card.cloneNode(true);
+    dragPreview.classList.remove("is-dragging");
+    dragPreview.classList.add("task-drag-preview");
+    dragPreview.setAttribute("aria-hidden", "true");
+    dragPreview.style.width = `${rect.width}px`;
+
+    document.body.appendChild(dragPreview);
+    updateTaskDragPreview(event.clientX, event.clientY);
+}
+
+function updateTaskDragPreview(clientX, clientY) {
+    if (!dragPreview || !pointerDragState) {
+        return;
+    }
+
+    const left = clientX - pointerDragState.offsetX;
+    const top = clientY - pointerDragState.offsetY;
+    dragPreview.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+}
+
+function autoScrollKanbanBoard(clientX) {
+    const rect = kanbanBoard.getBoundingClientRect();
+    const scrollZone = 88;
+    const maxSpeed = 24;
+
+    if (clientX < rect.left + scrollZone) {
+        kanbanBoard.scrollLeft -= maxSpeed;
+        return;
+    }
+
+    if (clientX > rect.right - scrollZone) {
+        kanbanBoard.scrollLeft += maxSpeed;
+    }
+}
+
+function handleTaskDragOver(event) {
+    if (!draggedTaskId) {
+        return;
+    }
+
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl || !state.board?.columns?.some((column) => column.id === columnEl.dataset.columnId)) {
+        return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    moveTaskPlaceholder(columnEl, event.clientY);
+}
+
+function handleTaskDragLeave(event) {
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl) {
+        return;
+    }
+
+    if (event.relatedTarget instanceof Node && columnEl.contains(event.relatedTarget)) {
+        return;
+    }
+
+    columnEl.classList.remove("is-drag-over");
+}
+
+async function handleTaskDrop(event) {
+    if (!draggedTaskId) {
+        return;
+    }
+
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl) {
+        cleanupTaskDrag();
+        return;
+    }
+
+    event.preventDefault();
+
+    if (dragPlaceholder?.parentElement !== columnEl) {
+        moveTaskPlaceholder(columnEl, event.clientY);
+    }
+
+    const taskId = draggedTaskId;
+    const toColumnId = columnEl.dataset.columnId;
+    const dropIndex = getTaskDropIndex(columnEl);
+
+    cleanupTaskDrag();
+
+    await moveTaskToColumn(taskId, toColumnId, dropIndex);
+}
+
+function getClosestKanbanColumn(target) {
+    return target instanceof Element ? target.closest(".kanban-column") : null;
+}
+
+function moveTaskPlaceholder(columnEl, pointerY) {
+    const placeholder = getTaskPlaceholder();
+    const afterElement = getTaskDragAfterElement(columnEl, pointerY);
+    const addTaskButton = columnEl.querySelector(".add-task-btn");
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((item) => {
+        if (item !== columnEl) {
+            item.classList.remove("is-drag-over");
+        }
+    });
+
+    columnEl.classList.add("is-drag-over");
+
+    if (afterElement) {
+        columnEl.insertBefore(placeholder, afterElement);
+        return;
+    }
+
+    if (addTaskButton) {
+        columnEl.insertBefore(placeholder, addTaskButton);
+        return;
+    }
+
+    columnEl.appendChild(placeholder);
+}
+
+function getTaskPlaceholder() {
+    if (!dragPlaceholder) {
+        dragPlaceholder = document.createElement("div");
+        dragPlaceholder.className = "task-drop-placeholder";
+        dragPlaceholder.setAttribute("aria-hidden", "true");
+    }
+
+    return dragPlaceholder;
+}
+
+function getTaskDragAfterElement(columnEl, pointerY) {
+    const cards = [...columnEl.querySelectorAll(".task-card:not(.is-dragging)")];
+
+    return cards.reduce(
+        (closest, card) => {
+            const box = card.getBoundingClientRect();
+            const offset = pointerY - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: card };
+            }
+
+            return closest;
+        },
+        { offset: Number.NEGATIVE_INFINITY, element: null }
+    ).element;
+}
+
+function getTaskDropIndex(columnEl) {
+    let index = 0;
+
+    for (const child of columnEl.children) {
+        if (child === dragPlaceholder) {
+            return index;
+        }
+
+        if (child.classList?.contains("task-card") && !child.classList.contains("is-dragging")) {
+            index += 1;
+        }
+    }
+
+    return index;
+}
+
+async function moveTaskToColumn(taskId, toColumnId, dropIndex) {
+    const location = getTaskLocation(taskId);
+    const toColumn = state.board?.columns?.find((column) => column.id === toColumnId);
+
+    if (!location || !toColumn || dropIndex === null) {
+        return;
+    }
+
+    const { task, column: fromColumn, index: fromIndex } = location;
+    const targetTasks = toColumn.tasks.filter((item) => item.id !== taskId);
+    const normalizedDropIndex = Math.max(0, Math.min(dropIndex, targetTasks.length));
+
+    if (fromColumn.id === toColumn.id && normalizedDropIndex === fromIndex) {
+        return;
+    }
+
+    const previousColumns = createBoardSnapshot();
+    const nextOrder = getTaskOrderForDrop(targetTasks, normalizedDropIndex);
+
+    movingTaskIds.add(taskId);
+
+    fromColumn.tasks = fromColumn.tasks.filter((item) => item.id !== taskId);
+    task.columnId = toColumn.id;
+    task.order = nextOrder;
+
+    const nextTasks = toColumn.tasks.filter((item) => item.id !== taskId);
+    nextTasks.splice(normalizedDropIndex, 0, task);
+    toColumn.tasks = nextTasks;
+
+    renderSidebar();
+    renderKanban(state.board);
+
+    try {
+        await moveTask(task.id, toColumn.id, nextOrder);
+    } catch (error) {
+        restoreBoardSnapshot(previousColumns);
+        handleActionError(error, "Не удалось переместить задачу");
+    } finally {
+        movingTaskIds.delete(taskId);
+        renderSidebar();
+        renderKanban(state.board);
+    }
+}
+
+function getTaskLocation(taskId) {
+    for (const column of state.board?.columns ?? []) {
+        const index = column.tasks.findIndex((task) => task.id === taskId);
+
+        if (index !== -1) {
+            return {
+                column,
+                index,
+                task: column.tasks[index],
+            };
+        }
+    }
+
+    return null;
+}
+
+function getTaskOrderForDrop(tasks, index) {
+    const previousOrder = tasks[index - 1]?.order ?? null;
+    const nextOrder = tasks[index]?.order ?? null;
+
+    if (previousOrder === null && nextOrder === null) {
+        return TASK_ORDER_STEP;
+    }
+
+    if (previousOrder === null) {
+        return nextOrder > 1 ? Math.floor(nextOrder / 2) : nextOrder - TASK_ORDER_STEP;
+    }
+
+    if (nextOrder === null) {
+        return previousOrder + TASK_ORDER_STEP;
+    }
+
+    if (nextOrder - previousOrder > 1) {
+        return Math.floor((previousOrder + nextOrder) / 2);
+    }
+
+    return previousOrder + 1;
+}
+
+function createBoardSnapshot() {
+    return (state.board?.columns ?? []).map((column) => ({
+        column,
+        tasks: column.tasks.map((task) => ({
+            task,
+            columnId: task.columnId,
+            order: task.order,
+        })),
+    }));
+}
+
+function restoreBoardSnapshot(snapshot) {
+    snapshot.forEach(({ column, tasks }) => {
+        column.tasks = tasks.map(({ task, columnId, order }) => {
+            task.columnId = columnId;
+            task.order = order;
+            return task;
+        });
+    });
+}
+
+function cleanupTaskDrag() {
+    draggedTaskId = null;
+
+    dragPlaceholder?.remove();
+    dragPreview?.remove();
+    dragPreview = null;
+    window.setTimeout(() => {
+        suppressTaskClick = false;
+    }, 0);
+
+    document.querySelectorAll(".task-card.is-dragging").forEach((card) => {
+        card.classList.remove("is-dragging");
+    });
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((column) => {
+        column.classList.remove("is-drag-over");
+    });
+}
+
+function clearTaskDropTarget() {
+    dragPlaceholder?.remove();
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((column) => {
+        column.classList.remove("is-drag-over");
+    });
 }
 
 function openTaskDetailOverlay(task) {
@@ -1367,6 +1805,7 @@ function addSelectedAssignee(assignee) {
         return;
     }
 
+    // selectedAssignees.push(assignee);
     selectedAssignees.push(normalizeAssignee(assignee));
     renderSelectedAssignees();
     renderCreateSubtaskAssigneeOptions();
@@ -2190,6 +2629,10 @@ window.addEventListener("project:selected", async (event) => {
 });
 
 window.addEventListener("sidebar:loaded", renderSidebar);
+
+kanbanBoard.addEventListener("dragover", handleTaskDragOver);
+kanbanBoard.addEventListener("dragleave", handleTaskDragLeave);
+kanbanBoard.addEventListener("drop", handleTaskDrop);
 
 kanbanBoard.addEventListener(
     "wheel",

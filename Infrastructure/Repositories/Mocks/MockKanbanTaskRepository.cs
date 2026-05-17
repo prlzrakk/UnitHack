@@ -49,8 +49,8 @@ public class MockKanbanTaskRepository(MockDataStore store) : IKanbanTaskReposito
         var task = store.Tasks.FirstOrDefault(x => x.Id == taskId);
         if (task is not null)
         {
-            task.Kanban ??= store.Kanbans.FirstOrDefault(x => x.Id == task.KanbanId);
-            task.Column ??= store.KanbanColumns.FirstOrDefault(x => x.Id == task.ColumnId);
+            task.Kanban ??= store.Kanbans.First(x => x.Id == task.KanbanId);
+            task.Column ??= store.KanbanColumns.First(x => x.Id == task.ColumnId);
         }
 
         return Task.FromResult(task);

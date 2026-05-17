@@ -5,7 +5,7 @@ export async function createUser(email, password, name = null) {
         method: "POST",
         body: { email, password, name },
         skipAuth: true,
-        errorText: "Failed to create user",
+        errorText: "Не удалось зарегистрироваться",
     });
 }
 

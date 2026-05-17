@@ -125,7 +125,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         if (kanban is null)
             return;
 
-        kanban.Project ??= store.Projects.FirstOrDefault(x => x.Id == kanban.ProjectId);
+        kanban.Project ??= store.Projects.First(x => x.Id == kanban.ProjectId);
         kanban.Columns = store.KanbanColumns
             .Where(x => x.KanbanId == kanban.Id)
             .OrderBy(x => x.Order)
@@ -151,7 +151,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
         foreach (var task in kanban.Tasks)
         {
             task.Kanban = kanban;
-            task.Column ??= kanban.Columns.FirstOrDefault(x => x.Id == task.ColumnId);
+            task.Column ??= kanban.Columns.First(x => x.Id == task.ColumnId);
             task.TaskTags = store.TaskTags
                 .Where(x => x.TaskId == task.Id)
                 .ToList();
@@ -159,7 +159,7 @@ public class MockKanbanRepository(MockDataStore store) : IKanbanRepository
             foreach (var taskTag in task.TaskTags)
             {
                 taskTag.Task = task;
-                taskTag.Tag ??= store.Tags.FirstOrDefault(x => x.Id == taskTag.TagId)!;
+                taskTag.Tag ??= store.Tags.First(x => x.Id == taskTag.TagId);
             }
         }
     }
