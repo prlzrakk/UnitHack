@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Application.Features.Notifications.Common;
 using Infrastructure.Enums;
 using Infrastructure.RabbitMq;
 using Infrastructure.Repositories.Interfaces;
@@ -70,7 +71,29 @@ public class NotificationWorker(
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         await notifications.AddAsync(userId, taskId, kanbanId, name, message, cancellationToken);
+        var notificationSender  = scope.ServiceProvider.GetRequiredService<INotificationSender>();
+        var notification = await notifications.AddAsync(
+            userId,
+            taskId,
+            kanbanId,
+            name,
+            message,
+            cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await notificationSender.SendToUserAsync(
+            userId,
+            new
+            {
+                id = notification.Id,
+                userId = userId,
+                taskId = taskId,
+                kanbanId = kanbanId,
+                name = name,
+                message = message,
+                isRead = false,
+                createdAt = DateTime.UtcNow
+            },
+            cancellationToken);
     }
 
     private static (string name, string message) BuildNotificationMessage(string eventType)

@@ -26,6 +26,13 @@ import {
 
 import { getMe } from "./api/userApi.js";
 
+import {
+    getNotifications,
+    getUnreadNotifications,
+    readAllNotifications,
+    readNotification,
+} from "./api/notificationApi.js";
+
 /* =========================
    DOM
 ========================= */
@@ -35,6 +42,16 @@ const closeKanbanSidebarBtn = document.getElementById("closeKanbanSidebar");
 
 const kanbanTitle = document.getElementById("kanbanTitle");
 const kanbanBoard = document.getElementById("kanbanBoard");
+
+/* Notifications */
+const notificationOpen = document.getElementById("notificationOpen");
+const notificationOverlay = document.getElementById("notificationOverlay");
+const notificationPanel = notificationOverlay?.querySelector(".notification-panel");
+const notificationClose = document.getElementById("notificationClose");
+const notificationUnreadOnly = document.getElementById("notificationUnreadOnly");
+const notificationReadAll = document.getElementById("notificationReadAll");
+const notificationList = document.getElementById("notificationList");
+const notificationBadge = document.getElementById("notificationBadge");
 
 /* Reminder modal */
 const reminderModal = document.getElementById("reminderModal");
@@ -94,6 +111,9 @@ let state = {
     activeKanban: null,
     board: null,
     currentUser: null,
+    notifications: [],
+    notificationsUnreadOnly: notificationUnreadOnly?.checked ?? true,
+    notificationUnreadCount: 0,
 };
 
 let selectedReminder = null;
@@ -140,6 +160,9 @@ async function init() {
         state.activeProject = selectProjectFromUrl(workspace.projects);
 
         await loadActiveBoard(selectKanbanFromUrl(state.activeProject)?.id ?? null);
+        refreshUnreadNotificationsCount().catch((error) => {
+            console.warn("Не удалось загрузить счетчик уведомлений:", error);
+        });
     } catch (error) {
         console.error(error);
         renderError("Не удалось загрузить доску. Проверь авторизацию и доступ к API.");
@@ -1278,6 +1301,365 @@ function renderCreatedTags() {
 }
 
 /* =========================
+   NOTIFICATIONS
+========================= */
+
+async function openNotificationsOverlay() {
+    if (!notificationOverlay) {
+        return;
+    }
+
+    notificationOverlay.classList.add("is-open");
+    notificationOverlay.setAttribute("aria-hidden", "false");
+
+    setTimeout(() => {
+        notificationPanel?.focus();
+    }, 0);
+
+    await loadNotifications();
+}
+
+function closeNotificationsOverlay() {
+    if (!notificationOverlay || !isNotificationsOpen()) {
+        return;
+    }
+
+    notificationOverlay.classList.remove("is-open");
+    notificationOverlay.setAttribute("aria-hidden", "true");
+    notificationOpen?.focus();
+}
+
+function isNotificationsOpen() {
+    return notificationOverlay?.classList.contains("is-open") ?? false;
+}
+
+async function loadNotifications() {
+    if (!notificationList) {
+        return;
+    }
+
+    renderNotificationsLoading();
+
+    try {
+        const notifications = state.notificationsUnreadOnly
+            ? await getUnreadNotifications()
+            : await getNotifications();
+
+        state.notifications = normalizeNotifications(notifications);
+        syncUnreadCountFromLoadedNotifications();
+        updateNotificationButton();
+        renderNotifications();
+    } catch (error) {
+        console.error(error);
+        renderNotificationsError("Не удалось загрузить уведомления");
+    }
+}
+
+async function refreshUnreadNotificationsCount() {
+    const notifications = normalizeNotifications(await getUnreadNotifications());
+
+    state.notificationUnreadCount = notifications.filter((notification) => !notification.isRead).length;
+    updateNotificationButton();
+
+    if (isNotificationsOpen() && state.notificationsUnreadOnly) {
+        state.notifications = notifications;
+        renderNotifications();
+    }
+}
+
+function renderNotificationsLoading() {
+    if (!notificationList) {
+        return;
+    }
+
+    if (notificationReadAll) {
+        notificationReadAll.disabled = true;
+    }
+    notificationList.innerHTML = `<div class="notification-empty">Загрузка уведомлений...</div>`;
+}
+
+function renderNotificationsError(message) {
+    if (!notificationList) {
+        return;
+    }
+
+    if (notificationReadAll) {
+        notificationReadAll.disabled = state.notificationUnreadCount === 0;
+    }
+    notificationList.innerHTML = `
+        <div class="notification-error">
+            ${escapeHtml(message)}
+        </div>
+    `;
+}
+
+function renderNotifications() {
+    if (!notificationList) {
+        return;
+    }
+
+    if (notificationReadAll) {
+        notificationReadAll.disabled = state.notificationUnreadCount === 0;
+    }
+    notificationList.innerHTML = "";
+
+    if (state.notifications.length === 0) {
+        const emptyText = state.notificationsUnreadOnly
+            ? "Непрочитанных уведомлений нет"
+            : "Уведомлений пока нет";
+
+        notificationList.innerHTML = `
+            <div class="notification-empty">
+                ${escapeHtml(emptyText)}
+            </div>
+        `;
+        return;
+    }
+
+    state.notifications.forEach((notification) => {
+        const item = document.createElement("button");
+        item.className = `notification-item ${notification.isRead ? "is-read" : "is-unread"}`;
+        item.type = "button";
+        item.dataset.notificationId = notification.id;
+        item.setAttribute(
+            "aria-label",
+            notification.isRead
+                ? `Уведомление: ${notification.name}`
+                : `Непрочитанное уведомление: ${notification.name}`
+        );
+
+        item.innerHTML = `
+            <span class="notification-check" aria-hidden="true"></span>
+            <span class="notification-content">
+                <span class="notification-title-row">
+                    <strong class="notification-name">${escapeHtml(notification.name)}</strong>
+                    <time class="notification-time" datetime="${escapeAttr(notification.createdAt)}">
+                        ${escapeHtml(formatNotificationTime(notification.createdAt))}
+                    </time>
+                </span>
+                <span class="notification-message">${escapeHtml(notification.message)}</span>
+            </span>
+        `;
+
+        item.addEventListener("click", () => {
+            markNotificationAsRead(notification.id);
+        });
+
+        notificationList.appendChild(item);
+    });
+}
+
+async function markNotificationAsRead(notificationId) {
+    const notification = state.notifications.find((item) => item.id === notificationId);
+
+    if (!notification || notification.isRead) {
+        return;
+    }
+
+    try {
+        const readResponse = await readNotification(notificationId);
+        const updatedNotification = readResponse
+            ? normalizeNotification(readResponse)
+            : notification;
+        const nextNotification = {
+            ...notification,
+            ...updatedNotification,
+            id: notification.id,
+            isRead: true,
+        };
+
+        state.notifications = state.notifications
+            .map((item) => (item.id === notificationId ? nextNotification : item))
+            .filter((item) => !state.notificationsUnreadOnly || !item.isRead);
+
+        state.notificationUnreadCount = Math.max(0, state.notificationUnreadCount - 1);
+        updateNotificationButton();
+        renderNotifications();
+    } catch (error) {
+        handleActionError(error, "Не удалось прочитать уведомление");
+    }
+}
+
+async function markAllNotificationsAsRead() {
+    if (state.notificationUnreadCount === 0) {
+        return;
+    }
+
+    try {
+        await readAllNotifications();
+
+        state.notificationUnreadCount = 0;
+        state.notifications = state.notifications
+            .map((notification) => ({
+                ...notification,
+                isRead: true,
+            }))
+            .filter((notification) => !state.notificationsUnreadOnly || !notification.isRead);
+
+        updateNotificationButton();
+        renderNotifications();
+        showToast("Все уведомления прочитаны");
+    } catch (error) {
+        handleActionError(error, "Не удалось прочитать уведомления");
+    }
+}
+
+function handleRealtimeNotification(notification) {
+    const normalizedNotification = normalizeNotification(notification);
+
+    if (!normalizedNotification.id) {
+        showToast(normalizedNotification.message || "Новое уведомление");
+        return;
+    }
+
+    const alreadyExists = state.notifications.some(
+        (item) => item.id === normalizedNotification.id
+    );
+
+    if (!alreadyExists && !normalizedNotification.isRead) {
+        state.notificationUnreadCount += 1;
+    }
+
+    if (isNotificationsOpen()) {
+        const shouldShow =
+            !state.notificationsUnreadOnly || !normalizedNotification.isRead;
+
+        state.notifications = upsertNotification(
+            state.notifications,
+            normalizedNotification
+        );
+
+        if (!shouldShow) {
+            state.notifications = state.notifications.filter(
+                (item) => item.id !== normalizedNotification.id
+            );
+        }
+
+        renderNotifications();
+    }
+
+    updateNotificationButton();
+    showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
+}
+
+function handleNotificationFilterChange() {
+    state.notificationsUnreadOnly = notificationUnreadOnly?.checked ?? false;
+
+    if (isNotificationsOpen()) {
+        loadNotifications();
+    }
+}
+
+function syncUnreadCountFromLoadedNotifications() {
+    const unreadCount = state.notifications.filter((notification) => !notification.isRead).length;
+
+    if (state.notificationsUnreadOnly) {
+        state.notificationUnreadCount = unreadCount;
+        return;
+    }
+
+    state.notificationUnreadCount = unreadCount;
+}
+
+function updateNotificationButton() {
+    if (!notificationOpen || !notificationBadge) {
+        return;
+    }
+
+    const count = Math.max(0, Number(state.notificationUnreadCount) || 0);
+    const countText = count > 99 ? "99+" : String(count);
+
+    notificationOpen.classList.toggle("has-unread", count > 0);
+    notificationOpen.dataset.unreadCount = countText;
+    notificationOpen.setAttribute(
+        "aria-label",
+        count > 0 ? `Уведомления, непрочитанных: ${countText}` : "Уведомления"
+    );
+    notificationBadge.textContent = countText;
+}
+
+function upsertNotification(notifications, notification) {
+    const nextNotifications = notifications.filter((item) => item.id !== notification.id);
+    return [notification, ...nextNotifications];
+}
+
+function normalizeNotifications(notifications) {
+    if (!Array.isArray(notifications)) {
+        return [];
+    }
+
+    return notifications
+        .map(normalizeNotification)
+        .filter((notification) => notification.id || notification.name || notification.message);
+}
+
+function normalizeNotification(notification = {}) {
+    const source = notification && typeof notification === "object" ? notification : {};
+    const name = readNotificationValue(source, "name", "Name") || "Уведомление";
+    const message =
+        readNotificationValue(source, "message", "Message") ||
+        "Текст уведомления";
+
+    return {
+        id: readNotificationValue(source, "id", "Id") || "",
+        userId: readNotificationValue(source, "userId", "UserId") || "",
+        taskId: readNotificationValue(source, "taskId", "TaskId") || "",
+        kanbanId: readNotificationValue(source, "kanbanId", "KanbanId") || "",
+        name,
+        message,
+        isRead: Boolean(readNotificationValue(source, "isRead", "IsRead")),
+        createdAt:
+            readNotificationValue(source, "createdAt", "CreatedAt") ||
+            new Date().toISOString(),
+        readAt: readNotificationValue(source, "readAt", "ReadAt") || null,
+    };
+}
+
+function readNotificationValue(source, ...keys) {
+    for (const key of keys) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            return source[key];
+        }
+    }
+
+    return null;
+}
+
+function formatNotificationTime(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    const diffMs = Date.now() - date.getTime();
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+
+    if (diffMs < minuteMs) {
+        return "только что";
+    }
+
+    if (diffMs < hourMs) {
+        return `${Math.max(1, Math.floor(diffMs / minuteMs))} мин`;
+    }
+
+    if (diffMs < dayMs) {
+        return `${Math.floor(diffMs / hourMs)} ч`;
+    }
+
+    if (diffMs < 7 * dayMs) {
+        return `${Math.floor(diffMs / dayMs)} дн`;
+    }
+
+    return date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "short",
+    });
+}
+
+/* =========================
    REMINDER MODAL
 ========================= */
 
@@ -1320,6 +1702,17 @@ reminderYes?.addEventListener("click", () => {
 /* =========================
    EVENT LISTENERS
 ========================= */
+
+notificationOpen?.addEventListener("click", openNotificationsOverlay);
+notificationClose?.addEventListener("click", closeNotificationsOverlay);
+notificationReadAll?.addEventListener("click", markAllNotificationsAsRead);
+notificationUnreadOnly?.addEventListener("change", handleNotificationFilterChange);
+
+notificationOverlay?.addEventListener("click", (event) => {
+    if (event.target === notificationOverlay) {
+        closeNotificationsOverlay();
+    }
+});
 
 createTaskClose?.addEventListener("click", closeCreateTaskModal);
 createTaskCancel?.addEventListener("click", closeCreateTaskModal);
@@ -1393,6 +1786,7 @@ document.addEventListener("keydown", (event) => {
     }
 
     closeReminderModal();
+    closeNotificationsOverlay();
 
     if (createTaskOverlay?.classList.contains("is-open")) {
         closeCreateTaskModal();
@@ -1529,3 +1923,16 @@ function handleActionError(error, fallbackMessage) {
 ========================= */
 
 init();
+
+try {
+    if (typeof window.connectNotifications === "function") {
+        window.connectNotifications(function (notification) {
+            console.log("Получено уведомление:", notification);
+            handleRealtimeNotification(notification);
+        });
+    } else {
+        console.warn("connectNotifications не найден");
+    }
+} catch (error) {
+    console.error("Не удалось подключить уведомления:", error);
+}
