@@ -1212,8 +1212,8 @@ body.sidebar-closed .kanban-head {
     outline: none;
     border-radius: 999px;
 
-    background: #42609f;
-    color: white;
+    background: rgba(255, 255, 255, 0.065);
+    color: #f4f4f4;
 
     font-family: var(--sans);
     font-size: 14px;
@@ -1227,9 +1227,6 @@ body.sidebar-closed .kanban-head {
 }
 
 .create-date-time {
-    background: rgba(118, 118, 128, 0.12);
-    border-bottom: 1px solid #ef6a35;
-    color: #d8d8d8;
     color-scheme: dark;
 }
 
@@ -1341,7 +1338,7 @@ body.sidebar-closed .kanban-head {
     outline: none;
     border-radius: 999px;
 
-    background: rgba(118, 118, 128, 0.12);
+    background: rgba(255, 255, 255, 0.065);
     color: white;
 
     font-family: var(--sans);
@@ -1438,6 +1435,190 @@ body.sidebar-closed .kanban-head {
 
     .create-action {
         width: 100%;
+    }
+}
+
+.create-date-time::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.78;
+    filter: invert(1);
+}
+
+.deadline-row {
+    align-items: flex-start;
+}
+
+.deadline-fields {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(96px, 0.8fr);
+    gap: 10px;
+}
+
+.create-date-part,
+.create-time-part,
+.create-assignee-search {
+    width: 100%;
+    min-height: 38px;
+
+    padding: 8px 12px;
+    border: 0;
+    outline: none;
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.065);
+    color: #f4f4f4;
+
+    font-family: var(--sans);
+    font-size: 14px;
+    color-scheme: dark;
+}
+
+.create-date-part::-webkit-calendar-picker-indicator,
+.create-time-part::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.78;
+    filter: invert(1);
+}
+
+.create-select:focus,
+.create-date-time:focus,
+.create-date-part:focus,
+.create-time-part:focus,
+.create-assignee-search:focus {
+    box-shadow: 0 0 0 2px rgba(244, 134, 77, 0.5);
+}
+
+/* assignee picker */
+
+.assignee-row {
+    align-items: flex-start;
+}
+
+.assignee-picker {
+    position: relative;
+    display: grid;
+    gap: 10px;
+}
+
+.selected-assignees {
+    min-height: 34px;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.selected-assignee-chip {
+    min-height: 30px;
+
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.07);
+    color: #f4f4f4;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    font-family: var(--label);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.selected-assignee-dot,
+.assignee-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+.selected-assignee-remove {
+    border: 0;
+    background: transparent;
+    color: #a7a7a7;
+
+    cursor: pointer;
+
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+}
+
+.selected-assignee-remove:hover {
+    color: var(--orange);
+}
+
+.assignee-options {
+    max-height: 140px;
+    padding-right: 4px;
+
+    display: grid;
+    gap: 7px;
+
+    overflow-y: auto;
+}
+
+.assignee-option {
+    min-height: 36px;
+
+    padding: 0 12px;
+    border: 1px solid #3a3a3a;
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.045);
+    color: white;
+
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 14px;
+}
+
+.assignee-option:hover {
+    border-color: var(--orange);
+    background: rgba(244, 134, 77, 0.12);
+}
+
+.assignee-option.is-selected {
+    border-color: #62b47b;
+    background: rgba(64, 125, 82, 0.16);
+}
+
+.assignee-type {
+    color: #9f9f9f;
+    font-size: 11px;
+    text-transform: lowercase;
+}
+
+.empty-assignees {
+    color: #838383;
+    font-family: var(--label);
+    font-size: 13px;
+}
+
+/* make right block breathe better */
+
+.create-task-settings-block {
+    gap: 18px;
+}
+
+@media (max-width: 780px) {
+    .create-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .deadline-fields {
+        grid-template-columns: 1fr;
     }
 }
 /* MOBILE */

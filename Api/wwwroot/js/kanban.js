@@ -42,12 +42,14 @@ const newTaskTagInput = document.getElementById("newTaskTagInput");
 const addTaskTagBtn = document.getElementById("addTaskTagBtn");
 const createdTags = document.getElementById("createdTags");
 
-let selectedAssignee = null;
+const selectedAssigneesEl = document.getElementById("selectedAssignees");
+
+let selectedAssignees = [];
 let selectedTags = [];
-const newTaskUser = document.getElementById("newTaskUser");
 const newTaskPriority = document.getElementById("newTaskPriority");
 const newTaskComplexity = document.getElementById("newTaskComplexity");
-const newTaskDeadline = document.getElementById("newTaskDeadline");
+const newTaskDeadlineDate = document.getElementById("newTaskDeadlineDate");
+const newTaskDeadlineTime = document.getElementById("newTaskDeadlineTime");
 
 let selectedColumnForNewTask = null;
 let selectedReminder = null;
@@ -246,15 +248,18 @@ function renderKanban(project) {
 
 function openCreateTaskModal(columnIndex) {
     selectedColumnForNewTask = columnIndex;
-    selectedAssignee = null;
+    selectedAssignees = [];
     selectedTags = [];
 
     createTaskForm.reset();
 
-    newTaskDeadline.value = getDefaultDateTimeLocal();
+    const defaultDeadline = getDefaultDeadlineParts();
+    newTaskDeadlineDate.value = defaultDeadline.date;
+    newTaskDeadlineTime.value = defaultDeadline.time;
     newTaskAssigneeSearch.value = "";
 
     renderCreatedTags();
+    renderSelectedAssignees();
     renderAssigneeOptions("");
 
     createTaskOverlay.classList.add("is-open");
@@ -267,7 +272,7 @@ function openCreateTaskModal(columnIndex) {
 function closeCreateTaskModal() {
     createTaskOverlay.classList.remove("is-open");
     selectedColumnForNewTask = null;
-    selectedAssignee = null;
+    selectedAssignees = [];
     selectedTags = [];
 }
 
@@ -276,7 +281,10 @@ function createTaskFromForm() {
     const description = newTaskDescription.value.trim();
     const priority = newTaskPriority.value;
     const complexity = newTaskComplexity.value;
-    const deadline = newTaskDeadline.value;
+    const deadline = combineDeadline(
+        newTaskDeadlineDate.value,
+        newTaskDeadlineTime.value
+    );
 
     if (!title) {
         newTaskTitle.focus();
@@ -297,7 +305,9 @@ function createTaskFromForm() {
         time: complexity,
         deadline,
         createdAt: new Date().toISOString(),
-        users: selectedAssignee ? [{ name: selectedAssignee.name }] : [],
+        users: selectedAssignees
+            .filter((assignee) => assignee.type !== "none")
+            .map((assignee) => ({ name: assignee.name })),
         tags: [...selectedTags],
     };
 
@@ -309,63 +319,108 @@ function createTaskFromForm() {
     showToast(`Задача «${title}» создана`);
 }
 
-function getDefaultDateTimeLocal() {
+function getDefaultDeadlineParts() {
     const date = new Date();
-    date.setHours(date.getHours() + 2);
-    date.setMinutes(0, 0, 0);
+    date.setHours(date.getHours() + 2, 0, 0, 0);
 
-    return toDateTimeLocalValue(date);
+    return {
+        date: toDateInputValue(date),
+        time: toTimeInputValue(date),
+    };
 }
 
-function toDateTimeLocalValue(date) {
+function toDateInputValue(date) {
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - offset * 60 * 1000);
 
-    return localDate.toISOString().slice(0, 16);
+    return localDate.toISOString().slice(0, 10);
 }
-createTaskClose.addEventListener("click", closeCreateTaskModal);
-createTaskCancel.addEventListener("click", closeCreateTaskModal);
 
-createTaskOverlay.addEventListener("click", (event) => {
-    if (event.target === createTaskOverlay) {
-        closeCreateTaskModal();
+function toTimeInputValue(date) {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${hours}:${minutes}`;
+}
+
+function combineDeadline(dateValue, timeValue) {
+    if (!dateValue) {
+        return "";
     }
-});
 
-createTaskForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    createTaskFromForm();
-});
+    return `${dateValue}T${timeValue || "12:00"}`;
+}
 
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && createTaskOverlay.classList.contains("is-open")) {
-        closeCreateTaskModal();
+function getProjectMembers(project) {
+    if (Array.isArray(project.members) && project.members.length > 0) {
+        return project.members;
     }
-});
+
+    const names = new Set();
+
+    project.columns?.forEach((column) => {
+        column.tasks?.forEach((task) => {
+            getTaskUsers(task.users).forEach((user) => {
+                if (user.name) {
+                    names.add(user.name);
+                }
+            });
+        });
+    });
+
+    return Array.from(names).map((name) => ({
+        name,
+        color: "#b5b5b5",
+    }));
+}
+
 function getProjectAssignees() {
     const project = PROJECTS[activeProjectId];
-
     const assignees = [];
 
     if (Array.isArray(project.teams)) {
-        project.teams.forEach((team) => {
+        project.teams.forEach((team, index) => {
             assignees.push({
+                id: `team-${index}`,
                 name: team.name,
                 color: team.color || "#f4864d",
+                type: "team",
             });
         });
     }
 
-    assignees.unshift({
-        name: "Не назначен",
-        color: "#838383",
+    const seenUsers = new Set();
+
+    getProjectMembers(project).forEach((member) => {
+        const key = member.name.toLowerCase();
+
+        if (seenUsers.has(key)) {
+            return;
+        }
+
+        seenUsers.add(key);
+
+        assignees.push({
+            id: `user-${key}`,
+            name: member.name,
+            color: member.color || "#b5b5b5",
+            type: "user",
+        });
     });
 
-    return assignees;
+    assignees.unshift({
+        id: "none",
+        name: "Не назначен",
+        color: "#838383",
+        type: "none",
+    });
+
+    return removeDuplicateAssignees(assignees);
 }
 
 function renderAssigneeOptions(searchValue) {
     const query = searchValue.trim().toLowerCase();
+
     const assignees = getProjectAssignees().filter((item) =>
         item.name.toLowerCase().includes(query)
     );
@@ -374,76 +429,27 @@ function renderAssigneeOptions(searchValue) {
 
     assignees.forEach((assignee) => {
         const button = document.createElement("button");
-        button.className = `assignee-option ${
-            selectedAssignee?.name === assignee.name ? "is-selected" : ""
-        }`;
+        const isSelected = isAssigneeSelected(assignee);
+
+        button.className = `assignee-option ${isSelected ? "is-selected" : ""}`;
         button.type = "button";
 
         button.innerHTML = `
             <span>${escapeHtml(assignee.name)}</span>
+            <span class="assignee-type">
+                ${assignee.type === "team" ? "команда" : assignee.type === "user" ? "юзер" : ""}
+            </span>
             <span class="assignee-dot" style="background:${assignee.color}"></span>
         `;
 
         button.addEventListener("click", () => {
-            selectedAssignee = assignee.name === "Не назначен" ? null : assignee;
-            newTaskAssigneeSearch.value = assignee.name;
-            renderAssigneeOptions(assignee.name);
+            toggleAssignee(assignee);
         });
 
         assigneeOptions.appendChild(button);
     });
 }
-function getProjectAssignees() {
-    const project = PROJECTS[activeProjectId];
 
-    const assignees = [];
-
-    if (Array.isArray(project.teams)) {
-        project.teams.forEach((team) => {
-            assignees.push({
-                name: team.name,
-                color: team.color || "#f4864d",
-            });
-        });
-    }
-
-    assignees.unshift({
-        name: "Не назначен",
-        color: "#838383",
-    });
-
-    return assignees;
-}
-
-function renderAssigneeOptions(searchValue) {
-    const query = searchValue.trim().toLowerCase();
-    const assignees = getProjectAssignees().filter((item) =>
-        item.name.toLowerCase().includes(query)
-    );
-
-    assigneeOptions.innerHTML = "";
-
-    assignees.forEach((assignee) => {
-        const button = document.createElement("button");
-        button.className = `assignee-option ${
-            selectedAssignee?.name === assignee.name ? "is-selected" : ""
-        }`;
-        button.type = "button";
-
-        button.innerHTML = `
-            <span>${escapeHtml(assignee.name)}</span>
-            <span class="assignee-dot" style="background:${assignee.color}"></span>
-        `;
-
-        button.addEventListener("click", () => {
-            selectedAssignee = assignee.name === "Не назначен" ? null : assignee;
-            newTaskAssigneeSearch.value = assignee.name;
-            renderAssigneeOptions(assignee.name);
-        });
-
-        assigneeOptions.appendChild(button);
-    });
-}
 createTaskClose.addEventListener("click", closeCreateTaskModal);
 createTaskCancel.addEventListener("click", closeCreateTaskModal);
 
@@ -595,7 +601,82 @@ function deleteColumn(columnIndex) {
     renderPage();
     showToast(`Колонка «${column.title}» удалена`);
 }
+function isAssigneeSelected(assignee) {
+    return selectedAssignees.some(
+        (item) => item.type === assignee.type && String(item.id ?? item.name) === String(assignee.id ?? assignee.name)
+    );
+}
 
+function toggleAssignee(assignee) {
+    if (assignee.type === "none") {
+        selectedAssignees = [];
+        newTaskAssigneeSearch.value = "";
+        renderSelectedAssignees();
+        renderAssigneeOptions("");
+        return;
+    }
+
+    if (isAssigneeSelected(assignee)) {
+        selectedAssignees = selectedAssignees.filter(
+            (item) => !(item.type === assignee.type && String(item.id ?? item.name) === String(assignee.id ?? assignee.name))
+        );
+    } else {
+        selectedAssignees.push(assignee);
+    }
+
+    renderSelectedAssignees();
+    renderAssigneeOptions(newTaskAssigneeSearch.value);
+}
+
+function removeSelectedAssignee(assignee) {
+    selectedAssignees = selectedAssignees.filter(
+        (item) => !(item.type === assignee.type && String(item.id ?? item.name) === String(assignee.id ?? assignee.name))
+    );
+
+    renderSelectedAssignees();
+    renderAssigneeOptions(newTaskAssigneeSearch.value);
+}
+
+function renderSelectedAssignees() {
+    selectedAssigneesEl.innerHTML = "";
+
+    if (selectedAssignees.length === 0) {
+        selectedAssigneesEl.innerHTML = `<span class="empty-assignees">Исполнители не выбраны</span>`;
+        return;
+    }
+
+    selectedAssignees.forEach((assignee) => {
+        const chip = document.createElement("span");
+        chip.className = "selected-assignee-chip";
+
+        chip.innerHTML = `
+            <span class="selected-assignee-dot" style="background:${assignee.color}"></span>
+            <span>${escapeHtml(assignee.name)}</span>
+            <span class="assignee-type">${assignee.type === "team" ? "команда" : "юзер"}</span>
+            <button class="selected-assignee-remove" type="button" aria-label="Убрать">×</button>
+        `;
+
+        chip.querySelector(".selected-assignee-remove").addEventListener("click", () => {
+            removeSelectedAssignee(assignee);
+        });
+
+        selectedAssigneesEl.appendChild(chip);
+    });
+}
+function removeDuplicateAssignees(assignees) {
+    const seen = new Set();
+
+    return assignees.filter((item) => {
+        const key = `${item.type}-${item.id ?? item.name}`;
+
+        if (seen.has(key)) {
+            return false;
+        }
+
+        seen.add(key);
+        return true;
+    });
+}
 function deleteTask(columnIndex, taskIndex) {
     const project = PROJECTS[activeProjectId];
     const column = project.columns[columnIndex];

@@ -108,22 +108,23 @@
                 </section>
 
                 <section class="create-task-block create-task-settings-block">
-                    <label class="create-row">
-                        <span class="create-row-label">Исполнитель</span>
+                    <label class="create-row assignee-row">
+                        <span class="create-row-label">Исполнители</span>
 
                         <div class="assignee-picker">
+                            <div class="selected-assignees" id="selectedAssignees"></div>
+
                             <input
-                                    class="create-select-like"
+                                    class="create-assignee-search"
                                     id="newTaskAssigneeSearch"
                                     type="text"
-                                    placeholder="Поиск участника"
+                                    placeholder="Поиск участника или команды"
                                     autocomplete="off"
                             >
 
                             <div class="assignee-options" id="assigneeOptions"></div>
                         </div>
                     </label>
-
                     <label class="create-row">
                         <span class="create-row-label">Приоритет</span>
 
@@ -148,14 +149,21 @@
                         </select>
                     </label>
 
-                    <label class="create-row">
+                    <label class="create-row deadline-row">
                         <span class="create-row-label">Дедлайн</span>
 
-                        <input
-                                class="create-date-time"
-                                id="newTaskDeadline"
-                                type="datetime-local"
-                        >
+                        <div class="deadline-fields">
+                            <input
+                                    class="create-date-part"
+                                    id="newTaskDeadlineDate"
+                                    type="date"
+                            >
+                            <input
+                                    class="create-time-part"
+                                    id="newTaskDeadlineTime"
+                                    type="time"
+                            >
+                        </div>
                     </label>
                 </section>
             </div>

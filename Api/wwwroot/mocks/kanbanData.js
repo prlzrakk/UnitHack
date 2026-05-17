@@ -12,6 +12,12 @@
             { name: "пупуня", color: "#e6a0a6" },
         ],
 
+        members: [
+            { name: "Аня", color: "#ef6a35" },
+            { name: "Макс", color: "#62b47b" },
+            { name: "aboba", color: "#e6a0a6" },
+        ],
+
         columns: [
             {
                 title: "Todo",
@@ -114,6 +120,12 @@
             { name: "QA", color: "#e6a0a6" },
         ],
 
+        members: [
+            { name: "Аня", color: "#ef6a35" },
+            { name: "Макс", color: "#62b47b" },
+            { name: "aboba", color: "#e6a0a6" },
+        ],
+
         columns: [
             {
                 title: "Backlog",
@@ -176,6 +188,12 @@
         teams: [
             { name: "Design", color: "#ffe3d8" },
             { name: "QA", color: "#e6a0a6" },
+        ],
+
+        members: [
+            { name: "Аня", color: "#ef6a35" },
+            { name: "Макс", color: "#62b47b" },
+            { name: "aboba", color: "#e6a0a6" },
         ],
 
         columns: [
