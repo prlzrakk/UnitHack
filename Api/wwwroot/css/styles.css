@@ -316,7 +316,9 @@ button {
     border-radius: 22px;
 
     background: transparent;
-
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
     transition:
             transform 0.18s ease,
             border-color 0.18s ease,

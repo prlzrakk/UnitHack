@@ -25,8 +25,14 @@ let state = {
 };
 
 function row(task) {
-    const el = document.createElement("article");
+    const el = document.createElement("a");
+
+    const projectId = task.projectId || task.project?.id || "";
+    const kanbanId = task.kanbanId || task.kanban?.id || "";
+
     el.className = "task-row";
+    el.href = `./kanban.html?project=${encodeURIComponent(projectId)}&kanban=${encodeURIComponent(kanbanId)}`;
+
     el.innerHTML = `
     <div class="task-title">${escapeHtml(task.title)}</div>
     <div class="divider"></div>
@@ -34,6 +40,7 @@ function row(task) {
     <div class="divider"></div>
     <div class="task-meta"><span>Дедлайн через</span><span>${escapeHtml(formatTimeLeft(task.deadline))}</span></div>
   `;
+
     return el;
 }
 
@@ -87,9 +94,23 @@ async function init() {
     try {
         const workspace = await loadWorkspace();
         const activeProject = selectProjectFromUrl(workspace.projects);
-        const boards = await Promise.all(workspace.projects.map((project) => loadBoard(project).catch(() => null)));
-        const tasks = boards.filter(Boolean).flatMap(getBoardTasks);
+        const boards = await Promise.all(
+            workspace.projects.map((project) =>
+                loadBoard(project).catch(() => null)
+            )
+        );
 
+        const tasks = boards
+            .filter(Boolean)
+            .flatMap((board) =>
+                getBoardTasks(board).map((task) => ({
+                    ...task,
+                    projectId: board.projectId || board.project?.id,
+                    project: board.project,
+                    kanbanId: board.selectedKanban?.id,
+                    kanban: board.selectedKanban,
+                }))
+            );
         state = {
             workspace,
             activeProjectId: activeProject?.id ?? null,
