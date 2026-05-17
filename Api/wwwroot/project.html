@@ -101,7 +101,7 @@
     <div class="project-modal-overlay" id="createBoardOverlay">
         <form class="project-modal project-board-modal" id="createBoardForm">
             <div class="project-modal-header">
-                <h2 id="createBoardTitle">Создание доски</h2>
+                <h2 id="createBoardTitle">Создание канбана</h2>
 
                 <button class="project-modal-close" id="createBoardClose" type="button" aria-label="Закрыть">
                     <span></span>
@@ -110,7 +110,7 @@
             </div>
 
             <label class="project-field">
-                <span>Название доски</span>
+                <span>Название канбана</span>
                 <input
                         class="project-input"
                         id="newBoardName"
@@ -127,7 +127,7 @@
                 </button>
 
                 <button class="project-modal-action project-modal-save is-waiting-selection" id="createBoardSubmit" type="submit" disabled>
-                    Создать доску
+                    Создать канбан
                 </button>
             </div>
         </form>
@@ -135,6 +135,8 @@
 </div>
 
 <script src="./js/sidebar.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script src="./js/api/notificationConnection.js"></script>
 <script type="module" src="./js/project.js"></script>
 </body>
 </html>

@@ -191,7 +191,7 @@ async function loadProject(team, project, index) {
         team,
         name: readText(project, "name", "Name") || "Проект",
         color: COLORS[index % COLORS.length],
-        meta: kanbans.length === 1 ? "1 доска" : `${kanbans.length} досок`,
+        meta: formatKanbanCount(kanbans.length),
         kanbans,
     };
 }
@@ -318,7 +318,7 @@ function renderSidebarTaskStats(taskStats) {
     }
 
     if (!taskStats) {
-        list.innerHTML = `<div class="sidebar-empty">Задачи загрузятся на доске</div>`;
+        list.innerHTML = `<div class="sidebar-empty">Задачи загрузятся на канбане</div>`;
         return;
     }
 
@@ -338,6 +338,21 @@ function renderSidebarTaskStats(taskStats) {
 
 function readId(record) {
     return readText(record, "id", "Id");
+}
+
+function formatKanbanCount(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+
+    if (mod10 === 1 && mod100 !== 11) {
+        return `${count} канбан`;
+    }
+
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+        return `${count} канбана`;
+    }
+
+    return `${count} канбанов`;
 }
 
 function readText(record, ...keys) {

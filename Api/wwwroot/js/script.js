@@ -23,6 +23,9 @@ let state = {
     activeProjectId: null,
     tasks: [],
 };
+const REALTIME_WORKSPACE_REFRESH_DELAY = 250;
+let realtimeWorkspaceRefreshTimer = null;
+let realtimeWorkspaceRefreshRequest = null;
 
 function row(task) {
     const el = document.createElement("article");
@@ -115,6 +118,83 @@ function renderSidebar() {
     renderSidebarNavigation(state.workspace, state.activeProjectId, getTaskStats(state.tasks));
 }
 
+function handleRealtimeNotification(notification = {}) {
+    const normalizedNotification = normalizeRealtimeNotification(notification);
+
+    if (!shouldRefreshWorkspaceForNotification(normalizedNotification)) {
+        return;
+    }
+
+    scheduleRealtimeWorkspaceRefresh();
+}
+
+function normalizeRealtimeNotification(notification = {}) {
+    const source = notification && typeof notification === "object" ? notification : {};
+
+    return {
+        teamId: readValue(source, "teamId", "TeamId") || "",
+        projectId: readValue(source, "projectId", "ProjectId") || "",
+        kanbanId: readValue(source, "kanbanId", "KanbanId") || "",
+        type: readValue(source, "type", "Type") || readValue(source, "eventType", "EventType") || "",
+        name: readValue(source, "name", "Name") || "",
+    };
+}
+
+function shouldRefreshWorkspaceForNotification(notification) {
+    return notification.type === "TeamMemberAdded" ||
+        notification.type === "ProjectCreated" ||
+        notification.type === "KanbanCreated" ||
+        notification.name === "Team Member Added" ||
+        Boolean(notification.teamId && (notification.projectId || notification.kanbanId));
+}
+
+function scheduleRealtimeWorkspaceRefresh() {
+    window.clearTimeout(realtimeWorkspaceRefreshTimer);
+    realtimeWorkspaceRefreshTimer = window.setTimeout(() => {
+        refreshWorkspaceFromRealtime().catch((error) => {
+            console.warn("Failed to refresh workspace from realtime notification:", error);
+        });
+    }, REALTIME_WORKSPACE_REFRESH_DELAY);
+}
+
+async function refreshWorkspaceFromRealtime() {
+    if (realtimeWorkspaceRefreshRequest) {
+        return realtimeWorkspaceRefreshRequest;
+    }
+
+    realtimeWorkspaceRefreshRequest = (async () => {
+        const workspace = await loadWorkspace();
+        const activeProject = selectProjectFromUrl(workspace.projects);
+        const boards = await Promise.all(workspace.projects.map((project) => loadBoard(project).catch(() => null)));
+        const tasks = boards.filter(Boolean).flatMap(getBoardTasks);
+
+        state = {
+            workspace,
+            activeProjectId: activeProject?.id ?? null,
+            tasks,
+        };
+
+        renderSidebar();
+        renderMatrix(tasks);
+    })().finally(() => {
+        realtimeWorkspaceRefreshRequest = null;
+    });
+
+    return realtimeWorkspaceRefreshRequest;
+}
+
+function readValue(source, camelKey, pascalKey) {
+    return source?.[camelKey] ?? source?.[pascalKey] ?? null;
+}
+
 window.addEventListener("sidebar:loaded", renderSidebar);
 
 init();
+
+try {
+    if (typeof window.connectNotifications === "function") {
+        window.connectNotifications(handleRealtimeNotification);
+    }
+} catch (error) {
+    console.error("Не удалось подключить уведомления:", error);
+}
