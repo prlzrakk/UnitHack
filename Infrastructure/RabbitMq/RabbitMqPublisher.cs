@@ -22,7 +22,7 @@ public class RabbitMqPublisher : IRabbitMqPublisher
             Password = _options.Password,
             Port = _options.Port,
         };
-        
+
         await using var connection = await factory.CreateConnectionAsync(cancellationToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
 
@@ -33,7 +33,7 @@ public class RabbitMqPublisher : IRabbitMqPublisher
             autoDelete: false,
             cancellationToken: cancellationToken
         );
-        
+
         var body = Encoding.UTF8.GetBytes(payload);
 
         await channel.BasicPublishAsync(

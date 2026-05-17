@@ -16,6 +16,6 @@ public class AutomationRule
     public string Action { get; set; } = null!;
 
     public bool IsEnabled { get; set; }
-    
+
     public DateTime CreatedAt { get; set; }
 }

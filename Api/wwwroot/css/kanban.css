@@ -889,6 +889,11 @@ body.sidebar-closed .kanban-head {
     scroll-snap-align: start;
 }
 
+.kanban-column.is-drag-over {
+    outline: 2px dashed rgba(244, 134, 77, 0.64);
+    outline-offset: -10px;
+}
+
 .column-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto auto;
@@ -970,6 +975,23 @@ body.sidebar-closed .kanban-head {
             box-shadow 0.18s ease;
 }
 
+.task-card[draggable="true"] {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.task-card.is-dragging {
+    opacity: 0.48;
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+.task-card.is-moving {
+    opacity: 0.68;
+    pointer-events: none;
+}
+
 .task-card:hover {
     transform: translateY(-2px);
     border-color: var(--task-color, var(--orange));
@@ -984,6 +1006,14 @@ body.sidebar-closed .kanban-head {
 .task-card:hover,
 .task-card:focus-within {
     z-index: 30;
+}
+
+.task-drop-placeholder {
+    width: 100%;
+    min-height: 84px;
+    border: 2px dashed rgba(244, 134, 77, 0.7);
+    border-radius: 12px;
+    background: rgba(244, 134, 77, 0.12);
 }
 
 .task-card::before {

@@ -5,7 +5,7 @@ namespace Infrastructure.Entities;
 public class OutboxEvent
 {
     public Guid Id { get; set; }
-    
+
     public EventType EventType { get; set; }
 
     public string Payload { get; set; } = null!;
@@ -19,5 +19,5 @@ public class OutboxEvent
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? PublishedAt { get; set; }
-    
+
 }

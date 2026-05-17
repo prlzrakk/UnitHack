@@ -34,7 +34,7 @@ public class MockKanbanColumnRepository(MockDataStore store) : IKanbanColumnRepo
         var column = store.KanbanColumns.FirstOrDefault(x => x.Id == columnId);
         if (column is not null)
         {
-            column.Kanban ??= store.Kanbans.FirstOrDefault(x => x.Id == column.KanbanId);
+            column.Kanban ??= store.Kanbans.First(x => x.Id == column.KanbanId);
             column.Tasks = store.Tasks
                 .Where(x => x.ColumnId == column.Id)
                 .OrderBy(x => x.Order)

@@ -141,7 +141,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<INotificationSender, NotificationSender>();
         builder.Services.AddHostedService<OutboxWorker>();
         builder.Services.AddHostedService<NotificationWorker>();
-        
+
         return builder;
     }
 

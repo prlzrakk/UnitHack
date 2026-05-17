@@ -62,7 +62,7 @@ public class MockDataStore
             User = user,
             Role = TeamRole.Admin
         };
-        
+
         var teamMember2 = new TeamMember
         {
             TeamId = teamId,

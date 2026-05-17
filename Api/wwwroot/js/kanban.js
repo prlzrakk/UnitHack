@@ -21,6 +21,7 @@ import {
 import {
     createTask,
     deleteTask as deleteTaskRequest,
+    moveTask,
     updateTask,
 } from "./api/taskApi.js";
 
@@ -81,6 +82,8 @@ const addTaskTagBtn = document.getElementById("addTaskTagBtn");
 const createdTags = document.getElementById("createdTags");
 
 const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
+const TASK_DRAG_THRESHOLD = 6;
+const TASK_ORDER_STEP = 1000;
 
 /* Task detail modal */
 const taskDetailOverlay = document.getElementById("taskDetailOverlay");
@@ -122,6 +125,11 @@ let selectedAssignees = [];
 let selectedTags = [];
 let selectedTaskForDetail = null;
 let detailSubtasks = [];
+let draggedTaskId = null;
+let dragPlaceholder = null;
+let pointerDragState = null;
+let suppressTaskClick = false;
+const movingTaskIds = new Set();
 
 /* =========================
    SIDEBAR
@@ -261,6 +269,7 @@ function renderKanban(board) {
     board.columns.forEach((column, columnIndex) => {
         const columnEl = document.createElement("section");
         columnEl.className = "kanban-column";
+        columnEl.dataset.columnId = column.id;
 
         columnEl.innerHTML = `
             <div class="column-head">
@@ -489,8 +498,15 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     const card = document.createElement("article");
     card.className = "task-card";
     card.style.setProperty("--task-color", color);
+    card.dataset.taskId = task.id;
+    card.dataset.columnId = column.id;
+    card.draggable = !movingTaskIds.has(task.id);
     card.tabIndex = 0;
     card.setAttribute("role", "button");
+    if (movingTaskIds.has(task.id)) {
+        card.classList.add("is-moving");
+        card.setAttribute("aria-busy", "true");
+    }
     card.setAttribute("aria-label", `Открыть задачу ${task.title}`);
 
     card.innerHTML = `
@@ -593,7 +609,21 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         });
     });
 
+    card.addEventListener("dragstart", (event) => {
+        startTaskDrag(event, task, card);
+    });
+
+    card.addEventListener("dragend", cleanupTaskDrag);
+
+    card.addEventListener("pointerdown", (event) => {
+        startTaskPointerDrag(event, task, card);
+    });
+
     card.addEventListener("click", () => {
+        if (draggedTaskId || suppressTaskClick) {
+            return;
+        }
+
         openTaskDetailOverlay(task);
     });
 
@@ -607,6 +637,370 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     });
 
     return card;
+}
+
+function startTaskDrag(event, task, card) {
+    const startedOnButton = event.target instanceof Element && event.target.closest("button");
+
+    if (movingTaskIds.has(task.id) || startedOnButton) {
+        event.preventDefault();
+        return;
+    }
+
+    draggedTaskId = task.id;
+    suppressTaskClick = true;
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", task.id);
+
+    requestAnimationFrame(() => {
+        card.classList.add("is-dragging");
+    });
+}
+
+function startTaskPointerDrag(event, task, card) {
+    const startedOnInteractiveElement =
+        event.target instanceof Element &&
+        event.target.closest("button, input, textarea, select, a");
+
+    if (event.button !== 0 || movingTaskIds.has(task.id) || startedOnInteractiveElement) {
+        return;
+    }
+
+    pointerDragState = {
+        active: false,
+        card,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        taskId: task.id,
+    };
+
+    document.addEventListener("pointermove", handleTaskPointerMove);
+    document.addEventListener("pointerup", handleTaskPointerUp);
+    document.addEventListener("pointercancel", cancelTaskPointerDrag);
+}
+
+function handleTaskPointerMove(event) {
+    if (!pointerDragState || pointerDragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const deltaX = event.clientX - pointerDragState.startX;
+    const deltaY = event.clientY - pointerDragState.startY;
+    const distance = Math.hypot(deltaX, deltaY);
+
+    if (!pointerDragState.active) {
+        if (distance < TASK_DRAG_THRESHOLD) {
+            return;
+        }
+
+        pointerDragState.active = true;
+        draggedTaskId = pointerDragState.taskId;
+        suppressTaskClick = true;
+        pointerDragState.card.classList.add("is-dragging");
+    }
+
+    event.preventDefault();
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const columnEl = getClosestKanbanColumn(target);
+
+    if (!columnEl || !state.board?.columns?.some((column) => column.id === columnEl.dataset.columnId)) {
+        return;
+    }
+
+    moveTaskPlaceholder(columnEl, event.clientY);
+}
+
+async function handleTaskPointerUp(event) {
+    if (!pointerDragState || pointerDragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const { active, taskId } = pointerDragState;
+    stopTaskPointerDragListeners();
+
+    if (!active) {
+        pointerDragState = null;
+        return;
+    }
+
+    event.preventDefault();
+
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const columnEl = dragPlaceholder?.parentElement ?? getClosestKanbanColumn(target);
+    const toColumnId = columnEl?.dataset.columnId ?? null;
+    const dropIndex = columnEl ? getTaskDropIndex(columnEl) : null;
+
+    pointerDragState = null;
+    cleanupTaskDrag();
+
+    if (!toColumnId || dropIndex === null) {
+        return;
+    }
+
+    await moveTaskToColumn(taskId, toColumnId, dropIndex);
+}
+
+function cancelTaskPointerDrag() {
+    stopTaskPointerDragListeners();
+    pointerDragState = null;
+    cleanupTaskDrag();
+}
+
+function stopTaskPointerDragListeners() {
+    document.removeEventListener("pointermove", handleTaskPointerMove);
+    document.removeEventListener("pointerup", handleTaskPointerUp);
+    document.removeEventListener("pointercancel", cancelTaskPointerDrag);
+}
+
+function handleTaskDragOver(event) {
+    if (!draggedTaskId) {
+        return;
+    }
+
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl || !state.board?.columns?.some((column) => column.id === columnEl.dataset.columnId)) {
+        return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    moveTaskPlaceholder(columnEl, event.clientY);
+}
+
+function handleTaskDragLeave(event) {
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl) {
+        return;
+    }
+
+    if (event.relatedTarget instanceof Node && columnEl.contains(event.relatedTarget)) {
+        return;
+    }
+
+    columnEl.classList.remove("is-drag-over");
+}
+
+async function handleTaskDrop(event) {
+    if (!draggedTaskId) {
+        return;
+    }
+
+    const columnEl = getClosestKanbanColumn(event.target);
+
+    if (!columnEl) {
+        cleanupTaskDrag();
+        return;
+    }
+
+    event.preventDefault();
+
+    if (dragPlaceholder?.parentElement !== columnEl) {
+        moveTaskPlaceholder(columnEl, event.clientY);
+    }
+
+    const taskId = draggedTaskId;
+    const toColumnId = columnEl.dataset.columnId;
+    const dropIndex = getTaskDropIndex(columnEl);
+
+    cleanupTaskDrag();
+
+    await moveTaskToColumn(taskId, toColumnId, dropIndex);
+}
+
+function getClosestKanbanColumn(target) {
+    return target instanceof Element ? target.closest(".kanban-column") : null;
+}
+
+function moveTaskPlaceholder(columnEl, pointerY) {
+    const placeholder = getTaskPlaceholder();
+    const afterElement = getTaskDragAfterElement(columnEl, pointerY);
+    const addTaskButton = columnEl.querySelector(".add-task-btn");
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((item) => {
+        if (item !== columnEl) {
+            item.classList.remove("is-drag-over");
+        }
+    });
+
+    columnEl.classList.add("is-drag-over");
+
+    if (afterElement) {
+        columnEl.insertBefore(placeholder, afterElement);
+        return;
+    }
+
+    columnEl.insertBefore(placeholder, addTaskButton);
+}
+
+function getTaskPlaceholder() {
+    if (!dragPlaceholder) {
+        dragPlaceholder = document.createElement("div");
+        dragPlaceholder.className = "task-drop-placeholder";
+        dragPlaceholder.setAttribute("aria-hidden", "true");
+    }
+
+    return dragPlaceholder;
+}
+
+function getTaskDragAfterElement(columnEl, pointerY) {
+    const cards = [...columnEl.querySelectorAll(".task-card:not(.is-dragging)")];
+
+    return cards.reduce(
+        (closest, card) => {
+            const box = card.getBoundingClientRect();
+            const offset = pointerY - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: card };
+            }
+
+            return closest;
+        },
+        { offset: Number.NEGATIVE_INFINITY, element: null }
+    ).element;
+}
+
+function getTaskDropIndex(columnEl) {
+    let index = 0;
+
+    for (const child of columnEl.children) {
+        if (child === dragPlaceholder) {
+            return index;
+        }
+
+        if (child.classList?.contains("task-card") && !child.classList.contains("is-dragging")) {
+            index += 1;
+        }
+    }
+
+    return index;
+}
+
+async function moveTaskToColumn(taskId, toColumnId, dropIndex) {
+    const location = getTaskLocation(taskId);
+    const toColumn = state.board?.columns?.find((column) => column.id === toColumnId);
+
+    if (!location || !toColumn || dropIndex === null) {
+        return;
+    }
+
+    const { task, column: fromColumn, index: fromIndex } = location;
+    const targetTasks = toColumn.tasks.filter((item) => item.id !== taskId);
+    const normalizedDropIndex = Math.max(0, Math.min(dropIndex, targetTasks.length));
+
+    if (fromColumn.id === toColumn.id && normalizedDropIndex === fromIndex) {
+        return;
+    }
+
+    const previousColumns = createBoardSnapshot();
+    const nextOrder = getTaskOrderForDrop(targetTasks, normalizedDropIndex);
+
+    movingTaskIds.add(taskId);
+
+    fromColumn.tasks = fromColumn.tasks.filter((item) => item.id !== taskId);
+    task.columnId = toColumn.id;
+    task.order = nextOrder;
+
+    const nextTasks = toColumn.tasks.filter((item) => item.id !== taskId);
+    nextTasks.splice(normalizedDropIndex, 0, task);
+    toColumn.tasks = nextTasks;
+
+    renderSidebar();
+    renderKanban(state.board);
+
+    try {
+        await moveTask(task.id, toColumn.id, nextOrder);
+    } catch (error) {
+        restoreBoardSnapshot(previousColumns);
+        handleActionError(error, "Не удалось переместить задачу");
+    } finally {
+        movingTaskIds.delete(taskId);
+        renderSidebar();
+        renderKanban(state.board);
+    }
+}
+
+function getTaskLocation(taskId) {
+    for (const column of state.board?.columns ?? []) {
+        const index = column.tasks.findIndex((task) => task.id === taskId);
+
+        if (index !== -1) {
+            return {
+                column,
+                index,
+                task: column.tasks[index],
+            };
+        }
+    }
+
+    return null;
+}
+
+function getTaskOrderForDrop(tasks, index) {
+    const previousOrder = tasks[index - 1]?.order ?? null;
+    const nextOrder = tasks[index]?.order ?? null;
+
+    if (previousOrder === null && nextOrder === null) {
+        return TASK_ORDER_STEP;
+    }
+
+    if (previousOrder === null) {
+        return nextOrder > 1 ? Math.floor(nextOrder / 2) : nextOrder - TASK_ORDER_STEP;
+    }
+
+    if (nextOrder === null) {
+        return previousOrder + TASK_ORDER_STEP;
+    }
+
+    if (nextOrder - previousOrder > 1) {
+        return Math.floor((previousOrder + nextOrder) / 2);
+    }
+
+    return previousOrder + 1;
+}
+
+function createBoardSnapshot() {
+    return (state.board?.columns ?? []).map((column) => ({
+        column,
+        tasks: column.tasks.map((task) => ({
+            task,
+            columnId: task.columnId,
+            order: task.order,
+        })),
+    }));
+}
+
+function restoreBoardSnapshot(snapshot) {
+    snapshot.forEach(({ column, tasks }) => {
+        column.tasks = tasks.map(({ task, columnId, order }) => {
+            task.columnId = columnId;
+            task.order = order;
+            return task;
+        });
+    });
+}
+
+function cleanupTaskDrag() {
+    draggedTaskId = null;
+
+    dragPlaceholder?.remove();
+    window.setTimeout(() => {
+        suppressTaskClick = false;
+    }, 0);
+
+    document.querySelectorAll(".task-card.is-dragging").forEach((card) => {
+        card.classList.remove("is-dragging");
+    });
+
+    document.querySelectorAll(".kanban-column.is-drag-over").forEach((column) => {
+        column.classList.remove("is-drag-over");
+    });
 }
 
 function openTaskDetailOverlay(task) {
@@ -1811,6 +2205,10 @@ window.addEventListener("project:selected", async (event) => {
 });
 
 window.addEventListener("sidebar:loaded", renderSidebar);
+
+kanbanBoard.addEventListener("dragover", handleTaskDragOver);
+kanbanBoard.addEventListener("dragleave", handleTaskDragLeave);
+kanbanBoard.addEventListener("drop", handleTaskDrop);
 
 kanbanBoard.addEventListener(
     "wheel",

@@ -71,7 +71,7 @@ public class NotificationWorker(
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         await notifications.AddAsync(userId, taskId, kanbanId, name, message, cancellationToken);
-        var notificationSender  = scope.ServiceProvider.GetRequiredService<INotificationSender>();
+        var notificationSender = scope.ServiceProvider.GetRequiredService<INotificationSender>();
         var notification = await notifications.AddAsync(
             userId,
             taskId,

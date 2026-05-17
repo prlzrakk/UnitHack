@@ -42,7 +42,7 @@ public class TeamsController(IMediator mediator) : ControllerBase
     {
         var userId = User.GetUserId();
         var result = await mediator.Send(new CreateTeamCommand(userId, req.Name), cancellationToken);
-        
+
         return Created($"api/teams/{result.Id}", result);
     }
 
@@ -68,7 +68,7 @@ public class TeamsController(IMediator mediator) : ControllerBase
 
         return NoContent();
     }
-    
+
     [HttpPatch("{teamId:guid}/members/{userId:guid}/role")]
     [Authorize(Policy = "RequireUserId")]
     public async Task<IActionResult> ChangeMemberRole(
