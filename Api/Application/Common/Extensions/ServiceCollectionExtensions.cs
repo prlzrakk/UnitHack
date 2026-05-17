@@ -9,6 +9,7 @@ using Infrastructure.Repositories;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
+using Infrastructure.Workers;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -126,7 +127,8 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ITeamRepository, TeamRepository>();
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWorkRepository>();
-
+        builder.Services.AddHostedService<OutboxWorker>();
+        
         return builder;
     }
 

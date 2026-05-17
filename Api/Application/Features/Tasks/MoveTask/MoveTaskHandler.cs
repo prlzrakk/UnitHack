@@ -1,7 +1,9 @@
+using System.Text.Json;
 using Api.Application.Common.Exceptions;
 using Api.Application.Features.Tags.Common;
 using Api.Application.Features.Tasks.Common;
 using Infrastructure.Entities;
+using Infrastructure.Enums;
 using Infrastructure.Repositories.Interfaces;
 using MediatR;
 
@@ -13,6 +15,7 @@ public class MoveTaskHandler(
     IKanbanTaskRepository tasks,
     ITaskTagRepository taskTags,
     ITeamMemberRepository members,
+    IOutboxRepository outboxes,
     IUnitOfWork unitOfWork) : IRequestHandler<MoveTaskCommand, TaskResponse>
 {
     public async Task<TaskResponse> Handle(MoveTaskCommand command, CancellationToken cancellationToken)
@@ -30,7 +33,7 @@ public class MoveTaskHandler(
         var teamId = kanban.Project.TeamId;
         if (!await members.IsMemberAsync(teamId, command.CurrentUserId, cancellationToken))
             throw new ForbiddenException("Only team member can move tasks");
-
+        var fromColumnId = task.ColumnId;
         task.Column?.Tasks.Remove(task);
         task.ColumnId = toColumn.Id;
         task.Column = toColumn;
@@ -40,6 +43,27 @@ public class MoveTaskHandler(
             toColumn.Tasks.Add(task);
 
         var responseTags = await taskTags.GetTagsByTaskIdAsync(task.Id, cancellationToken);
+
+        var outboxEvent = new OutboxEvent
+        {
+            Id = Guid.NewGuid(),
+            EventType = EventType.TaskMoved,
+            Payload = JsonSerializer.Serialize(new
+            {
+                TaskId = task.Id,
+                KanbanId = kanban.Id,
+                ToColumnId = toColumn.Id,
+                FromColumnId = fromColumnId,
+                Order = command.Order,
+                MovedBy = command.CurrentUserId,
+                OccuredAt = DateTime.UtcNow,
+            }),
+            Status = "Pending",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        await outboxes.AddAsync(outboxEvent, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return ToResponse(task, responseTags);
