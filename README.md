@@ -7,12 +7,6 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="http://51.250.102.19/index.html">
-    🌐 Перейти на сайт Boardify
-  </a>
-</p>
-
 ![Platform](https://img.shields.io/badge/platform-Web-blue)
 ![Language](https://img.shields.io/badge/language-C%23-purple)
 ![Backend](https://img.shields.io/badge/backend-ASP.NET%20Core-green)
