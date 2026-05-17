@@ -529,16 +529,70 @@ button {
     align-items: center;
     justify-content: space-between;
 
-    cursor: pointer;
     color: #f4f4f4;
 
     transition:
             color 0.2s ease,
             transform 0.2s ease;
 }
-.section-head:hover {
+
+button.section-head {
+    cursor: pointer;
+}
+
+button.section-head:hover {
     color: #f4864d;
     transform: translateX(var(--sidebar-hover-shift));
+}
+
+.section-head--split {
+    cursor: default;
+}
+
+.section-head-link {
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    transition:
+            color 0.2s ease,
+            transform 0.2s ease;
+}
+
+.section-head-link:hover,
+.section-head-link:focus-visible {
+    color: #f4864d;
+    outline: none;
+    transform: translateX(var(--sidebar-hover-shift));
+}
+
+.section-arrow {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    cursor: pointer;
+    transition:
+            color 0.2s ease,
+            transform 0.2s ease;
+}
+
+.section-arrow:hover,
+.section-arrow:focus-visible {
+    color: #f4864d;
+    outline: none;
+    transform: translateX(3px);
+}
+
+.section-arrow .chevron {
+    margin: -6px 0 0;
 }
 
 .chevron {
@@ -556,6 +610,10 @@ button {
 .sidebar-section.is-collapsed .chevron {
     transform: rotate(-45deg);
     margin-top: 8px;
+}
+
+.sidebar-section.is-collapsed .section-arrow .chevron {
+    margin-top: 6px;
 }
 
 /* Контент, который скрывается */

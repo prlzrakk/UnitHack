@@ -47,9 +47,17 @@ function initSidebar() {
     });
 
     document.querySelectorAll("[data-collapse]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+
             const section = button.closest(".sidebar-section");
-            section.classList.toggle("is-collapsed");
+
+            if (!section) {
+                return;
+            }
+
+            const isCollapsed = section.classList.toggle("is-collapsed");
+            button.setAttribute("aria-expanded", String(!isCollapsed));
         });
     });
 
