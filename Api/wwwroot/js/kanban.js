@@ -261,6 +261,7 @@ function renderEmpty(message) {
 function renderKanban(board) {
     kanbanTitle.textContent = board.title || "Kanban";
     kanbanBoard.innerHTML = "";
+    const canRenameColumns = isActiveProjectTeamAdmin();
 
     if (!board.id) {
         renderEmpty("У проекта пока нет досок");
@@ -325,12 +326,16 @@ function renderKanban(board) {
         const editColumnBtn = columnEl.querySelector(".column-edit-btn");
         const columnTitle = columnEl.querySelector("[data-column-title]");
 
+        if (!canRenameColumns) {
+            editColumnBtn?.remove();
+        }
+
         deleteColumnBtn.addEventListener("click", (event) => {
             event.stopPropagation();
             deleteColumn(column);
         });
 
-        editColumnBtn.addEventListener("click", (event) => {
+        editColumnBtn?.addEventListener("click", (event) => {
             event.stopPropagation();
             startEditColumnTitle(columnTitle, column);
         });
@@ -389,6 +394,11 @@ async function addColumnToBoard() {
 }
 
 function startEditColumnTitle(titleEl, column) {
+    if (!isActiveProjectTeamAdmin()) {
+        showToast("Переименовывать колонки может только админ команды");
+        return;
+    }
+
     if (!titleEl || !column) {
         return;
     }
@@ -2325,6 +2335,43 @@ function getTaskUsers(users) {
 
 function getCurrentUserId() {
     return state.currentUser?.id ?? state.currentUser?.Id ?? null;
+}
+
+function isActiveProjectTeamAdmin() {
+    const team = state.activeProject?.team ?? state.activeProject?.Team ?? null;
+
+    if (normalizeTeamRoleValue(team?.role ?? team?.Role) === "Admin") {
+        return true;
+    }
+
+    const currentUserId = getCurrentUserId();
+    const members = team?.members ?? team?.Members ?? [];
+    const currentMember = members.find((member) => {
+        const memberId =
+            member.userId ??
+            member.UserId ??
+            member.memberId ??
+            member.MemberId ??
+            member.id ??
+            member.Id ??
+            null;
+
+        return currentUserId && memberId && String(memberId) === String(currentUserId);
+    });
+
+    return normalizeTeamRoleValue(currentMember?.role ?? currentMember?.Role) === "Admin";
+}
+
+function normalizeTeamRoleValue(role) {
+    const normalized = String(role ?? "")
+        .trim()
+        .toLowerCase();
+
+    if (normalized === "admin" || normalized === "админ" || normalized === "администратор" || normalized === "0") {
+        return "Admin";
+    }
+
+    return "Member";
 }
 
 function getDefaultDeadline() {
