@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boardify — Профиль</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/user.css" />
+  <script type="module" src="./js/authGuard.js"></script>
+</head>
+<body class="user-body">
+<main class="user-page" aria-labelledby="userTitle">
+  <div class="user-orb" aria-hidden="true"></div>
+
+  <header class="user-header">
+    <a class="user-brand" id="userTitle" href="./index.html" aria-label="Boardify">Boardify</a>
+  </header>
+
+  <section class="user-card" aria-label="Профиль пользователя">
+    <div class="user-card-head">
+      <h1>Профиль</h1>
+      <a class="user-close" href="./index.html" aria-label="На главную">
+        <span></span>
+        <span></span>
+      </a>
+    </div>
+
+    <div class="user-form" aria-live="polite">
+      <label class="user-field">
+        <span class="sr-only">Email</span>
+        <svg class="user-field-icon" viewBox="0 0 40 32" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="35" height="25" rx="4" />
+          <path d="M5 7l15 11L35 7" />
+        </svg>
+        <input id="profileEmail" type="email" placeholder="Email" readonly>
+      </label>
+
+      <label class="user-field">
+        <span class="sr-only">Name</span>
+        <svg class="user-field-icon" viewBox="0 0 36 40" aria-hidden="true">
+          <circle cx="18" cy="10" r="7" />
+          <path d="M4 37c1-11 7-17 14-17s13 6 14 17" />
+        </svg>
+        <input id="profileName" type="text" placeholder="Name" readonly>
+      </label>
+
+      <label class="user-field user-id-field">
+        <span class="sr-only">ID</span>
+        <svg class="user-field-icon" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="16" />
+          <path d="M14 20h12M20 14v12" />
+        </svg>
+        <input id="profileId" type="text" placeholder="ID" readonly>
+      </label>
+
+      <button class="user-submit" id="logoutButton" type="button">Выйти</button>
+      <a class="user-link" href="./index.html">Вернуться на главную</a>
+    </div>
+  </section>
+
+  <p class="user-message" id="userMessage" role="status" aria-live="polite">Загружаем профиль...</p>
+</main>
+
+<script type="module" src="./js/user.js"></script>
+</body>
+</html>
