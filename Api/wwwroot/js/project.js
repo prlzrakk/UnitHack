@@ -26,6 +26,7 @@ const newBoardName = document.getElementById("newBoardName");
 const createBoardSubmit = document.getElementById("createBoardSubmit");
 
 const PROJECT_COLORS = ["#ef6a35", "#4668ad", "#ffe3d8", "#407d52", "#e6a0a6"];
+const REALTIME_PROJECT_REFRESH_DELAY = 250;
 
 let state = {
     workspace: {
@@ -35,6 +36,8 @@ let state = {
     selectedProjectId: getProjectFromUrl(),
     targetBoardProjectId: null,
 };
+let realtimeProjectRefreshTimer = null;
+let realtimeProjectRefreshRequest = null;
 
 async function init() {
     renderLoading();
@@ -81,12 +84,12 @@ function createProjectCard(project) {
 
     panel.innerHTML = `
         <div class="project-panel-head">
-            <span class="project-color-dot" style="background:${escapeHtml(project.color)}"></span>
-
-            <div class="project-title-block">
+            <div class="project-team-inline">
+                <span class="project-color-dot" style="background:${escapeHtml(project.color)}"></span>
                 <p class="project-team-name">${escapeHtml(project.team?.name || "Без команды")}</p>
-                <h2 class="project-card-name">${escapeHtml(project.name || "Проект")}</h2>
             </div>
+
+            <h2 class="project-card-name">${escapeHtml(project.name || "Проект")}</h2>
 
             <span class="project-board-count">${escapeHtml(formatBoardCount(project.kanbans?.length ?? 0))}</span>
         </div>
@@ -101,7 +104,7 @@ function createProjectCard(project) {
                 type="button"
         >
             <span>＋</span>
-            <span>Добавить доску</span>
+            <span>Добавить канбан</span>
         </button>
     `;
 
@@ -124,7 +127,7 @@ function renderBoardRows(project) {
     const kanbans = project.kanbans ?? [];
 
     if (kanbans.length === 0) {
-        return `<div class="project-empty">досок пока нет</div>`;
+        return `<div class="project-empty">канбанов пока нет</div>`;
     }
 
     return kanbans.map((kanban) => {
@@ -133,7 +136,7 @@ function renderBoardRows(project) {
         return `
             <a class="project-board-row" href="${href}">
                 <span class="project-board-name">${escapeHtml(kanban.name || "Kanban")}</span>
-                <span class="project-board-meta">Открыть доску проекта</span>
+                <span class="project-board-meta">Открыть канбан проекта</span>
                 <span class="project-board-open" aria-hidden="true">→</span>
             </a>
         `;
@@ -222,7 +225,7 @@ function openCreateBoardOverlay(projectId) {
     state.selectedProjectId = project.id;
 
     createBoardForm.reset();
-    createBoardTitle.textContent = `Создание доски: ${project.name}`;
+    createBoardTitle.textContent = `Создание канбана: ${project.name}`;
     updateCreateBoardSubmitState();
     syncSelectedProjectUrl();
     renderSidebar();
@@ -270,10 +273,10 @@ async function submitCreateBoard() {
         renderProjects();
         syncSelectedProjectUrl();
         scrollSelectedProjectIntoView();
-        showToast(`Доска «${kanban.name}» создана`);
+        showToast(`Канбан «${kanban.name}» создан`);
     } catch (error) {
         console.error(error);
-        showToast(getRequestErrorMessage(error, "Не удалось создать доску"));
+        showToast(getRequestErrorMessage(error, "Не удалось создать канбан"));
     } finally {
         setProjectSubmitBusy(createBoardSubmit, false);
     }
@@ -364,6 +367,79 @@ function renderSidebar() {
     );
 }
 
+function handleRealtimeNotification(notification = {}) {
+    const normalizedNotification = normalizeRealtimeNotification(notification);
+
+    if (!shouldRefreshProjectsForNotification(normalizedNotification)) {
+        return;
+    }
+
+    scheduleRealtimeProjectRefresh(normalizedNotification);
+    showToast(normalizedNotification.message || "Проекты обновлены");
+}
+
+function normalizeRealtimeNotification(notification = {}) {
+    const source = notification && typeof notification === "object" ? notification : {};
+
+    return {
+        teamId: readValue(source, "teamId", "TeamId") || "",
+        projectId: readValue(source, "projectId", "ProjectId") || "",
+        kanbanId: readValue(source, "kanbanId", "KanbanId") || "",
+        type: readValue(source, "type", "Type") || readValue(source, "eventType", "EventType") || "",
+        name: readValue(source, "name", "Name") || "",
+        message: readValue(source, "message", "Message") || "",
+    };
+}
+
+function shouldRefreshProjectsForNotification(notification) {
+    return notification.type === "TeamMemberAdded" ||
+        notification.type === "ProjectCreated" ||
+        notification.type === "KanbanCreated" ||
+        notification.name === "Team Member Added" ||
+        Boolean(notification.projectId && (notification.kanbanId || notification.teamId));
+}
+
+function scheduleRealtimeProjectRefresh(notification) {
+    window.clearTimeout(realtimeProjectRefreshTimer);
+    realtimeProjectRefreshTimer = window.setTimeout(() => {
+        refreshProjectsFromRealtime(notification).catch((error) => {
+            console.warn("Failed to refresh projects from realtime notification:", error);
+        });
+    }, REALTIME_PROJECT_REFRESH_DELAY);
+}
+
+async function refreshProjectsFromRealtime(notification = {}) {
+    if (realtimeProjectRefreshRequest) {
+        return realtimeProjectRefreshRequest;
+    }
+
+    realtimeProjectRefreshRequest = (async () => {
+        const previousSelectedProjectId = state.selectedProjectId;
+        const workspace = await loadWorkspace();
+        const previousSelectionStillExists =
+            previousSelectedProjectId &&
+            workspace.projects.some((project) => project.id === previousSelectedProjectId);
+        const preferredProject =
+            workspace.projects.find((project) => project.id === notification.projectId) ??
+            selectProjectFromUrl(workspace.projects) ??
+            workspace.projects[0] ??
+            null;
+
+        state.workspace = workspace;
+        state.selectedProjectId = previousSelectionStillExists
+            ? previousSelectedProjectId
+            : preferredProject?.id ?? null;
+
+        syncSelectedProjectUrl();
+        renderSidebar();
+        renderProjects();
+    })().finally(() => {
+        realtimeProjectRefreshRequest = null;
+    });
+
+    return realtimeProjectRefreshRequest;
+}
+
 function updateCreateProjectSubmitState() {
     const isReady = Boolean(newProjectName.value.trim() && newProjectTeam.value);
 
@@ -444,14 +520,14 @@ function formatBoardCount(count) {
     const mod100 = count % 100;
 
     if (mod10 === 1 && mod100 !== 11) {
-        return `${count} доска`;
+        return `${count} канбан`;
     }
 
     if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-        return `${count} доски`;
+        return `${count} канбана`;
     }
 
-    return `${count} досок`;
+    return `${count} канбанов`;
 }
 
 function cssEscape(value) {
@@ -516,3 +592,11 @@ document.addEventListener("keydown", (event) => {
 });
 
 init();
+
+try {
+    if (typeof window.connectNotifications === "function") {
+        window.connectNotifications(handleRealtimeNotification);
+    }
+} catch (error) {
+    console.error("Не удалось подключить уведомления:", error);
+}

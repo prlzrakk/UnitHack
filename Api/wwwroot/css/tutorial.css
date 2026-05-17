@@ -1,0 +1,206 @@
+:root {
+    --tutorial-bg: #1f1f1f;
+    --tutorial-panel: #282828;
+    --tutorial-line: #3a3a3a;
+    --tutorial-text: #f4f4f4;
+    --tutorial-muted: #a7a7a7;
+    --tutorial-orange: #f4864d;
+    --tutorial-green: #407d52;
+    --tutorial-serif: "Yeseva One", Georgia, serif;
+    --tutorial-sans: Inter, Arial, sans-serif;
+    --tutorial-label: Raleway, Inter, Arial, sans-serif;
+}
+
+body.tutorial-locked {
+    overflow: hidden;
+}
+
+.tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.64);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+.tutorial-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tutorial-card {
+    position: relative;
+    width: min(720px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    padding: 34px;
+    border: 1px solid rgba(244, 134, 77, 0.42);
+    border-radius: 24px;
+    background: linear-gradient(180deg, #2b2b2b 0%, var(--tutorial-panel) 100%);
+    color: var(--tutorial-text);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
+    display: grid;
+    gap: 22px;
+    overflow-y: auto;
+    transform: translateY(18px) scale(0.97);
+    transition: transform 0.22s ease;
+    text-align: left;
+}
+
+.tutorial-overlay.is-open .tutorial-card {
+    transform: translateY(0) scale(1);
+}
+
+.tutorial-close {
+    position: absolute;
+    right: 22px;
+    top: 20px;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.tutorial-close span {
+    position: absolute;
+    left: 6px;
+    top: 17px;
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: white;
+}
+
+.tutorial-close span:first-child {
+    transform: rotate(45deg);
+}
+
+.tutorial-close span:last-child {
+    transform: rotate(-45deg);
+}
+
+.tutorial-close:hover span,
+.tutorial-close:focus-visible span {
+    background: var(--tutorial-orange);
+}
+
+.tutorial-eyebrow {
+    margin: 0;
+    color: var(--tutorial-orange);
+    font-family: var(--tutorial-label);
+    font-size: 16px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.tutorial-card h2 {
+    margin: 0;
+    padding-right: 44px;
+    color: white;
+    font-family: var(--tutorial-label);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+    text-align: left;
+}
+
+.tutorial-steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+}
+
+.tutorial-steps li {
+    min-height: 58px;
+    padding: 14px 16px;
+    border: 1px solid var(--tutorial-line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    color: var(--tutorial-text);
+    font-family: var(--tutorial-label);
+    font-size: 17px;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.tutorial-step-index {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(244, 134, 77, 0.18);
+    color: var(--tutorial-orange);
+    display: grid;
+    place-items: center;
+    font-family: var(--tutorial-sans);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.tutorial-done {
+    width: max-content;
+    min-height: 44px;
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    color: var(--tutorial-green);
+    cursor: pointer;
+    font-family: var(--tutorial-label);
+    font-size: 21px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.tutorial-done:hover,
+.tutorial-done:focus-visible {
+    color: #5fb978;
+    outline: none;
+}
+
+@media (max-width: 700px) {
+    .tutorial-overlay {
+        padding: 14px;
+    }
+
+    .tutorial-card {
+        width: calc(100vw - 28px);
+        padding: 26px 20px;
+        gap: 18px;
+        text-align: left;
+    }
+
+    .tutorial-card h2 {
+        font-size: 28px;
+        padding-right: 38px;
+        text-align: left;
+    }
+
+    .tutorial-eyebrow {
+        text-align: left;
+    }
+
+    .tutorial-steps li {
+        grid-template-columns: 30px minmax(0, 1fr);
+        padding: 12px;
+        font-size: 15px;
+        align-items: center;
+        text-align: left;
+    }
+
+    .tutorial-done {
+        width: 100%;
+        margin-left: 0;
+        text-align: left;
+    }
+}

@@ -185,7 +185,7 @@ async function init() {
         });
     } catch (error) {
         console.error(error);
-        renderError("Не удалось загрузить доску. Проверь авторизацию и доступ к API.");
+        renderError("Не удалось загрузить канбан. Проверь авторизацию и доступ к API.");
     }
 }
 
@@ -244,7 +244,7 @@ function renderSidebar() {
 
 function renderLoading() {
     kanbanTitle.textContent = "Kanban";
-    kanbanBoard.innerHTML = `<div class="kanban-state">Загрузка доски...</div>`;
+    kanbanBoard.innerHTML = `<div class="kanban-state">Загрузка канбана...</div>`;
 }
 
 function renderError(message) {
@@ -275,7 +275,7 @@ function renderKanban(board) {
     const canRenameColumns = isActiveProjectTeamAdmin();
 
     if (!board.id) {
-        renderEmpty("У проекта пока нет досок");
+        renderEmpty("У проекта пока нет канбанов");
         return;
     }
 
@@ -370,7 +370,7 @@ function renderKanban(board) {
 
 async function addColumnToBoard() {
     if (!state.board?.id) {
-        showToast("Сначала выбери доску");
+        showToast("Сначала выбери канбан");
         return;
     }
 
@@ -1077,6 +1077,8 @@ function openTaskDetailOverlay(task) {
     detailTaskAssignee.textContent = getTaskAssigneeName(task);
     detailTaskPriority.value = normalizePriorityForSelect(task.priority);
     detailTaskComplexity.value = task.complexity || "";
+    syncKanbanSelect(detailTaskPriority);
+    syncKanbanSelect(detailTaskComplexity);
     detailTaskDeadline.value = toDateTimeLocalValueSafe(task.deadline);
 
     renderDetailSubtasks();
@@ -1088,7 +1090,35 @@ function openTaskDetailOverlay(task) {
         detailTaskTitle.focus();
     }, 0);
 }
+function syncKanbanSelect(input) {
+    if (!input) {
+        return;
+    }
 
+    const dropdown = document.querySelector(`[data-kanban-select="${input.id}"]`);
+
+    if (!dropdown) {
+        return;
+    }
+
+    const label = dropdown.querySelector("[data-kanban-select-label]");
+    const options = dropdown.querySelectorAll(".kanban-select-option");
+
+    let selectedOption = null;
+
+    options.forEach((option) => {
+        const isSelected = option.dataset.value === input.value;
+        option.classList.toggle("is-selected", isSelected);
+
+        if (isSelected) {
+            selectedOption = option;
+        }
+    });
+
+    if (label && selectedOption) {
+        label.textContent = selectedOption.textContent.trim();
+    }
+}
 function closeTaskDetailOverlay() {
     taskDetailOverlay.classList.remove("is-open");
     taskDetailOverlay.setAttribute("aria-hidden", "true");
@@ -1370,7 +1400,7 @@ async function createTaskFromForm() {
     }
 
     if (!state.board?.id) {
-        showToast("Доска не выбрана");
+        showToast("Канбан не выбран");
         return;
     }
 
@@ -2320,7 +2350,14 @@ function handleRealtimeNotification(notification) {
     const normalizedNotification = normalizeNotification(notification);
 
     if (!normalizedNotification.id) {
+        syncRealtimeStateForNotification(normalizedNotification);
         showToast(normalizedNotification.message || "Новое уведомление");
+        return;
+    }
+
+    if (!normalizedNotification.isPersisted) {
+        syncRealtimeStateForNotification(normalizedNotification);
+        showToast(normalizedNotification.message || normalizedNotification.name || "Новое уведомление");
         return;
     }
 
@@ -2373,7 +2410,10 @@ function shouldRefreshBoardForNotification(notification) {
 
 function shouldRefreshWorkspaceForNotification(notification) {
     return Boolean(notification.teamId) ||
+        Boolean(notification.projectId) ||
         notification.type === "TeamMemberAdded" ||
+        notification.type === "ProjectCreated" ||
+        notification.type === "KanbanCreated" ||
         notification.name === "Team Member Added";
 }
 
@@ -2443,6 +2483,15 @@ async function refreshWorkspaceFromRealtime() {
             state.activeKanban =
                 activeProject.kanbans?.find((kanban) => sameId(kanban.id, previousKanbanId)) ??
                 state.activeKanban;
+        }
+
+        const activeKanbanStillExists =
+            state.activeKanban?.id &&
+            activeProject?.kanbans?.some((kanban) => sameId(kanban.id, state.activeKanban.id));
+
+        if (activeProject && (!state.activeKanban?.id || !activeKanbanStillExists)) {
+            await loadActiveBoard(activeProject.kanbans?.[0]?.id ?? null);
+            return;
         }
 
         if (state.board) {
@@ -2519,12 +2568,14 @@ function normalizeNotification(notification = {}) {
         id: readNotificationValue(source, "id", "Id") || "",
         userId: readNotificationValue(source, "userId", "UserId") || "",
         teamId: readNotificationValue(source, "teamId", "TeamId") || "",
+        projectId: readNotificationValue(source, "projectId", "ProjectId") || "",
         taskId: readNotificationValue(source, "taskId", "TaskId") || "",
         kanbanId: readNotificationValue(source, "kanbanId", "KanbanId") || "",
         type: readNotificationValue(source, "type", "Type", "eventType", "EventType") || "",
         name,
         message,
         isRead: Boolean(readNotificationValue(source, "isRead", "IsRead")),
+        isPersisted: getNotificationPersistence(source),
         createdAt:
             readNotificationValue(source, "createdAt", "CreatedAt") ||
             new Date().toISOString(),
@@ -2540,6 +2591,19 @@ function readNotificationValue(source, ...keys) {
     }
 
     return null;
+}
+
+function getNotificationPersistence(source) {
+    const explicitValue = readNotificationValue(source, "isPersisted", "IsPersisted");
+
+    if (explicitValue !== null) {
+        return explicitValue === true || explicitValue === "true";
+    }
+
+    return Boolean(
+        readNotificationValue(source, "taskId", "TaskId") &&
+        readNotificationValue(source, "kanbanId", "KanbanId")
+    );
 }
 
 function formatNotificationTime(value) {
@@ -2696,16 +2760,16 @@ newTaskAssigneeSearch?.addEventListener("focus", () => {
 });
 
 document.addEventListener("click", (event) => {
-    if (!newTaskAssigneeSearch || !assigneeOptions) {
-        return;
-    }
-
     if (!event.target.closest(".assignee-picker")) {
         assigneeOptions.innerHTML = "";
     }
 
     if (!event.target.closest(".subtask-assignee-dropdown")) {
         closeSubtaskAssigneeDropdowns();
+    }
+
+    if (!event.target.closest(".kanban-select-dropdown")) {
+        closeKanbanSelects();
     }
 });
 
@@ -2904,7 +2968,7 @@ function handleActionError(error, fallbackMessage) {
 /* =========================
    START
 ========================= */
-
+initKanbanSelects();
 init();
 
 try {
@@ -2918,4 +2982,49 @@ try {
     }
 } catch (error) {
     console.error("Не удалось подключить уведомления:", error);
+}
+function initKanbanSelects() {
+    document.querySelectorAll("[data-kanban-select]").forEach((dropdown) => {
+        const inputId = dropdown.dataset.kanbanSelect;
+        const input = document.getElementById(inputId);
+        const toggle = dropdown.querySelector(".kanban-select-toggle");
+        const label = dropdown.querySelector("[data-kanban-select-label]");
+        const options = dropdown.querySelectorAll(".kanban-select-option");
+
+        toggle?.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            const shouldOpen = !dropdown.classList.contains("is-open");
+            closeKanbanSelects(dropdown);
+
+            dropdown.classList.toggle("is-open", shouldOpen);
+            toggle.setAttribute("aria-expanded", String(shouldOpen));
+        });
+
+        options.forEach((option) => {
+            option.addEventListener("click", (event) => {
+                event.stopPropagation();
+
+                input.value = option.dataset.value;
+                label.textContent = option.textContent.trim();
+
+                options.forEach((item) => {
+                    item.classList.toggle("is-selected", item === option);
+                });
+
+                closeKanbanSelects();
+            });
+        });
+    });
+}
+
+function closeKanbanSelects(exceptDropdown = null) {
+    document.querySelectorAll(".kanban-select-dropdown.is-open").forEach((dropdown) => {
+        if (dropdown === exceptDropdown) {
+            return;
+        }
+
+        dropdown.classList.remove("is-open");
+        dropdown.querySelector(".kanban-select-toggle")?.setAttribute("aria-expanded", "false");
+    });
 }

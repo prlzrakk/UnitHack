@@ -14,7 +14,7 @@ public class NotificationSender : INotificationSender
     public Task SendToUserAsync(Guid userId, object notification, CancellationToken cancellationToken = default)
     {
         return hub.Clients
-            .All
+            .User(userId.ToString())
             .SendAsync("notification.received", notification, cancellationToken);
     }
 }
