@@ -60,15 +60,9 @@ function renderMatrix(tasks) {
 }
 
 function emptyRow(text) {
-    const el = document.createElement("article");
-    el.className = "task-row";
-    el.innerHTML = `
-    <div class="task-title">${escapeHtml(text)}</div>
-    <div class="divider"></div>
-    <div class="task-meta"><span>приоритет</span><span>—</span></div>
-    <div class="divider"></div>
-    <div class="task-meta"><span>Дедлайн через</span><span>—</span></div>
-  `;
+    const el = document.createElement("p");
+    el.className = "empty-state";
+    el.textContent = text;
     return el;
 }
 

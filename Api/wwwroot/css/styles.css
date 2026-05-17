@@ -329,6 +329,22 @@ button {
     border-color: #ff9b68;
 }
 
+.empty-state {
+    width: 100%;
+    min-height: 178px;
+    margin: 0;
+
+    display: grid;
+    place-items: center;
+
+    color: rgba(255, 255, 255, 0.22);
+    font-family: var(--label);
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+}
+
 /* Название задачи */
 .task-title {
     min-width: 0;

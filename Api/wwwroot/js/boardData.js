@@ -300,7 +300,7 @@ function renderSidebarTeams(teams) {
     }
 
     list.innerHTML = teams.map((team) => `
-        <button class="team-card">
+        <button class="team-card" data-team="${escapeHtml(team.id)}">
             <span>${escapeHtml(team.name)}</span>
             <span class="team-dot" style="background:${escapeHtml(team.color)}"></span>
         </button>
