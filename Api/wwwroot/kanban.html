@@ -45,8 +45,15 @@
             <div class="kanban-head">
                 <h1 id="kanbanTitle">Kanban</h1>
 
-                <button class="notify-btn" aria-label="Уведомления">
+                <button
+                        class="notify-btn"
+                        id="notificationOpen"
+                        type="button"
+                        aria-label="Уведомления"
+                        data-unread-count="0"
+                >
                     <img src="components/images/hasNotifications.svg" alt="есть уведомления">
+                    <span class="notify-count" id="notificationBadge" aria-hidden="true">0</span>
                 </button>
             </div>
 
@@ -171,6 +178,47 @@
             </div>
         </form>
     </div>
+
+    <div class="notification-overlay" id="notificationOverlay" aria-hidden="true">
+        <section
+                class="notification-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="notificationTitle"
+                tabindex="-1"
+        >
+            <div class="notification-panel-head">
+                <h2 id="notificationTitle">Уведомления</h2>
+
+                <label class="notification-filter" for="notificationUnreadOnly">
+                    <span>Показать только непрочитанные</span>
+                    <input id="notificationUnreadOnly" type="checkbox" checked>
+                    <span class="notification-switch" aria-hidden="true"></span>
+                </label>
+
+                <button
+                        class="notification-close"
+                        id="notificationClose"
+                        type="button"
+                        aria-label="Закрыть уведомления"
+                >
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <div class="notification-line"></div>
+
+            <div class="notification-actions">
+                <button class="notification-read-all" id="notificationReadAll" type="button">
+                    Прочитать все
+                </button>
+            </div>
+
+            <div class="notification-list" id="notificationList" aria-live="polite"></div>
+        </section>
+    </div>
+
     <div class="reminder-modal" id="reminderModal">
         <div class="reminder-window">
             <button class="reminder-close" id="reminderClose" aria-label="Закрыть">
@@ -194,6 +242,8 @@
     </div>
 </div>
 <script src="./js/sidebar.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script src="./js/api/notificationConnection.js"></script>
 <script type="module" src="./js/kanban.js"></script>
 </body>
 </html>

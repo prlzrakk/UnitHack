@@ -1063,3 +1063,17 @@ function handleActionError(error, fallbackMessage) {
 ========================= */
 
 init();
+
+
+try {
+    if (typeof window.connectNotifications === "function") {
+        window.connectNotifications(function (notification) {
+            console.log("Получено уведомление:", notification);
+            showToast(notification.message || "Новое уведомление");
+        });
+    } else {
+        console.warn("connectNotifications не найден");
+    }
+} catch (error) {
+    console.error("Не удалось подключить уведомления:", error);
+}
