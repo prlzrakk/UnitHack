@@ -1,0 +1,938 @@
+﻿:root {
+    --bg: #1f1f1f;
+    --panel: #282828;
+    --panel-line: #3a3a3a;
+    --text: #f4f4f4;
+    --muted: #838383;
+
+    --orange: #f4864d;
+    --blue: #42609f;
+    --green: #407d52;
+    --peach: #ffe3d8;
+    --pink: #e3a5a8;
+
+    --serif: "Yeseva One", Georgia, serif;
+    --sans: Inter, Arial, sans-serif;
+    --label: Raleway, Inter, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.teams-app {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #252525 0%, #1f1f1f 58%, #191919 100%);
+    overflow-x: hidden;
+}
+
+/* TOPBAR */
+
+.teams-topbar {
+    height: 120px;
+    padding: 24px 36px;
+    background: var(--panel);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
+    border-bottom-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.brand {
+    font-family: var(--serif);
+    font-size: clamp(72px, 7vw, 96px);
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 22px var(--orange);
+    user-select: none;
+}
+
+.teams-menu-btn,
+.profile-btn,
+.home-link {
+    position: absolute;
+    top: 42px;
+
+    width: 38px;
+    height: 38px;
+
+    border: 0;
+    background: transparent;
+    color: var(--orange);
+    cursor: pointer;
+    z-index: 45;
+}
+
+.teams-menu-btn {
+    left: 36px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 0 6px;
+}
+
+.teams-menu-btn span {
+    width: 28px;
+    height: 4px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.home-link {
+    left: 82px;
+    text-decoration: none;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.profile-btn {
+    right: 36px;
+    padding: 3px;
+}
+
+.profile-btn svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* PAGE */
+
+.teams-page {
+    width: min(980px, calc(100vw - 64px));
+    margin: 0 auto;
+    padding: 82px 0 80px;
+}
+
+.teams-head {
+    margin-bottom: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.teams-head h1 {
+    margin: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.teams-add-btn {
+    border: 0;
+    background: transparent;
+    color: white;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 25px;
+}
+
+.teams-add-btn:hover {
+    color: var(--orange);
+}
+
+/* TEAM CARDS */
+
+.teams-grid {
+    display: grid;
+    gap: 34px;
+}
+
+.team-panel {
+    min-height: 420px;
+
+    padding: 24px 26px;
+    background: var(--panel);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+    border-radius: 30px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.team-panel-head {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+}
+
+.team-color-dot {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+}
+
+.team-name {
+    min-width: 0;
+    margin: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+
+    overflow-wrap: anywhere;
+}
+
+.team-icon-btn {
+    width: 30px;
+    height: 30px;
+
+    border: 0;
+    background: transparent;
+    color: white;
+
+    cursor: pointer;
+
+    display: grid;
+    place-items: center;
+
+    font-size: 22px;
+}
+
+.team-icon-btn:hover {
+    color: var(--orange);
+}
+
+.team-members {
+    flex: 1;
+    min-height: 280px;
+
+    border: 1px solid white;
+    border-radius: 20px;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.team-member-row {
+    min-height: 66px;
+
+    padding: 14px 20px;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 0.8fr) 34px;
+    align-items: center;
+    gap: 34px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.team-member-row:nth-child(even) {
+    background: #353535;
+}
+
+.team-member-name,
+.team-member-role {
+    min-width: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.25;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-delete-btn {
+    width: 28px;
+    height: 28px;
+
+    border: 0;
+    background: transparent;
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 22px;
+}
+
+.member-delete-btn:hover {
+    color: var(--orange);
+}
+
+.team-empty {
+    flex: 1;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--orange);
+    font-family: var(--serif);
+    font-size: 24px;
+}
+
+.team-add-member {
+    width: max-content;
+    margin-top: auto;
+
+    border: 0;
+    background: transparent;
+    color: white;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 25px;
+}
+
+.team-add-member:hover {
+    color: var(--orange);
+}
+
+/* MODALS */
+
+.team-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 170;
+
+    display: grid;
+    place-items: center;
+
+    padding: 24px;
+
+    background: rgba(31, 31, 31, 0.55);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.22s ease;
+}
+
+.team-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.team-modal {
+    width: min(1105px, calc(100vw - 48px));
+
+    padding: 40px;
+    border: 0;
+    border-radius: 20px;
+
+    background: var(--panel);
+    color: white;
+
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+
+    transform: translateY(18px) scale(0.97);
+    transition: transform 0.22s ease;
+}
+
+.team-modal-overlay.is-open .team-modal {
+    transform: translateY(0) scale(1);
+}
+
+.create-team-modal {
+    min-height: 560px;
+}
+
+.add-member-modal {
+    min-height: 420px;
+    background: #050505;
+}
+
+.team-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.team-modal-header h2 {
+    margin: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.modal-close-btn {
+    position: relative;
+
+    width: 42px;
+    height: 42px;
+
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.modal-close-btn span {
+    position: absolute;
+    left: 6px;
+    top: 19px;
+
+    width: 32px;
+    height: 4px;
+
+    border-radius: 999px;
+    background: white;
+}
+
+.modal-close-btn span:first-child {
+    transform: rotate(45deg);
+}
+
+.modal-close-btn span:last-child {
+    transform: rotate(-45deg);
+}
+
+.modal-close-btn:hover span {
+    background: var(--orange);
+}
+
+.team-field {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.team-field span {
+    color: white;
+    font-family: var(--label);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.team-input {
+    width: 100%;
+    min-height: 54px;
+
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    outline: none;
+
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+
+    font-size: 18px;
+}
+
+.team-input:focus {
+    border-color: rgba(244, 134, 77, 0.8);
+    box-shadow: 0 0 0 2px rgba(244, 134, 77, 0.25);
+}
+
+.team-color-input {
+    width: 82px;
+    height: 44px;
+
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.team-members-create {
+    display: grid;
+    gap: 18px;
+}
+
+.team-members-create-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.team-members-create-head h3 {
+    margin: 0;
+
+    color: white;
+    font-family: var(--label);
+    font-size: 32px;
+    font-weight: 500;
+}
+
+.small-pill-btn {
+    min-height: 44px;
+
+    padding: 0 28px;
+    border: 0;
+    border-radius: 999px;
+
+    background: #3b3b3b;
+    color: white;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 20px;
+}
+
+.small-pill-btn:hover {
+    background: rgba(244, 134, 77, 0.3);
+}
+
+.draft-members-box {
+    min-height: 180px;
+
+    padding: 20px;
+    border: 1px solid white;
+    border-radius: 20px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 10px;
+}
+
+.empty-team-text {
+    width: 100%;
+    align-self: center;
+
+    color: var(--orange);
+    text-align: center;
+    font-family: var(--serif);
+    font-size: 24px;
+}
+
+.draft-member-chip {
+    min-height: 36px;
+
+    padding: 0 12px;
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    font-family: var(--label);
+    font-size: 14px;
+}
+
+.draft-member-chip button {
+    border: 0;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.draft-member-chip button:hover {
+    color: var(--orange);
+}
+
+/* ADD MEMBER */
+
+.member-search {
+    min-height: 56px;
+
+    padding: 4px 16px;
+
+    border-radius: 28px;
+    background: #ece6f0;
+
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    align-items: center;
+    gap: 8px;
+}
+
+.member-search-icon {
+    color: #49454f;
+    font-size: 24px;
+}
+
+.member-search input {
+    border: 0;
+    outline: none;
+    background: transparent;
+
+    color: #262626;
+
+    font-family: Roboto, Inter, sans-serif;
+    font-size: 16px;
+}
+
+.member-search-results {
+    max-height: 152px;
+
+    display: grid;
+    gap: 8px;
+
+    overflow-y: auto;
+}
+
+.member-result {
+    min-height: 44px;
+
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+
+    background: #282828;
+    color: white;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.6fr);
+    align-items: center;
+    gap: 12px;
+
+    cursor: pointer;
+    text-align: left;
+}
+
+.member-result:hover,
+.member-result.is-selected {
+    border-color: var(--orange);
+    background: #353535;
+}
+
+.member-result span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-result-role {
+    color: #a7a7a7;
+    font-size: 14px;
+}
+
+.team-modal-actions {
+    margin-top: auto;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+}
+
+.modal-action {
+    min-height: 48px;
+
+    border: 0;
+    background: transparent;
+
+    cursor: pointer;
+
+    font-family: var(--label);
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.modal-cancel {
+    color: #838383;
+}
+
+.modal-cancel:hover {
+    color: white;
+}
+
+.modal-save {
+    color: var(--green);
+}
+
+.modal-save:hover {
+    color: #5fb978;
+}
+
+/* TOAST */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 46px;
+    z-index: 250;
+
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 10px;
+
+    background: white;
+    color: #111;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 14px;
+
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* MOBILE */
+
+@media (max-width: 800px) {
+    .teams-topbar {
+        height: 82px;
+    }
+
+    .brand {
+        font-size: 46px;
+    }
+
+    .teams-menu-btn,
+    .profile-btn,
+    .home-link {
+        top: 24px;
+    }
+
+    .teams-page {
+        width: calc(100vw - 32px);
+        padding-top: 48px;
+    }
+
+    .teams-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .teams-head h1 {
+        font-size: 48px;
+    }
+
+    .team-panel {
+        padding: 20px;
+    }
+
+    .team-panel-head {
+        grid-template-columns: 18px minmax(0, 1fr) auto auto;
+    }
+
+    .team-name {
+        font-size: 30px;
+    }
+
+    .team-member-row {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+    }
+
+    .team-member-role {
+        display: none;
+    }
+
+    .team-modal {
+        padding: 26px;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+    }
+
+    .team-modal-header h2 {
+        font-size: 28px;
+    }
+
+    .team-field span,
+    .team-members-create-head h3 {
+        font-size: 24px;
+    }
+
+    .team-modal-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .modal-action {
+        width: 100%;
+    }
+}
+
+/* MODAL FINAL SIZE + LOCK */
+
+body.modal-locked {
+    overflow: hidden;
+}
+
+.team-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+
+    display: grid;
+    place-items: center;
+
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(3px);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.22s ease;
+}
+
+.team-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* компактнее общая модалка */
+.team-modal {
+    width: min(780px, calc(100vw - 36px));
+    max-height: calc(100vh - 48px);
+
+    padding: 28px;
+    border-radius: 22px;
+
+    overflow-y: auto;
+
+    gap: 26px;
+
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.62);
+}
+
+/* создание/редактирование команды */
+.create-team-modal {
+    min-height: auto;
+}
+
+/* добавление участника еще меньше */
+.add-member-modal {
+    width: min(720px, calc(100vw - 36px));
+    min-height: auto;
+    background: #101010;
+}
+
+/* заголовки компактнее */
+.team-modal-header h2 {
+    font-size: 30px;
+    line-height: 1.15;
+}
+
+.team-field span {
+    font-size: 22px;
+}
+
+.team-input {
+    min-height: 46px;
+    font-size: 16px;
+}
+
+.team-members-create-head h3 {
+    font-size: 24px;
+}
+
+.small-pill-btn {
+    min-height: 38px;
+    padding: 0 22px;
+    font-size: 16px;
+}
+
+.draft-members-box {
+    min-height: 120px;
+    max-height: 178px;
+    overflow-y: auto;
+}
+
+.empty-team-text {
+    font-size: 20px;
+}
+
+.team-modal-actions {
+    gap: 14px;
+}
+
+.modal-action {
+    min-height: 42px;
+    font-size: 18px;
+}
+
+/* поиск участника компактнее */
+.member-search {
+    min-height: 48px;
+}
+
+.member-search-results {
+    max-height: 150px;
+}
+
+.member-result {
+    min-height: 40px;
+}
+
+/* чтобы экран за оверлеем не ловил клики */
+.team-modal-overlay.is-open ~ * {
+    pointer-events: none;
+}
+
+.team-modal-overlay.is-open,
+.team-modal-overlay.is-open * {
+    pointer-events: auto;
+}
+
+@media (max-width: 700px) {
+    .team-modal {
+        width: calc(100vw - 24px);
+        padding: 22px;
+    }
+
+    .team-modal-header h2 {
+        font-size: 24px;
+    }
+
+    .team-field span,
+    .team-members-create-head h3 {
+        font-size: 20px;
+    }
+}
