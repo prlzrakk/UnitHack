@@ -32,6 +32,8 @@ public class DeleteTaskHandler(
         {
             TaskId = task.Id,
             KanbanId = kanban.Id,
+            TaskName = task.Name,
+            UserId = task.UserId,
             DeletedBy = command.CurrentUserId,
             OccurredAt = DateTime.UtcNow
         }), cancellationToken);

@@ -120,7 +120,13 @@ async function loadNotifications() {
             ? await getUnreadNotifications()
             : await getNotifications();
 
-        state.notifications = normalizeNotifications(notifications);
+        state.notifications = mergeLocalNotifications(
+            normalizeNotifications(notifications),
+            getLocalNotifications()
+        );
+        if (state.notificationsUnreadOnly) {
+            state.notifications = state.notifications.filter((notification) => !notification.isRead);
+        }
         syncUnreadCountFromLoadedNotifications();
         updateNotificationButton();
         renderNotifications();
@@ -132,12 +138,16 @@ async function loadNotifications() {
 
 async function refreshUnreadNotificationsCount() {
     const notifications = normalizeNotifications(await getUnreadNotifications());
+    const localNotifications = getLocalNotifications();
+    const localUnreadCount = localNotifications.filter((notification) => !notification.isRead).length;
 
-    state.notificationUnreadCount = notifications.filter((notification) => !notification.isRead).length;
+    state.notificationUnreadCount =
+        notifications.filter((notification) => !notification.isRead).length + localUnreadCount;
     updateNotificationButton();
 
     if (isNotificationsOpen() && state.notificationsUnreadOnly) {
-        state.notifications = notifications;
+        state.notifications = mergeLocalNotifications(notifications, localNotifications)
+            .filter((notification) => !notification.isRead);
         renderNotifications();
     }
 }
@@ -234,6 +244,17 @@ async function markNotificationAsRead(notificationId) {
         return;
     }
 
+    if (!notification.isPersisted) {
+        state.notifications = state.notifications
+            .map((item) => (item.id === notificationId ? { ...item, isRead: true } : item))
+            .filter((item) => !state.notificationsUnreadOnly || !item.isRead);
+
+        state.notificationUnreadCount = Math.max(0, state.notificationUnreadCount - 1);
+        updateNotificationButton();
+        renderNotifications();
+        return;
+    }
+
     try {
         const readResponse = await readNotification(notificationId);
         const updatedNotification = readResponse
@@ -264,7 +285,13 @@ async function markAllNotificationsAsRead() {
     }
 
     try {
-        await readAllNotifications();
+        const hasPersistedUnread = state.notifications.some(
+            (notification) => notification.isPersisted && !notification.isRead
+        );
+
+        if (hasPersistedUnread) {
+            await readAllNotifications();
+        }
 
         state.notificationUnreadCount = 0;
         state.notifications = state.notifications
@@ -284,7 +311,7 @@ async function markAllNotificationsAsRead() {
 function handleRealtimeNotification(notification) {
     const normalizedNotification = normalizeNotification(notification);
 
-    if (!normalizedNotification.id || !normalizedNotification.isPersisted) {
+    if (!normalizedNotification.id) {
         return;
     }
 
@@ -296,14 +323,14 @@ function handleRealtimeNotification(notification) {
         state.notificationUnreadCount += 1;
     }
 
+    state.notifications = upsertNotification(
+        state.notifications,
+        normalizedNotification
+    );
+
     if (isNotificationsOpen()) {
         const shouldShow =
             !state.notificationsUnreadOnly || !normalizedNotification.isRead;
-
-        state.notifications = upsertNotification(
-            state.notifications,
-            normalizedNotification
-        );
 
         if (!shouldShow) {
             state.notifications = state.notifications.filter(
@@ -315,6 +342,19 @@ function handleRealtimeNotification(notification) {
     }
 
     updateNotificationButton();
+}
+
+function getLocalNotifications() {
+    return state.notifications.filter((notification) => !notification.isPersisted);
+}
+
+function mergeLocalNotifications(remoteNotifications, localNotifications) {
+    const localIds = new Set(localNotifications.map((notification) => notification.id));
+
+    return [
+        ...localNotifications,
+        ...remoteNotifications.filter((notification) => !localIds.has(notification.id)),
+    ];
 }
 
 function handleNotificationFilterChange() {

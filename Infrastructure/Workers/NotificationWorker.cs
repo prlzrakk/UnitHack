@@ -51,24 +51,20 @@ public class NotificationWorker(
 
     private async Task HandleMessageAsync(string eventType, string payload, CancellationToken cancellationToken)
     {
-        if (eventType == EventType.TaskDeleted.ToString())
-            return;
-
         if (eventType != EventType.TaskCreated.ToString()
             && eventType != EventType.TaskUpdated.ToString()
-            && eventType != EventType.TaskMoved.ToString())
+            && eventType != EventType.TaskMoved.ToString()
+            && eventType != EventType.TaskDeleted.ToString())
             return;
 
         using var scope = scopeFactory.CreateScope();
         using var document = JsonDocument.Parse(payload);
         var root = document.RootElement;
-        var userId = root.GetProperty("UserId").GetGuid();
         var taskId = root.GetProperty("TaskId").GetGuid();
         var kanbanId = root.GetProperty("KanbanId").GetGuid();
+        var userId = TryGetGuid(root, "UserId") ?? TryGetGuid(root, "DeletedBy") ?? Guid.Empty;
 
         var (name, message) = BuildNotificationMessage(eventType);
-        var notifications = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var notificationSender = scope.ServiceProvider.GetRequiredService<INotificationSender>();
         var recipientUserIds = await ResolveRecipientUserIdsAsync(
             scope.ServiceProvider,
@@ -76,6 +72,28 @@ public class NotificationWorker(
             userId,
             cancellationToken);
 
+        if (eventType == EventType.TaskDeleted.ToString())
+        {
+            await SendTransientNotificationsAsync(
+                notificationSender,
+                recipientUserIds,
+                taskId,
+                kanbanId,
+                eventType,
+                name,
+                message,
+                cancellationToken);
+            return;
+        }
+
+        if (userId == Guid.Empty)
+        {
+            logger.LogWarning("Notification event {EventType} has no recipient user id.", eventType);
+            return;
+        }
+
+        var notifications = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var createdNotifications = new List<(Guid UserId, Guid NotificationId, DateTime CreatedAt)>();
 
         foreach (var recipientUserId in recipientUserIds)
@@ -113,6 +131,37 @@ public class NotificationWorker(
         }
     }
 
+    private static async Task SendTransientNotificationsAsync(
+        INotificationSender notificationSender,
+        IReadOnlyCollection<Guid> recipientUserIds,
+        Guid taskId,
+        Guid kanbanId,
+        string eventType,
+        string name,
+        string message,
+        CancellationToken cancellationToken)
+    {
+        foreach (var recipientUserId in recipientUserIds)
+        {
+            await notificationSender.SendToUserAsync(
+                recipientUserId,
+                new
+                {
+                    id = Guid.NewGuid(),
+                    userId = recipientUserId,
+                    taskId = taskId,
+                    kanbanId = kanbanId,
+                    type = eventType,
+                    name = name,
+                    message = message,
+                    isRead = false,
+                    isPersisted = false,
+                    createdAt = DateTime.UtcNow
+                },
+                cancellationToken);
+        }
+    }
+
     private static async Task<IReadOnlyCollection<Guid>> ResolveRecipientUserIdsAsync(
         IServiceProvider serviceProvider,
         Guid kanbanId,
@@ -124,7 +173,7 @@ public class NotificationWorker(
 
         var kanban = await kanbans.GetByIdWithProjectAsync(kanbanId, cancellationToken);
         if (kanban?.Project is null)
-            return [fallbackUserId];
+            return fallbackUserId == Guid.Empty ? [] : [fallbackUserId];
 
         var teamMembers = await members.GetMembersByTeamIdAsync(kanban.Project.TeamId, cancellationToken);
         var recipientUserIds = teamMembers
@@ -134,7 +183,26 @@ public class NotificationWorker(
 
         return recipientUserIds.Length > 0
             ? recipientUserIds
-            : [fallbackUserId];
+            : fallbackUserId == Guid.Empty ? [] : [fallbackUserId];
+    }
+
+    private static Guid? TryGetGuid(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var property))
+            return null;
+
+        try
+        {
+            return property.GetGuid();
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private static (string name, string message) BuildNotificationMessage(string eventType)
@@ -144,6 +212,9 @@ public class NotificationWorker(
 
         if (eventType == EventType.TaskUpdated.ToString())
             return ("Task Updated", "Одно из ваших заданий было обновлено");
+
+        if (eventType == EventType.TaskDeleted.ToString())
+            return ("Task Deleted", "Задача была удалена");
 
         if (eventType == EventType.TaskMoved.ToString())
             return ("Task Moved", "Одно из ваших заданий было перенесено в другую колонку");

@@ -85,7 +85,7 @@ button {
   );
 }
 
-.auth-header {
+.auth-title {
   position: relative;
   z-index: 1;
   height: 215px;
@@ -93,11 +93,7 @@ button {
   justify-content: center;
   align-items: flex-start;
   padding-top: 43px;
-}
-
-.auth-brand {
   color: #000;
-  text-decoration: none;
   font-family: var(--serif);
   font-size: 128px;
   font-weight: 400;
@@ -307,12 +303,12 @@ button {
     top: -1010px;
   }
 
-  .auth-header {
+  .auth-title {
     height: 175px;
     padding-top: 42px;
   }
 
-  .auth-brand {
+  .auth-title {
     font-size: clamp(68px, 18vw, 94px);
   }
 
