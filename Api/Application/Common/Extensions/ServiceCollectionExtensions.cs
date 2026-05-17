@@ -1,13 +1,15 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using Client.Models.Configs;
 using FluentValidation;
 using Infrastructure.Extensions;
+using Infrastructure.RabbitMq;
 using Infrastructure.Repositories;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Security;
 using Infrastructure.Security.Interfaces;
+using Infrastructure.Workers;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -74,6 +76,15 @@ public static class ServiceCollectionExtensions
         return builder;
     }
 
+    public static WebApplicationBuilder AddRabbitMq(this WebApplicationBuilder builder)
+    {
+        builder.Services.Configure<RabbitMqOptions>(
+            builder.Configuration.GetSection("RabbitMq"));
+        builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+        builder.Services.AddSingleton<IRabbitMqConsumer, RabbitMqConsumer>();
+        return builder;
+    }
+
     public static WebApplicationBuilder AddSwaggerWithAuth(this WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
@@ -118,7 +129,10 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ITeamRepository, TeamRepository>();
         builder.Services.AddScoped<ITeamMemberRepository, TeamMemberRepository>();
         builder.Services.AddScoped<IUnitOfWork, UnitOfWorkRepository>();
-
+        builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
+        builder.Services.AddHostedService<OutboxWorker>();
+        builder.Services.AddHostedService<NotificationWorker>();
+        
         return builder;
     }
 
