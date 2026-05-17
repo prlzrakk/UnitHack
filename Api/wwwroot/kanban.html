@@ -1,4 +1,358 @@
-﻿<!doctype html>
+﻿<!--<!doctype html>-->
+<!--<html lang="ru">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8" />-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0" />-->
+
+<!--    <title>Boardify — Kanban</title>-->
+
+<!--    <link rel="preconnect" href="https://fonts.googleapis.com">-->
+<!--    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>-->
+<!--    <link-->
+<!--            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Raleway:wght@400;500;600;700;800&family=Yeseva+One&display=swap"-->
+<!--            rel="stylesheet"-->
+<!--    >-->
+<!--    <link rel="stylesheet" href="./css/styles.css" />-->
+
+<!--    <link rel="stylesheet" href="./css/kanban.css" />-->
+<!--    -->
+<!--</head>-->
+
+<!--<body class="kanban-body">-->
+<!--<div class="kanban-app">-->
+<!--    <header class="kanban-topbar">-->
+<!--        <button class="kanban-menu-btn" id="openSidebar" aria-label="Открыть меню">-->
+<!--            <span></span>-->
+<!--            <span></span>-->
+<!--            <span></span>-->
+<!--        </button>-->
+
+<!--        <a class="home-link" href="./index.html" aria-label="Назад на главную">←</a>-->
+
+<!--        <div class="brand">Boardify</div>-->
+
+<!--        <button class="profile-btn" aria-label="Профиль">-->
+<!--            <svg viewBox="0 0 48 48">-->
+<!--                <circle cx="24" cy="14" r="7"></circle>-->
+<!--                <path d="M10 38c1.2-10 7.3-15 14-15s12.8 5 14 15"></path>-->
+<!--            </svg>-->
+<!--        </button>-->
+<!--    </header>-->
+<!--    <div id="sidebarMount"></div>-->
+
+<!--    <main class="kanban-page">-->
+<!--        <section class="kanban-main">-->
+<!--            <div class="kanban-head">-->
+<!--                <h1 id="kanbanTitle">Kanban</h1>-->
+
+<!--                <button-->
+<!--                        class="notify-btn"-->
+<!--                        id="notificationOpen"-->
+<!--                        type="button"-->
+<!--                        aria-label="Уведомления"-->
+<!--                        data-unread-count="0"-->
+<!--                >-->
+<!--                    <img src="components/images/hasNotifications.svg" alt="есть уведомления">-->
+<!--                    <span class="notify-count" id="notificationBadge" aria-hidden="true">0</span>-->
+<!--                </button>-->
+<!--            </div>-->
+
+<!--            <section class="kanban-scroll" id="kanbanBoard"></section>-->
+<!--        </section>-->
+<!--    </main>-->
+
+<!--    <div class="toast" id="toast">-->
+<!--        <span class="toast-bell">🔔</span>-->
+<!--        <span id="toastText">напомнить о задании</span>-->
+<!--    </div>-->
+<!--    <div class="create-task-overlay" id="createTaskOverlay">-->
+<!--        <form class="create-task-modal" id="createTaskForm">-->
+<!--            <div class="create-task-header">-->
+<!--                <input-->
+<!--                        class="create-task-name"-->
+<!--                        id="newTaskTitle"-->
+<!--                        type="text"-->
+<!--                        placeholder="Название задачи"-->
+<!--                        autocomplete="off"-->
+<!--                        required-->
+<!--                >-->
+
+<!--                <button class="create-task-close" id="createTaskClose" type="button" aria-label="Закрыть">-->
+<!--                    <span></span>-->
+<!--                    <span></span>-->
+<!--                </button>-->
+<!--            </div>-->
+
+<!--            <div class="create-task-body">-->
+<!--                <section class="create-task-block create-task-description-block">-->
+<!--                    <label class="create-field">-->
+<!--                        <span class="create-label">Описание</span>-->
+<!--                        <textarea-->
+<!--                                class="create-textarea"-->
+<!--                                id="newTaskDescription"-->
+<!--                                placeholder="Напиши описание задачи"-->
+<!--                        ></textarea>-->
+<!--                    </label>-->
+
+<!--                    <label class="create-field">-->
+<!--                        <span class="create-label">Теги</span>-->
+
+<!--                        <div class="create-tags-box">-->
+<!--                            <div class="created-tags" id="createdTags"></div>-->
+
+<!--                            <div class="tag-create-row">-->
+<!--                                <input-->
+<!--                                        class="create-input-small"-->
+<!--                                        id="newTaskTagInput"-->
+<!--                                        type="text"-->
+<!--                                        placeholder="Добавить тег"-->
+<!--                                        autocomplete="off"-->
+<!--                                >-->
+<!--                                <button class="tag-add-btn" id="addTaskTagBtn" type="button">+</button>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </label>-->
+<!--                </section>-->
+
+<!--                <section class="create-task-block create-task-settings-block">-->
+<!--                    <label class="create-row create-assignee-row">-->
+<!--                        <span class="create-row-label">Исполнитель</span>-->
+
+<!--                        <div class="assignee-picker">-->
+<!--                            <input-->
+<!--                                    class="create-select-like"-->
+<!--                                    id="newTaskAssigneeSearch"-->
+<!--                                    type="text"-->
+<!--                                    placeholder="Поиск участника"-->
+<!--                                    autocomplete="off"-->
+<!--                            >-->
+
+<!--                            <div class="assignee-options" id="assigneeOptions"></div>-->
+<!--                        </div>-->
+
+<!--                        <div class="selected-assignees" id="selectedAssignees"></div>-->
+<!--                    </label>-->
+
+<!--                    <label class="create-row">-->
+<!--                        <span class="create-row-label">Приоритет</span>-->
+
+<!--                        <select class="create-select" id="newTaskPriority">-->
+<!--                            <option value="LOW">LOW</option>-->
+<!--                            <option value="MID" selected>MID</option>-->
+<!--                            <option value="HIGH">HIGH</option>-->
+<!--                        </select>-->
+<!--                    </label>-->
+
+<!--                    <label class="create-row">-->
+<!--                        <span class="create-row-label">Сложность</span>-->
+
+<!--                        <select class="create-select" id="newTaskComplexity">-->
+<!--                            <option value="30 мин">30 мин</option>-->
+<!--                            <option value="1 час">1 час</option>-->
+<!--                            <option value="2 часа" selected>2 часа</option>-->
+<!--                            <option value="3 часа">3 часа</option>-->
+<!--                            <option value="4 часа">4 часа</option>-->
+<!--                            <option value="6 часов">6 часов</option>-->
+<!--                            <option value="8 часов">8 часов</option>-->
+<!--                        </select>-->
+<!--                    </label>-->
+
+<!--                    <label class="create-row create-deadline-row">-->
+<!--                        <span class="create-row-label">Дедлайн</span>-->
+
+<!--                        <input-->
+<!--                                class="create-date-time"-->
+<!--                                id="newTaskDeadline"-->
+<!--                                type="datetime-local"-->
+<!--                        >-->
+<!--                    </label>-->
+<!--                </section>-->
+<!--            </div>-->
+
+<!--            <div class="create-task-actions">-->
+<!--                <button class="create-action create-cancel" id="createTaskCancel" type="button">-->
+<!--                    Выйти без сохранения-->
+<!--                </button>-->
+
+<!--                <button class="create-action create-save" type="submit">-->
+<!--                    Создать задачу-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </form>-->
+<!--    </div>-->
+
+<!--    <div class="task-detail-overlay" id="taskDetailOverlay" aria-hidden="true">-->
+<!--        <form class="task-detail-modal" id="taskDetailForm">-->
+<!--            <div class="task-detail-head">-->
+<!--                <label class="sr-only" for="detailTaskTitle">Название задачи</label>-->
+<!--                <input-->
+<!--                        class="task-detail-title"-->
+<!--                        id="detailTaskTitle"-->
+<!--                        type="text"-->
+<!--                        placeholder="Название задачи"-->
+<!--                        autocomplete="off"-->
+<!--                        required-->
+<!--                >-->
+
+<!--                <button class="task-detail-close" id="taskDetailClose" type="button" aria-label="Закрыть">-->
+<!--                    <span></span>-->
+<!--                    <span></span>-->
+<!--                </button>-->
+
+<!--                <label class="sr-only" for="detailTaskDescription">Описание задачи</label>-->
+<!--                <textarea-->
+<!--                        class="task-detail-description"-->
+<!--                        id="detailTaskDescription"-->
+<!--                        placeholder="Описание задачи"-->
+<!--                ></textarea>-->
+<!--            </div>-->
+
+<!--            <div class="task-detail-content">-->
+<!--                <section class="task-detail-panel task-detail-subtasks" aria-labelledby="taskDetailSubtasksTitle">-->
+<!--                    <div class="task-detail-panel-head">-->
+<!--                        <h2 id="taskDetailSubtasksTitle">Создать подзадачу</h2>-->
+<!--                    </div>-->
+
+<!--                    <div class="subtask-list" id="detailSubtaskList"></div>-->
+
+<!--                    <div class="subtask-add-row">-->
+<!--                        <label class="sr-only" for="detailSubtaskInput">Название подзадачи</label>-->
+<!--                        <input-->
+<!--                                class="subtask-input"-->
+<!--                                id="detailSubtaskInput"-->
+<!--                                type="text"-->
+<!--                                placeholder="Название подзадачи"-->
+<!--                                autocomplete="off"-->
+<!--                        >-->
+<!--                        <button class="subtask-add-btn" id="detailSubtaskAdd" type="button" aria-label="Добавить подзадачу">-->
+<!--                            +-->
+<!--                        </button>-->
+<!--                    </div>-->
+<!--                </section>-->
+
+<!--                <section class="task-detail-panel task-detail-fields" aria-label="Параметры задачи">-->
+<!--                    <div class="task-detail-field">-->
+<!--                        <span class="task-detail-label">Исполнитель:</span>-->
+<!--                        <div class="task-detail-assignee">-->
+<!--                            <img src="components/images/user.svg" alt="">-->
+<!--                            <span id="detailTaskAssignee">Не назначен</span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+
+<!--                    <label class="task-detail-field" for="detailTaskPriority">-->
+<!--                        <span class="task-detail-label">Приоритет:</span>-->
+<!--                        <select class="task-detail-select" id="detailTaskPriority">-->
+<!--                            <option value="Low">Низкий</option>-->
+<!--                            <option value="Medium">Средний</option>-->
+<!--                            <option value="High">Высокий</option>-->
+<!--                        </select>-->
+<!--                    </label>-->
+
+<!--                    <label class="task-detail-field" for="detailTaskComplexity">-->
+<!--                        <span class="task-detail-label">Сложность:</span>-->
+<!--                        <select class="task-detail-select" id="detailTaskComplexity">-->
+<!--                            <option value="">Выбрать сложность</option>-->
+<!--                            <option value="30 мин">30 мин</option>-->
+<!--                            <option value="1 час">1 час</option>-->
+<!--                            <option value="2 часа">2 часа</option>-->
+<!--                            <option value="3 часа">3 часа</option>-->
+<!--                            <option value="4 часа">4 часа</option>-->
+<!--                            <option value="6 часов">6 часов</option>-->
+<!--                            <option value="8 часов">8 часов</option>-->
+<!--                        </select>-->
+<!--                    </label>-->
+
+<!--                    <label class="task-detail-field" for="detailTaskDeadline">-->
+<!--                        <span class="task-detail-label">Дедлайн:</span>-->
+<!--                        <input class="task-detail-date" id="detailTaskDeadline" type="datetime-local">-->
+<!--                    </label>-->
+<!--                </section>-->
+<!--            </div>-->
+
+<!--            <div class="task-detail-actions">-->
+<!--                <button class="task-detail-action task-detail-cancel" id="taskDetailCancel" type="button">-->
+<!--                    <span class="task-detail-action-icon" aria-hidden="true">×</span>-->
+<!--                    <span>Выйти без сохранения</span>-->
+<!--                </button>-->
+
+<!--                <button class="task-detail-action task-detail-save" type="submit">-->
+<!--                    <span class="task-detail-action-icon" aria-hidden="true">✓</span>-->
+<!--                    <span>Сохранить изменения</span>-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </form>-->
+<!--    </div>-->
+
+<!--    <div class="notification-overlay" id="notificationOverlay" aria-hidden="true">-->
+<!--        <section-->
+<!--                class="notification-panel"-->
+<!--                role="dialog"-->
+<!--                aria-modal="true"-->
+<!--                aria-labelledby="notificationTitle"-->
+<!--                tabindex="-1"-->
+<!--        >-->
+<!--            <div class="notification-panel-head">-->
+<!--                <h2 id="notificationTitle">Уведомления</h2>-->
+
+<!--                <label class="notification-filter" for="notificationUnreadOnly">-->
+<!--                    <span>Показать только непрочитанные</span>-->
+<!--                    <input id="notificationUnreadOnly" type="checkbox" checked>-->
+<!--                    <span class="notification-switch" aria-hidden="true"></span>-->
+<!--                </label>-->
+
+<!--                <button-->
+<!--                        class="notification-close"-->
+<!--                        id="notificationClose"-->
+<!--                        type="button"-->
+<!--                        aria-label="Закрыть уведомления"-->
+<!--                >-->
+<!--                    <span></span>-->
+<!--                    <span></span>-->
+<!--                </button>-->
+<!--            </div>-->
+
+<!--            <div class="notification-line"></div>-->
+
+<!--            <div class="notification-actions">-->
+<!--                <button class="notification-read-all" id="notificationReadAll" type="button">-->
+<!--                    Прочитать все-->
+<!--                </button>-->
+<!--            </div>-->
+
+<!--            <div class="notification-list" id="notificationList" aria-live="polite"></div>-->
+<!--        </section>-->
+<!--    </div>-->
+
+<!--    <div class="reminder-modal" id="reminderModal">-->
+<!--        <div class="reminder-window">-->
+<!--            <button class="reminder-close" id="reminderClose" aria-label="Закрыть">-->
+<!--                <span></span>-->
+<!--                <span></span>-->
+<!--            </button>-->
+
+<!--            <div class="reminder-icon">🔔</div>-->
+
+<!--            <h2 class="reminder-title">Напомнить о задаче?</h2>-->
+
+<!--            <p class="reminder-text" id="reminderText">-->
+<!--                Напомнить выбранному пользователю о задаче?-->
+<!--            </p>-->
+
+<!--            <div class="reminder-actions">-->
+<!--                <button class="reminder-btn reminder-no" id="reminderNo">Нет</button>-->
+<!--                <button class="reminder-btn reminder-yes" id="reminderYes">Да</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--<script type="module" src="./js/authGuard.js"></script>-->
+<!--<script src="./js/sidebar.js"></script>-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>-->
+<!--<script src="./js/api/notificationConnection.js"></script>-->
+<!--<script type="module" src="./js/kanban.js"></script>-->
+<!--</body>-->
+<!--</html>-->
+<!doctype html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
@@ -15,7 +369,7 @@
     <link rel="stylesheet" href="./css/styles.css" />
 
     <link rel="stylesheet" href="./css/kanban.css" />
-    
+
 </head>
 
 <body class="kanban-body">
@@ -68,14 +422,24 @@
     <div class="create-task-overlay" id="createTaskOverlay">
         <form class="create-task-modal" id="createTaskForm">
             <div class="create-task-header">
-                <input
-                        class="create-task-name"
-                        id="newTaskTitle"
-                        type="text"
-                        placeholder="Название задачи"
-                        autocomplete="off"
-                        required
-                >
+                <div class="create-task-title-area">
+                    <label class="sr-only" for="newTaskTitle">Название задачи</label>
+                    <input
+                            class="create-task-name"
+                            id="newTaskTitle"
+                            type="text"
+                            placeholder="Название задачи"
+                            autocomplete="off"
+                            required
+                    >
+
+                    <label class="sr-only" for="newTaskDescription">Описание задачи</label>
+                    <textarea
+                            class="create-task-description"
+                            id="newTaskDescription"
+                            placeholder="Описание задачи"
+                    ></textarea>
+                </div>
 
                 <button class="create-task-close" id="createTaskClose" type="button" aria-label="Закрыть">
                     <span></span>
@@ -84,34 +448,45 @@
             </div>
 
             <div class="create-task-body">
-                <section class="create-task-block create-task-description-block">
-                    <label class="create-field">
-                        <span class="create-label">Описание</span>
-                        <textarea
-                                class="create-textarea"
-                                id="newTaskDescription"
-                                placeholder="Напиши описание задачи"
-                        ></textarea>
-                    </label>
+                <section class="create-task-block create-task-subtasks-block" aria-labelledby="createSubtasksTitle">
+                    <div class="create-task-panel-head">
+                        <h2 id="createSubtasksTitle">Создать подзадачу</h2>
+                    </div>
 
-                    <label class="create-field">
-                        <span class="create-label">Теги</span>
+                    <div class="create-subtask-list" id="createSubtaskList"></div>
 
-                        <div class="create-tags-box">
-                            <div class="created-tags" id="createdTags"></div>
+                    <div class="create-subtask-add-row">
+                        <label class="sr-only" for="createSubtaskInput">Название подзадачи</label>
+                        <input
+                                class="create-subtask-input"
+                                id="createSubtaskInput"
+                                type="text"
+                                placeholder="Название подзадачи"
+                                autocomplete="off"
+                        >
 
-                            <div class="tag-create-row">
-                                <input
-                                        class="create-input-small"
-                                        id="newTaskTagInput"
-                                        type="text"
-                                        placeholder="Добавить тег"
-                                        autocomplete="off"
-                                >
-                                <button class="tag-add-btn" id="addTaskTagBtn" type="button">+</button>
-                            </div>
+                        <div
+                                class="subtask-assignee-dropdown create-subtask-assignee"
+                                id="createSubtaskAssignee"
+                                data-subtask-assignee-dropdown
+                        >
+                            <button
+                                    class="subtask-assignee-toggle"
+                                    type="button"
+                                    data-subtask-assignee-toggle
+                                    aria-expanded="false"
+                                    aria-label="Исполнитель подзадачи"
+                            >
+                                <span data-subtask-assignee-label>Сначала выбери исполнителя</span>
+                                <span class="subtask-assignee-chevron" aria-hidden="true"></span>
+                            </button>
+                            <div class="subtask-assignee-menu" data-subtask-assignee-menu role="menu"></div>
                         </div>
-                    </label>
+
+                        <button class="create-subtask-add-btn" id="createSubtaskAdd" type="button" aria-label="Добавить подзадачу">
+                            +
+                        </button>
+                    </div>
                 </section>
 
                 <section class="create-task-block create-task-settings-block">
@@ -166,6 +541,25 @@
                                 type="datetime-local"
                         >
                     </label>
+
+                    <label class="create-row create-tags-row">
+                        <span class="create-row-label">Теги</span>
+
+                        <div class="create-tags-box">
+                            <div class="created-tags" id="createdTags"></div>
+
+                            <div class="tag-create-row">
+                                <input
+                                        class="create-input-small"
+                                        id="newTaskTagInput"
+                                        type="text"
+                                        placeholder="Добавить тег"
+                                        autocomplete="off"
+                                >
+                                <button class="tag-add-btn" id="addTaskTagBtn" type="button">+</button>
+                            </div>
+                        </div>
+                    </label>
                 </section>
             </div>
 
@@ -184,27 +578,29 @@
     <div class="task-detail-overlay" id="taskDetailOverlay" aria-hidden="true">
         <form class="task-detail-modal" id="taskDetailForm">
             <div class="task-detail-head">
-                <label class="sr-only" for="detailTaskTitle">Название задачи</label>
-                <input
-                        class="task-detail-title"
-                        id="detailTaskTitle"
-                        type="text"
-                        placeholder="Название задачи"
-                        autocomplete="off"
-                        required
-                >
+                <div class="task-detail-title-area">
+                    <label class="sr-only" for="detailTaskTitle">Название задачи</label>
+                    <input
+                            class="task-detail-title"
+                            id="detailTaskTitle"
+                            type="text"
+                            placeholder="Название задачи"
+                            autocomplete="off"
+                            required
+                    >
+
+                    <label class="sr-only" for="detailTaskDescription">Описание задачи</label>
+                    <textarea
+                            class="task-detail-description"
+                            id="detailTaskDescription"
+                            placeholder="Описание задачи"
+                    ></textarea>
+                </div>
 
                 <button class="task-detail-close" id="taskDetailClose" type="button" aria-label="Закрыть">
                     <span></span>
                     <span></span>
                 </button>
-
-                <label class="sr-only" for="detailTaskDescription">Описание задачи</label>
-                <textarea
-                        class="task-detail-description"
-                        id="detailTaskDescription"
-                        placeholder="Описание задачи"
-                ></textarea>
             </div>
 
             <div class="task-detail-content">

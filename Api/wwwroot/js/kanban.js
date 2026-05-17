@@ -79,8 +79,13 @@ const newTaskDeadline = document.getElementById("newTaskDeadline");
 const newTaskTagInput = document.getElementById("newTaskTagInput");
 const addTaskTagBtn = document.getElementById("addTaskTagBtn");
 const createdTags = document.getElementById("createdTags");
+const createSubtaskList = document.getElementById("createSubtaskList");
+const createSubtaskInput = document.getElementById("createSubtaskInput");
+const createSubtaskAssignee = document.getElementById("createSubtaskAssignee");
+const createSubtaskAdd = document.getElementById("createSubtaskAdd");
 
 const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
+const TASK_SUBTASKS_STORAGE_KEY = "boardifyTaskSubtasks";
 
 /* Task detail modal */
 const taskDetailOverlay = document.getElementById("taskDetailOverlay");
@@ -120,6 +125,7 @@ let selectedReminder = null;
 let selectedColumnForNewTask = null;
 let selectedAssignees = [];
 let selectedTags = [];
+let createSubtasks = [];
 let selectedTaskForDetail = null;
 let detailSubtasks = [];
 
@@ -661,13 +667,17 @@ async function saveTaskDetailFromForm() {
             name,
             description,
             priority: detailTaskPriority.value || "Medium",
+
             deadline: detailTaskDeadline.value
                 ? new Date(detailTaskDeadline.value).toISOString()
                 : selectedTaskForDetail.deadline,
+
             userId,
         });
 
+        rememberTaskSubtasks(selectedTaskForDetail.id, detailSubtasks);
         closeTaskDetailOverlay();
+
         await reloadBoard(`Задача «${name}» обновлена`);
     } catch (error) {
         handleActionError(error, "Не удалось обновить задачу");
@@ -675,25 +685,69 @@ async function saveTaskDetailFromForm() {
 }
 
 function getTaskSubtasks(task) {
-    if (!Array.isArray(task.subtasks)) {
+    const subtasks =
+        task.subtasks ||
+        task.subTasks ||
+        task.Subtasks ||
+        [];
+
+    if (!Array.isArray(subtasks)) {
         return [];
     }
 
-    return task.subtasks.map((subtask, index) => {
-        if (typeof subtask === "string") {
-            return {
-                id: `subtask-${index}`,
-                title: subtask,
-                done: false,
-            };
-        }
+    return normalizeSubtasks(subtasks);
+}
 
+function normalizeSubtasks(subtasks) {
+    if (!Array.isArray(subtasks)) {
+        return [];
+    }
+
+    return subtasks
+        .map((subtask, index) => normalizeSubtask(subtask, index))
+        .filter((subtask) => subtask.title);
+}
+
+function normalizeSubtask(subtask, index = 0) {
+    if (typeof subtask === "string") {
         return {
-            id: subtask.id ?? `subtask-${index}`,
-            title: subtask.title ?? subtask.name ?? "Подзадача",
-            done: Boolean(subtask.done ?? subtask.isDone ?? subtask.completed),
+            id: `subtask-${index}`,
+            title: subtask.trim(),
+            done: false,
+            assignee: null,
         };
-    });
+    }
+
+    const title = String(subtask?.title ?? subtask?.name ?? "Подзадача").trim();
+
+    return {
+        id: subtask?.id ?? subtask?.Id ?? `subtask-${index}`,
+        title,
+        done: Boolean(subtask?.done ?? subtask?.isDone ?? subtask?.completed),
+        assignee: getSubtaskAssignee(subtask),
+    };
+}
+
+function getSubtaskAssignee(subtask) {
+    const assignee =
+        subtask?.assignee ??
+        subtask?.Assignee ??
+        subtask?.user ??
+        subtask?.User ??
+        null;
+
+    if (assignee) {
+        return normalizeAssignee(assignee);
+    }
+
+    const assigneeId =
+        subtask?.assigneeId ??
+        subtask?.AssigneeId ??
+        subtask?.userId ??
+        subtask?.UserId ??
+        null;
+
+    return assigneeId ? resolveAssigneeById(assigneeId) : null;
 }
 
 function renderDetailSubtasks() {
@@ -706,6 +760,8 @@ function renderDetailSubtasks() {
 
     detailSubtasks.forEach((subtask) => {
         const row = document.createElement("div");
+        const assigneeName = subtask.assignee?.name ?? "Не назначен";
+
         row.className = `subtask-item ${subtask.done ? "is-done" : ""}`;
 
         row.innerHTML = `
@@ -716,6 +772,7 @@ function renderDetailSubtasks() {
                 aria-label="Отметить подзадачу"
             >
             <span class="subtask-title">${escapeHtml(subtask.title)}</span>
+            <span class="subtask-assignee">${escapeHtml(assigneeName)}</span>
             <button class="subtask-remove-btn" type="button" aria-label="Удалить подзадачу">×</button>
         `;
 
@@ -745,6 +802,7 @@ function addDetailSubtask() {
         id: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
         title,
         done: false,
+        assignee: getTaskUsers(selectedTaskForDetail?.users)[0] ?? null,
     });
 
     detailSubtaskInput.value = "";
@@ -758,7 +816,9 @@ function getTaskAssigneeName(task) {
         return user.name;
     }
 
-    return task.userId ? `#${task.userId.slice(0, 8)}` : "Не назначен";
+    return task.userId
+        ? `#${String(task.userId).slice(0, 8)}`
+        : "Не назначен";
 }
 
 function normalizePriorityForSelect(priority) {
@@ -795,6 +855,7 @@ async function deleteTask(task) {
     try {
         await deleteTaskRequest(task.id);
         forgetTaskAssignees(task.id);
+        forgetTaskSubtasks(task.id);
         await reloadBoard(`Задача «${task.title}» удалена`);
     } catch (error) {
         handleActionError(error, "Не удалось удалить задачу");
@@ -809,6 +870,7 @@ function openCreateTaskModal(column) {
     selectedColumnForNewTask = column;
     selectedAssignees = [];
     selectedTags = [];
+    createSubtasks = [];
 
     createTaskForm.reset();
 
@@ -817,6 +879,8 @@ function openCreateTaskModal(column) {
 
     renderCreatedTags();
     renderSelectedAssignees();
+    renderCreateSubtasks();
+    renderCreateSubtaskAssigneeOptions();
     renderAssigneeOptions("");
 
     createTaskOverlay.classList.add("is-open");
@@ -831,6 +895,8 @@ function closeCreateTaskModal() {
     selectedColumnForNewTask = null;
     selectedAssignees = [];
     selectedTags = [];
+    createSubtasks = [];
+    closeSubtaskAssigneeDropdowns();
 }
 
 async function createTaskFromForm() {
@@ -855,6 +921,14 @@ async function createTaskFromForm() {
         return;
     }
 
+    const subtasks = normalizeSubtasks(createSubtasks);
+    const hasUnassignedSubtasks = subtasks.some((subtask) => !subtask.assignee?.id);
+
+    if (hasUnassignedSubtasks) {
+        showToast("Назначь исполнителя каждой подзадаче");
+        return;
+    }
+
     const userId = selectedAssignees[0]?.id ?? getCurrentUserId();
 
     if (!userId) {
@@ -876,18 +950,240 @@ async function createTaskFromForm() {
             tagIds: [],
         });
 
+        const createdTaskId = readTaskId(createdTask);
+
         rememberTaskAssignees(
-            readTaskId(createdTask),
+            createdTaskId,
             selectedAssignees.length
                 ? selectedAssignees
                 : [resolveAssigneeById(userId)]
         );
+        rememberTaskSubtasks(createdTaskId, subtasks);
 
         closeCreateTaskModal();
         await reloadBoard(`Задача «${title}» создана`);
     } catch (error) {
         handleActionError(error, "Не удалось создать задачу");
     }
+}
+
+function renderCreateSubtasks() {
+    if (!createSubtaskList) {
+        return;
+    }
+
+    createSubtaskList.innerHTML = "";
+
+    if (!createSubtasks.length) {
+        createSubtaskList.innerHTML = `<div class="create-subtask-empty">Подзадач пока нет</div>`;
+        return;
+    }
+
+    createSubtasks.forEach((subtask) => {
+        const row = document.createElement("div");
+        const assigneeId = subtask.assignee?.id ? String(subtask.assignee.id) : "";
+        const assigneeName = subtask.assignee?.name ?? "Выбери исполнителя";
+
+        row.className = "create-subtask-item";
+        row.innerHTML = `
+            <span class="create-subtask-check" aria-hidden="true">✓</span>
+            <span class="create-subtask-title">${escapeHtml(subtask.title)}</span>
+            <div class="subtask-assignee-dropdown create-subtask-item-assignee" data-subtask-row-assignee-dropdown>
+                <button
+                    class="subtask-assignee-toggle"
+                    type="button"
+                    data-subtask-row-assignee-toggle
+                    aria-expanded="false"
+                    aria-label="Исполнитель подзадачи"
+                >
+                    <span>${escapeHtml(assigneeName)}</span>
+                    <span class="subtask-assignee-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="subtask-assignee-menu" role="menu">
+                    ${getCreateSubtaskAssigneeMenuHtml(assigneeId)}
+                </div>
+            </div>
+            <button class="create-subtask-remove-btn" type="button" aria-label="Удалить подзадачу">×</button>
+        `;
+
+        const assigneeDropdown = row.querySelector("[data-subtask-row-assignee-dropdown]");
+        const assigneeToggle = row.querySelector("[data-subtask-row-assignee-toggle]");
+
+        assigneeDropdown.classList.toggle("is-disabled", selectedAssignees.length === 0);
+        assigneeToggle.disabled = selectedAssignees.length === 0;
+        assigneeToggle.addEventListener("click", () => {
+            toggleSubtaskAssigneeDropdown(assigneeDropdown);
+        });
+
+        row.querySelectorAll("[data-subtask-assignee-option]").forEach((button) => {
+            button.addEventListener("click", () => {
+                subtask.assignee = getSelectedAssigneeById(button.dataset.subtaskAssigneeOption);
+                closeSubtaskAssigneeDropdowns();
+                renderCreateSubtasks();
+            });
+        });
+
+        row.querySelector(".create-subtask-remove-btn").addEventListener("click", () => {
+            createSubtasks = createSubtasks.filter((item) => item.id !== subtask.id);
+            renderCreateSubtasks();
+        });
+
+        createSubtaskList.appendChild(row);
+    });
+}
+
+function renderCreateSubtaskAssigneeOptions() {
+    if (!createSubtaskAssignee) {
+        return;
+    }
+
+    const previousValue = createSubtaskAssignee.dataset.assigneeId ?? "";
+    const toggle = createSubtaskAssignee.querySelector("[data-subtask-assignee-toggle]");
+    const label = createSubtaskAssignee.querySelector("[data-subtask-assignee-label]");
+    const menu = createSubtaskAssignee.querySelector("[data-subtask-assignee-menu]");
+
+    if (!toggle || !label || !menu) {
+        return;
+    }
+
+    if (!selectedAssignees.length) {
+        createSubtaskAssignee.dataset.assigneeId = "";
+        createSubtaskAssignee.classList.add("is-disabled");
+        toggle.disabled = true;
+        label.textContent = "Сначала выбери исполнителя";
+        menu.innerHTML = "";
+        return;
+    }
+
+    const nextAssignee =
+        getSelectedAssigneeById(previousValue) ??
+        normalizeAssignee(selectedAssignees[0]);
+
+    createSubtaskAssignee.dataset.assigneeId = String(nextAssignee.id);
+    createSubtaskAssignee.classList.remove("is-disabled");
+    toggle.disabled = false;
+    toggle.setAttribute("aria-expanded", "false");
+    label.textContent = nextAssignee.name;
+    menu.innerHTML = getCreateSubtaskAssigneeMenuHtml(nextAssignee.id);
+
+    menu.querySelectorAll("[data-subtask-assignee-option]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const assignee = getSelectedAssigneeById(button.dataset.subtaskAssigneeOption);
+
+            if (!assignee) {
+                return;
+            }
+
+            createSubtaskAssignee.dataset.assigneeId = String(assignee.id);
+            label.textContent = assignee.name;
+            renderCreateSubtaskAssigneeOptions();
+            closeSubtaskAssigneeDropdowns();
+        });
+    });
+}
+
+function getCreateSubtaskAssigneeMenuHtml(selectedId = "") {
+    if (!selectedAssignees.length) {
+        return "";
+    }
+
+    return selectedAssignees.map((assignee) => {
+        const value = String(assignee.id);
+        const isSelected = String(selectedId) === value;
+
+        return `
+            <button
+                class="subtask-assignee-option ${isSelected ? "is-selected" : ""}"
+                type="button"
+                data-subtask-assignee-option="${escapeAttr(value)}"
+                role="menuitemradio"
+                aria-checked="${isSelected}"
+            >
+                ${escapeHtml(assignee.name)}
+            </button>
+        `;
+    }).join("");
+}
+
+function toggleSubtaskAssigneeDropdown(dropdown) {
+    if (!dropdown || dropdown.classList.contains("is-disabled")) {
+        return;
+    }
+
+    const shouldOpen = !dropdown.classList.contains("is-open");
+
+    closeSubtaskAssigneeDropdowns(dropdown);
+    dropdown.classList.toggle("is-open", shouldOpen);
+    dropdown.querySelector(".subtask-assignee-toggle")?.setAttribute("aria-expanded", String(shouldOpen));
+}
+
+function closeSubtaskAssigneeDropdowns(exceptDropdown = null) {
+    document.querySelectorAll(".subtask-assignee-dropdown.is-open").forEach((dropdown) => {
+        if (dropdown === exceptDropdown) {
+            return;
+        }
+
+        dropdown.classList.remove("is-open");
+        dropdown.querySelector(".subtask-assignee-toggle")?.setAttribute("aria-expanded", "false");
+    });
+}
+
+function addCreateSubtask() {
+    const title = createSubtaskInput.value.trim();
+
+    if (!title) {
+        createSubtaskInput.focus();
+        return;
+    }
+
+    if (!selectedAssignees.length) {
+        showToast("Сначала выбери исполнителя задачи");
+        newTaskAssigneeSearch?.focus();
+        return;
+    }
+
+    const assignee = getSelectedAssigneeById(createSubtaskAssignee.dataset.assigneeId);
+
+    if (!assignee) {
+        showToast("Выбери исполнителя подзадачи");
+        createSubtaskAssignee.querySelector("[data-subtask-assignee-toggle]")?.focus();
+        return;
+    }
+
+    createSubtasks.push({
+        id: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+        title,
+        done: false,
+        assignee,
+    });
+
+    createSubtaskInput.value = "";
+    renderCreateSubtasks();
+    renderCreateSubtaskAssigneeOptions();
+    createSubtaskInput.focus();
+}
+
+function getSelectedAssigneeById(assigneeId) {
+    const assignee = selectedAssignees.find((item) =>
+        item.id && String(item.id) === String(assigneeId)
+    );
+
+    return assignee ? normalizeAssignee(assignee) : null;
+}
+
+function syncCreateSubtasksWithSelectedAssignees() {
+    const selectedIds = new Set(selectedAssignees.map((assignee) => String(assignee.id)));
+
+    createSubtasks = createSubtasks.map((subtask) => {
+        if (!subtask.assignee?.id || !selectedIds.has(String(subtask.assignee.id))) {
+            return {
+                ...subtask,
+                assignee: null,
+            };
+        }
+
+        return subtask;
+    });
 }
 
 function getDefaultDateTimeLocal() {
@@ -1071,15 +1367,20 @@ function addSelectedAssignee(assignee) {
         return;
     }
 
-    selectedAssignees.push(assignee);
+    selectedAssignees.push(normalizeAssignee(assignee));
     renderSelectedAssignees();
+    renderCreateSubtaskAssigneeOptions();
+    renderCreateSubtasks();
 }
 
 function removeSelectedAssignee(assigneeKey) {
     selectedAssignees = selectedAssignees.filter((assignee) =>
         getAssigneeKey(assignee) !== assigneeKey
     );
+    syncCreateSubtasksWithSelectedAssignees();
     renderSelectedAssignees();
+    renderCreateSubtaskAssigneeOptions();
+    renderCreateSubtasks();
 }
 
 function renderSelectedAssignees() {
@@ -1123,6 +1424,7 @@ function hydrateBoardTaskAssignees(board) {
         column.tasks = (column.tasks ?? []).map((task) => ({
             ...task,
             users: getStoredTaskAssignees(task.id) ?? getFallbackTaskAssignees(task),
+            subtasks: getStoredTaskSubtasks(task.id) ?? getTaskSubtasks(task),
         }));
     });
 
@@ -1191,6 +1493,50 @@ function forgetTaskAssignees(taskId) {
     writeTaskAssigneeStore(store);
 }
 
+function rememberTaskSubtasks(taskId, subtasks) {
+    if (!taskId) {
+        return;
+    }
+
+    const cleanSubtasks = normalizeSubtasks(subtasks).map((subtask) => ({
+        ...subtask,
+        assignee: subtask.assignee ? normalizeAssignee(subtask.assignee) : null,
+    }));
+    const store = readTaskSubtaskStore();
+
+    if (cleanSubtasks.length === 0) {
+        delete store[taskId];
+    } else {
+        store[taskId] = cleanSubtasks;
+    }
+
+    writeTaskSubtaskStore(store);
+}
+
+function forgetTaskSubtasks(taskId) {
+    if (!taskId) {
+        return;
+    }
+
+    const store = readTaskSubtaskStore();
+    delete store[taskId];
+    writeTaskSubtaskStore(store);
+}
+
+function getStoredTaskSubtasks(taskId) {
+    if (!taskId) {
+        return null;
+    }
+
+    const subtasks = readTaskSubtaskStore()[taskId];
+
+    if (!Array.isArray(subtasks)) {
+        return null;
+    }
+
+    return normalizeSubtasks(subtasks);
+}
+
 function getStoredTaskAssignees(taskId) {
     if (!taskId) {
         return null;
@@ -1237,6 +1583,18 @@ function readTaskAssigneeStore() {
 
 function writeTaskAssigneeStore(store) {
     localStorage.setItem(TASK_ASSIGNEES_STORAGE_KEY, JSON.stringify(store));
+}
+
+function readTaskSubtaskStore() {
+    try {
+        return JSON.parse(localStorage.getItem(TASK_SUBTASKS_STORAGE_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function writeTaskSubtaskStore(store) {
+    localStorage.setItem(TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(store));
 }
 
 /* =========================
@@ -1753,6 +2111,23 @@ detailSubtaskInput?.addEventListener("keydown", (event) => {
     addDetailSubtask();
 });
 
+createSubtaskAdd?.addEventListener("click", addCreateSubtask);
+
+createSubtaskInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+        return;
+    }
+
+    event.preventDefault();
+    addCreateSubtask();
+});
+
+createSubtaskAssignee
+    ?.querySelector("[data-subtask-assignee-toggle]")
+    ?.addEventListener("click", () => {
+        toggleSubtaskAssigneeDropdown(createSubtaskAssignee);
+    });
+
 newTaskAssigneeSearch?.addEventListener("input", () => {
     renderAssigneeOptions(newTaskAssigneeSearch.value);
 });
@@ -1768,6 +2143,10 @@ document.addEventListener("click", (event) => {
 
     if (!event.target.closest(".assignee-picker")) {
         assigneeOptions.innerHTML = "";
+    }
+
+    if (!event.target.closest(".subtask-assignee-dropdown")) {
+        closeSubtaskAssigneeDropdowns();
     }
 });
 
