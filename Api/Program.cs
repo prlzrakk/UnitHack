@@ -8,6 +8,7 @@ builder
     .AddApiServices()
     .AddSecurityServices()
     .AddAuthorizationPolicy()
+    .AddRabbitMq()
     .AddSwaggerWithAuth()
     .AddApplicationServices()
     .AddDatabase()

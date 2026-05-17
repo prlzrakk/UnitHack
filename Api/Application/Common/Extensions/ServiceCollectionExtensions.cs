@@ -1,9 +1,10 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using Client.Models.Configs;
 using FluentValidation;
 using Infrastructure.Extensions;
+using Infrastructure.RabbitMq;
 using Infrastructure.Repositories.Interfaces;
 using Infrastructure.Repositories.Mocks;
 using Infrastructure.Security;
@@ -71,6 +72,13 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddAuth(jwtSettings);
 
+        return builder;
+    }
+
+    public static WebApplicationBuilder AddRabbitMq(this WebApplicationBuilder builder)
+    {
+        builder.Services.Configure<RabbitMqOptions>(
+            builder.Configuration.GetSection("RabbitMq"));
         return builder;
     }
 

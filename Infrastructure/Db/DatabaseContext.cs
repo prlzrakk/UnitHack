@@ -18,6 +18,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
     public DbSet<AutomationRule> AutomationRules { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<TaskTag> TaskTags { get; set; }
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,7 @@ public class DatabaseContext(DbContextOptions<DatabaseContext> options) : DbCont
         modelBuilder.ApplyConfiguration(new NotificationConfiguration());
         modelBuilder.ApplyConfiguration(new TaskEventConfiguration());
         modelBuilder.ApplyConfiguration(new AutomationRuleConfiguration());
+        modelBuilder.ApplyConfiguration(new OutboxEventConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
@@ -259,5 +261,34 @@ public class AutomationRuleConfiguration : IEntityTypeConfiguration<AutomationRu
         builder.HasOne(x => x.Kanban)
             .WithMany()
             .HasForeignKey(x => x.KanbanId);
+    }
+}
+
+public class OutboxEventConfiguration : IEntityTypeConfiguration<OutboxEvent>
+{
+    public void Configure(EntityTypeBuilder<OutboxEvent> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.EventType)
+            .HasConversion<string>()
+            .IsRequired();
+
+        builder.Property(x => x.Payload)
+            .HasColumnType("jsonb")
+            .IsRequired();
+
+        builder.Property(x => x.Status)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(x => x.RetryCount)
+            .IsRequired();
+
+        builder.Property(x => x.LastError);
+
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.PublishedAt);
     }
 }
