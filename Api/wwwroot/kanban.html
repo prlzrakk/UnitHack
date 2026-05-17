@@ -173,6 +173,109 @@
             </div>
         </form>
     </div>
+
+    <div class="task-detail-overlay" id="taskDetailOverlay" aria-hidden="true">
+        <form class="task-detail-modal" id="taskDetailForm">
+            <div class="task-detail-head">
+                <label class="sr-only" for="detailTaskTitle">Название задачи</label>
+                <input
+                        class="task-detail-title"
+                        id="detailTaskTitle"
+                        type="text"
+                        placeholder="Название задачи"
+                        autocomplete="off"
+                        required
+                >
+
+                <button class="task-detail-close" id="taskDetailClose" type="button" aria-label="Закрыть">
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <label class="sr-only" for="detailTaskDescription">Описание задачи</label>
+                <textarea
+                        class="task-detail-description"
+                        id="detailTaskDescription"
+                        placeholder="Описание задачи"
+                ></textarea>
+            </div>
+
+            <div class="task-detail-content">
+                <section class="task-detail-panel task-detail-subtasks" aria-labelledby="taskDetailSubtasksTitle">
+                    <div class="task-detail-panel-head">
+                        <h2 id="taskDetailSubtasksTitle">Создать подзадачу</h2>
+                    </div>
+
+                    <div class="subtask-list" id="detailSubtaskList"></div>
+
+                    <div class="subtask-add-row">
+                        <label class="sr-only" for="detailSubtaskInput">Название подзадачи</label>
+                        <input
+                                class="subtask-input"
+                                id="detailSubtaskInput"
+                                type="text"
+                                placeholder="Название подзадачи"
+                                autocomplete="off"
+                        >
+                        <button class="subtask-add-btn" id="detailSubtaskAdd" type="button" aria-label="Добавить подзадачу">
+                            +
+                        </button>
+                    </div>
+                </section>
+
+                <section class="task-detail-panel task-detail-fields" aria-label="Параметры задачи">
+                    <div class="task-detail-field">
+                        <span class="task-detail-label">Исполнитель:</span>
+                        <div class="task-detail-assignee">
+                            <img src="components/images/user.svg" alt="">
+                            <span id="detailTaskAssignee">Не назначен</span>
+                        </div>
+                    </div>
+
+                    <label class="task-detail-field" for="detailTaskPriority">
+                        <span class="task-detail-label">Приоритет:</span>
+                        <select class="task-detail-select" id="detailTaskPriority">
+                            <option value="Low">Низкий</option>
+                            <option value="Medium">Средний</option>
+                            <option value="High">Высокий</option>
+                        </select>
+                    </label>
+
+                    <label class="task-detail-field" for="detailTaskComplexity">
+                        <span class="task-detail-label">Сложность:</span>
+                        <select class="task-detail-select" id="detailTaskComplexity">
+                            <option value="">Выбрать сложность</option>
+                            <option value="30 мин">30 мин</option>
+                            <option value="1 час">1 час</option>
+                            <option value="2 часа">2 часа</option>
+                            <option value="3 часа">3 часа</option>
+                            <option value="4 часа">4 часа</option>
+                            <option value="6 часов">6 часов</option>
+                            <option value="8 часов">8 часов</option>
+                        </select>
+                    </label>
+
+                    <label class="task-detail-field" for="detailTaskDeadline">
+                        <span class="task-detail-label">Дедлайн:</span>
+                        <input class="task-detail-date" id="detailTaskDeadline" type="datetime-local">
+                    </label>
+                </section>
+            </div>
+
+            <div class="task-detail-actions">
+                <button class="task-detail-action task-detail-cancel" id="taskDetailCancel" type="button">
+                    <span class="task-detail-action-icon" aria-hidden="true">×</span>
+                    <span>Выйти без сохранения</span>
+                </button>
+
+                <button class="task-detail-action task-detail-save" type="submit">
+                    <span class="task-detail-action-icon" aria-hidden="true">✓</span>
+                    <span>Сохранить изменения</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
     <div class="reminder-modal" id="reminderModal">
         <div class="reminder-window">
             <button class="reminder-close" id="reminderClose" aria-label="Закрыть">

@@ -65,6 +65,22 @@ const createdTags = document.getElementById("createdTags");
 
 const TASK_ASSIGNEES_STORAGE_KEY = "boardifyTaskAssignees";
 
+/* Task detail modal */
+const taskDetailOverlay = document.getElementById("taskDetailOverlay");
+const taskDetailForm = document.getElementById("taskDetailForm");
+const taskDetailClose = document.getElementById("taskDetailClose");
+const taskDetailCancel = document.getElementById("taskDetailCancel");
+
+const detailTaskTitle = document.getElementById("detailTaskTitle");
+const detailTaskDescription = document.getElementById("detailTaskDescription");
+const detailTaskAssignee = document.getElementById("detailTaskAssignee");
+const detailTaskPriority = document.getElementById("detailTaskPriority");
+const detailTaskComplexity = document.getElementById("detailTaskComplexity");
+const detailTaskDeadline = document.getElementById("detailTaskDeadline");
+const detailSubtaskList = document.getElementById("detailSubtaskList");
+const detailSubtaskInput = document.getElementById("detailSubtaskInput");
+const detailSubtaskAdd = document.getElementById("detailSubtaskAdd");
+
 /* =========================
    STATE
 ========================= */
@@ -84,6 +100,8 @@ let selectedReminder = null;
 let selectedColumnForNewTask = null;
 let selectedAssignees = [];
 let selectedTags = [];
+let selectedTaskForDetail = null;
+let detailSubtasks = [];
 
 /* =========================
    SIDEBAR
@@ -448,6 +466,9 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
     const card = document.createElement("article");
     card.className = "task-card";
     card.style.setProperty("--task-color", color);
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `Открыть задачу ${task.title}`);
 
     card.innerHTML = `
         <div class="task-top">
@@ -530,7 +551,7 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
 
     card.querySelector(".task-edit-btn").addEventListener("click", (event) => {
         event.stopPropagation();
-        editTask(task);
+        openTaskDetailOverlay(task);
     });
 
     card.querySelector(".task-delete-btn").addEventListener("click", (event) => {
@@ -549,31 +570,196 @@ function createTaskCard(task, column, columnIndex, taskIndex) {
         });
     });
 
+    card.addEventListener("click", () => {
+        openTaskDetailOverlay(task);
+    });
+
+    card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+
+        event.preventDefault();
+        openTaskDetailOverlay(task);
+    });
+
     return card;
 }
 
-async function editTask(task) {
-    const name = prompt("Название задачи", task.title);
+function openTaskDetailOverlay(task) {
+    selectedTaskForDetail = task;
+    detailSubtasks = getTaskSubtasks(task);
 
-    if (!name?.trim()) {
+    detailTaskTitle.value = task.title || "";
+    detailTaskDescription.value = task.description || "";
+    detailTaskAssignee.textContent = getTaskAssigneeName(task);
+    detailTaskPriority.value = normalizePriorityForSelect(task.priority);
+    detailTaskComplexity.value = task.complexity || "";
+    detailTaskDeadline.value = toDateTimeLocalValueSafe(task.deadline);
+
+    renderDetailSubtasks();
+
+    taskDetailOverlay.classList.add("is-open");
+    taskDetailOverlay.setAttribute("aria-hidden", "false");
+
+    setTimeout(() => {
+        detailTaskTitle.focus();
+    }, 0);
+}
+
+function closeTaskDetailOverlay() {
+    taskDetailOverlay.classList.remove("is-open");
+    taskDetailOverlay.setAttribute("aria-hidden", "true");
+    selectedTaskForDetail = null;
+    detailSubtasks = [];
+}
+
+async function saveTaskDetailFromForm() {
+    if (!selectedTaskForDetail) {
         return;
     }
 
-    const description = prompt("Описание задачи", task.description) ?? "";
+    const name = detailTaskTitle.value.trim();
+    const description = detailTaskDescription.value.trim();
+    const userId = selectedTaskForDetail.userId || getCurrentUserId();
+
+    if (!name) {
+        detailTaskTitle.focus();
+        return;
+    }
+
+    if (!userId) {
+        showToast("Нужна авторизация или назначенный исполнитель");
+        return;
+    }
 
     try {
-        await updateTask(task.id, {
-            name: name.trim(),
-            description: description.trim(),
-            priority: task.priority,
-            deadline: task.deadline,
-            userId: task.userId,
+        await updateTask(selectedTaskForDetail.id, {
+            name,
+            description,
+            priority: detailTaskPriority.value || "Medium",
+            deadline: detailTaskDeadline.value
+                ? new Date(detailTaskDeadline.value).toISOString()
+                : selectedTaskForDetail.deadline,
+            userId,
         });
 
-        await reloadBoard(`Задача «${name.trim()}» обновлена`);
+        closeTaskDetailOverlay();
+        await reloadBoard(`Задача «${name}» обновлена`);
     } catch (error) {
         handleActionError(error, "Не удалось обновить задачу");
     }
+}
+
+function getTaskSubtasks(task) {
+    if (!Array.isArray(task.subtasks)) {
+        return [];
+    }
+
+    return task.subtasks.map((subtask, index) => {
+        if (typeof subtask === "string") {
+            return {
+                id: `subtask-${index}`,
+                title: subtask,
+                done: false,
+            };
+        }
+
+        return {
+            id: subtask.id ?? `subtask-${index}`,
+            title: subtask.title ?? subtask.name ?? "Подзадача",
+            done: Boolean(subtask.done ?? subtask.isDone ?? subtask.completed),
+        };
+    });
+}
+
+function renderDetailSubtasks() {
+    detailSubtaskList.innerHTML = "";
+
+    if (!detailSubtasks.length) {
+        detailSubtaskList.innerHTML = `<div class="subtask-empty">Подзадач пока нет</div>`;
+        return;
+    }
+
+    detailSubtasks.forEach((subtask) => {
+        const row = document.createElement("div");
+        row.className = `subtask-item ${subtask.done ? "is-done" : ""}`;
+
+        row.innerHTML = `
+            <input
+                class="subtask-checkbox"
+                type="checkbox"
+                ${subtask.done ? "checked" : ""}
+                aria-label="Отметить подзадачу"
+            >
+            <span class="subtask-title">${escapeHtml(subtask.title)}</span>
+            <button class="subtask-remove-btn" type="button" aria-label="Удалить подзадачу">×</button>
+        `;
+
+        row.querySelector(".subtask-checkbox").addEventListener("change", (event) => {
+            subtask.done = event.target.checked;
+            renderDetailSubtasks();
+        });
+
+        row.querySelector(".subtask-remove-btn").addEventListener("click", () => {
+            detailSubtasks = detailSubtasks.filter((item) => item.id !== subtask.id);
+            renderDetailSubtasks();
+        });
+
+        detailSubtaskList.appendChild(row);
+    });
+}
+
+function addDetailSubtask() {
+    const title = detailSubtaskInput.value.trim();
+
+    if (!title) {
+        detailSubtaskInput.focus();
+        return;
+    }
+
+    detailSubtasks.push({
+        id: window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+        title,
+        done: false,
+    });
+
+    detailSubtaskInput.value = "";
+    renderDetailSubtasks();
+}
+
+function getTaskAssigneeName(task) {
+    const user = getTaskUsers(task.users)[0];
+
+    if (user?.name) {
+        return user.name;
+    }
+
+    return task.userId ? `#${task.userId.slice(0, 8)}` : "Не назначен";
+}
+
+function normalizePriorityForSelect(priority) {
+    const value = String(priority || "").toLowerCase();
+
+    if (value === "low") {
+        return "Low";
+    }
+
+    if (value === "high") {
+        return "High";
+    }
+
+    return "Medium";
+}
+
+function toDateTimeLocalValueSafe(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return getDefaultDateTimeLocal();
+    }
+
+    return toDateTimeLocalValue(date);
 }
 
 async function deleteTask(task) {
@@ -1149,6 +1335,31 @@ createTaskForm?.addEventListener("submit", (event) => {
     createTaskFromForm();
 });
 
+taskDetailClose?.addEventListener("click", closeTaskDetailOverlay);
+taskDetailCancel?.addEventListener("click", closeTaskDetailOverlay);
+
+taskDetailOverlay?.addEventListener("click", (event) => {
+    if (event.target === taskDetailOverlay) {
+        closeTaskDetailOverlay();
+    }
+});
+
+taskDetailForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveTaskDetailFromForm();
+});
+
+detailSubtaskAdd?.addEventListener("click", addDetailSubtask);
+
+detailSubtaskInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+        return;
+    }
+
+    event.preventDefault();
+    addDetailSubtask();
+});
+
 newTaskAssigneeSearch?.addEventListener("input", () => {
     renderAssigneeOptions(newTaskAssigneeSearch.value);
 });
@@ -1185,6 +1396,10 @@ document.addEventListener("keydown", (event) => {
 
     if (createTaskOverlay?.classList.contains("is-open")) {
         closeCreateTaskModal();
+    }
+
+    if (taskDetailOverlay?.classList.contains("is-open")) {
+        closeTaskDetailOverlay();
     }
 });
 
